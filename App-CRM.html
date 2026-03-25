@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>CRM متطور</title>
+
+<style>
+body { font-family: Arial; background:#f0f2f5; padding:20px;}
+.container { max-width:1000px; margin:auto; background:#fff; padding:20px; border-radius:10px;}
+input, select, textarea, button {
+padding:10px; margin:5px; width:100%;
+}
+.row { display:flex; gap:10px; }
+.row > * { flex:1; }
+
+table { width:100%; margin-top:20px; border-collapse: collapse;}
+th, td { padding:10px; border:1px solid #ddd; text-align:center;}
+th { background:#222; color:#fff;}
+
+.stats { display:flex; gap:10px; margin-top:10px;}
+.card {
+flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>📊 CRM إدارة العملاء</h2>
+
+<div class="row">
+<input type="text" id="name" placeholder="اسم العميل">
+<input type="text" id="phone" placeholder="رقم الهاتف">
+<input type="date" id="date">
+</div>
+
+<div class="row">
+<select id="status">
+<option value="مهتم">مهتم</option>
+<option value="جاري العمل">جاري العمل</option>
+<option value="تم الانتهاء">تم الانتهاء</option>
+</select>
+<input type="text" id="notes" placeholder="ملاحظات">
+</div>
+
+<button onclick="addOrUpdate()">💾 حفظ</button>
+
+<hr>
+
+<div class="row">
+<input type="text" id="search" placeholder="🔍 بحث..." onkeyup="render()">
+<select id="filter" onchange="render()">
+<option value="">كل الحالات</option>
+<option value="مهتم">مهتم</option>
+<option value="جاري العمل">جاري العمل</option>
+<option value="تم الانتهاء">تم الانتهاء</option>
+</select>
+</div>
+
+<div class="stats">
+<div class="card" id="total"></div>
+<div class="card" id="interested"></div>
+<div class="card" id="working"></div>
+<div class="card" id="done"></div>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>الاسم</th>
+<th>الهاتف</th>
+<th>التاريخ</th>
+<th>الحالة</th>
+<th>ملاحظات</th>
+<th>إجراءات</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
+
+</div>
+
+<script>
+
+let clients = JSON.parse(localStorage.getItem("clients")) || [];
+let editIndex = -1;
+
+function save(){
+localStorage.setItem("clients", JSON.stringify(clients));
+}
+
+function addOrUpdate(){
+let name = nameInput.value;
+let phone = phoneInput.value;
+let date = dateInput.value;
+let status = statusInput.value;
+let notes = notesInput.value;
+
+if(!name || !phone){
+alert("املأ البيانات");
+return;
+}
+
+let client = {name, phone, date, status, notes};
+
+if(editIndex === -1){
+clients.push(client);
+}else{
+clients[editIndex] = client;
+editIndex = -1;
+}
+
+save();
+clearForm();
+render();
+}
+
+function editClient(i){
+let c = clients[i];
+nameInput.value = c.name;
+phoneInput.value = c.phone;
+dateInput.value = c.date;
+statusInput.value = c.status;
+notesInput.value = c.notes;
+
+editIndex = i;
+}
+
+function deleteClient(i){
+clients.splice(i,1);
+save();
+render();
+}
+
+function clearForm(){
+nameInput.value="";
+phoneInput.value="";
+dateInput.value="";
+notesInput.value="";
+}
+
+function render(){
+
+let search = document.getElementById("search").value.toLowerCase();
+let filter = document.getElementById("filter").value;
+
+let table = document.getElementById("table");
+table.innerHTML="";
+
+let total=0, interested=0, working=0, done=0;
+
+clients.forEach((c,i)=>{
+
+if(
+(c.name.toLowerCase().includes(search) || c.phone.includes(search)) &&
+(filter==="" || c.status===filter)
+){
+
+total++;
+
+if(c.status==="مهتم") interested++;
+if(c.status==="جاري العمل") working++;
+if(c.status==="تم الانتهاء") done++;
+
+table.innerHTML += `
+<tr>
+<td>${c.name}</td>
+<td>${c.phone}</td>
+<td>${c.date}</td>
+<td>${c.status}</td>
+<td>${c.notes}</td>
+<td>
+<button onclick="editClient(${i})">✏️</button>
+<button onclick="deleteClient(${i})">❌</button>
+</td>
+</tr>
+`;
+}
+});
+
+document.getElementById("total").innerText = "👥 الكل: " + total;
+document.getElementById("interested").innerText = "🎯 مهتم: " + interested;
+document.getElementById("working").innerText = "🔧 جاري: " + working;
+document.getElementById("done").innerText = "✅ تم: " + done;
+
+}
+
+const nameInput = document.getElementById("name");
+const phoneInput = document.getElementById("phone");
+const dateInput = document.getElementById("date");
+const statusInput = document.getElementById("status");
+const notesInput = document.getElementById("notes");
+
+render();
+
+</script>
+
+</body>
+</html>
