@@ -1,62 +1,63 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM متطور</title>
-
+<title>CRM Full</title>
 <style>
 body { font-family: Arial; background:#f0f2f5; padding:20px;}
 .container { max-width:1000px; margin:auto; background:#fff; padding:20px; border-radius:10px;}
-input, select, textarea, button {
-padding:10px; margin:5px; width:100%;
-}
+input, select, textarea, button { padding:10px; margin:5px; width:100%; }
 .row { display:flex; gap:10px; }
 .row > * { flex:1; }
-
 table { width:100%; margin-top:20px; border-collapse: collapse;}
 th, td { padding:10px; border:1px solid #ddd; text-align:center;}
 th { background:#222; color:#fff;}
-
 .stats { display:flex; gap:10px; margin-top:10px;}
-.card {
-flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px;
-}
+.card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; }
 </style>
-
 </head>
-
 <body>
 
 <div class="container">
 
-<h2>📊 CRM إدارة العملاء</h2>
+<!-- Company Logo -->
+<div style="text-align:center; margin-bottom:10px;">
+  <img src="logo.png" alt="Company Logo" style="height:80px;">
+</div>
+
+<!-- Developer Name -->
+<div style="text-align:right; margin-bottom:15px;">
+  Developed by: <strong>Mahmoud Mohamed Marie</strong> 👋
+</div>
+
+<h2>📊 CRM Customer Management</h2>
 
 <div class="row">
-<input type="text" id="name" placeholder="اسم العميل">
-<input type="text" id="phone" placeholder="رقم الهاتف">
+<input type="text" id="name" placeholder="Customer Name">
+<input type="text" id="phone" placeholder="Phone Number">
 <input type="date" id="date">
 </div>
 
 <div class="row">
 <select id="status">
-<option value="مهتم">مهتم</option>
-<option value="جاري العمل">جاري العمل</option>
-<option value="تم الانتهاء">تم الانتهاء</option>
+<option value="Interested">Interested</option>
+<option value="In Progress">In Progress</option>
+<option value="Completed">Completed</option>
 </select>
-<input type="text" id="notes" placeholder="ملاحظات">
+<input type="text" id="notes" placeholder="Notes">
 </div>
 
-<button onclick="addOrUpdate()">💾 حفظ</button>
+<button onclick="addOrUpdate()">💾 Save</button>
 
 <hr>
 
 <div class="row">
-<input type="text" id="search" placeholder="🔍 بحث..." onkeyup="render()">
+<input type="text" id="search" placeholder="🔍 Search..." onkeyup="render()">
 <select id="filter" onchange="render()">
-<option value="">كل الحالات</option>
-<option value="مهتم">مهتم</option>
-<option value="جاري العمل">جاري العمل</option>
-<option value="تم الانتهاء">تم الانتهاء</option>
+<option value="">All Statuses</option>
+<option value="Interested">Interested</option>
+<option value="In Progress">In Progress</option>
+<option value="Completed">Completed</option>
 </select>
 </div>
 
@@ -70,12 +71,12 @@ flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px;
 <table>
 <thead>
 <tr>
-<th>الاسم</th>
-<th>الهاتف</th>
-<th>التاريخ</th>
-<th>الحالة</th>
-<th>ملاحظات</th>
-<th>إجراءات</th>
+<th>Name</th>
+<th>Phone</th>
+<th>Date</th>
+<th>Status</th>
+<th>Notes</th>
+<th>Actions</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -84,7 +85,6 @@ flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px;
 </div>
 
 <script>
-
 let clients = JSON.parse(localStorage.getItem("clients")) || [];
 let editIndex = -1;
 
@@ -100,7 +100,7 @@ let status = statusInput.value;
 let notes = notesInput.value;
 
 if(!name || !phone){
-alert("املأ البيانات");
+alert("Please fill in all required fields");
 return;
 }
 
@@ -143,7 +143,6 @@ notesInput.value="";
 }
 
 function render(){
-
 let search = document.getElementById("search").value.toLowerCase();
 let filter = document.getElementById("filter").value;
 
@@ -153,17 +152,14 @@ table.innerHTML="";
 let total=0, interested=0, working=0, done=0;
 
 clients.forEach((c,i)=>{
-
 if(
 (c.name.toLowerCase().includes(search) || c.phone.includes(search)) &&
 (filter==="" || c.status===filter)
 ){
-
 total++;
-
-if(c.status==="مهتم") interested++;
-if(c.status==="جاري العمل") working++;
-if(c.status==="تم الانتهاء") done++;
+if(c.status==="Interested") interested++;
+if(c.status==="In Progress") working++;
+if(c.status==="Completed") done++;
 
 table.innerHTML += `
 <tr>
@@ -181,11 +177,10 @@ table.innerHTML += `
 }
 });
 
-document.getElementById("total").innerText = "👥 الكل: " + total;
-document.getElementById("interested").innerText = "🎯 مهتم: " + interested;
-document.getElementById("working").innerText = "🔧 جاري: " + working;
-document.getElementById("done").innerText = "✅ تم: " + done;
-
+document.getElementById("total").innerText = "👥 Total: " + total;
+document.getElementById("interested").innerText = "🎯 Interested: " + interested;
+document.getElementById("working").innerText = "🔧 In Progress: " + working;
+document.getElementById("done").innerText = "✅ Completed: " + done;
 }
 
 const nameInput = document.getElementById("name");
@@ -195,7 +190,6 @@ const statusInput = document.getElementById("status");
 const notesInput = document.getElementById("notes");
 
 render();
-
 </script>
 
 </body>
