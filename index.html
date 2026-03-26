@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" dir="rtl">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>CRM Full</title>
 <style>
 body { font-family: Arial; background:#f0f2f5; padding:20px;}
@@ -22,166 +22,92 @@ th { background:#222; color:#fff;}
 
 <!-- Company Logo -->
 <div style="text-align:center; margin-bottom:10px;">
-  <img src="logo.png" alt="Company Logo" style="height:80px;">
+  <img src="logo.png" alt="Company Logo" style="height:80px;" />
 </div>
 
 <!-- Developer Name and Phone -->
 <div style="text-align:right; margin-bottom:15px;">
-  Developed by: <strong>Mahmoud Mohamed Marie</strong> 👋<br>
+  Developed by: <strong>Mahmoud Mohamed Marie</strong> 👋<br />
   Phone: <strong>01222153415</strong>
 </div>
 <h2>📊 CRM Customer Management For Utopia Trading</h2>
 
 <div class="row">
-<input type="text" id="name" placeholder="Customer Name">
-<input type="text" id="phone" placeholder="Phone Number">
-<input type="date" id="date">
+  <input type="text" id="name" placeholder="Customer Name" />
+  <input type="text" id="phone" placeholder="Phone Number" />
+  <input type="date" id="date" />
 </div>
 
 <div class="row">
-<select id="status">
-<option value="Interested">Interested</option>
-<option value="In Progress">In Progress</option>
-<option value="Completed">Completed</option>
-</select>
-<input type="text" id="notes" placeholder="Notes">
+  <select id="status">
+    <option value="Interested">Interested</option>
+    <option value="In Progress">In Progress</option>
+    <option value="Completed">Completed</option>
+  </select>
+  <input type="text" id="notes" placeholder="Notes" />
 </div>
 
 <button onclick="addOrUpdate()">💾 Save</button>
 
-<hr>
+<hr />
 
 <div class="row">
-<input type="text" id="search" placeholder="🔍 Search..." onkeyup="render()">
-<select id="filter" onchange="render()">
-<option value="">All Statuses</option>
-<option value="Interested">Interested</option>
-<option value="In Progress">In Progress</option>
-<option value="Completed">Completed</option>
-</select>
+  <input type="text" id="search" placeholder="🔍 Search..." onkeyup="render()" />
+  <select id="filter" onchange="render()">
+    <option value="">All Statuses</option>
+    <option value="Interested">Interested</option>
+    <option value="In Progress">In Progress</option>
+    <option value="Completed">Completed</option>
+  </select>
 </div>
 
 <div class="stats">
-<div class="card" id="total"></div>
-<div class="card" id="interested"></div>
-<div class="card" id="working"></div>
-<div class="card" id="done"></div>
+  <div class="card" id="total"></div>
+  <div class="card" id="interested"></div>
+  <div class="card" id="working"></div>
+  <div class="card" id="done"></div>
 </div>
 
 <table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Phone</th>
-<th>Date</th>
-<th>Status</th>
-<th>Notes</th>
-<th>Actions</th>
-</tr>
-</thead>
-<tbody id="table"></tbody>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Phone</th>
+      <th>Date</th>
+      <th>Status</th>
+      <th>Notes</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="table"></tbody>
 </table>
 
 </div>
 
-<script>
-let clients = JSON.parse(localStorage.getItem("clients")) || [];
-let editIndex = -1;
+<script type="module">
+// استيراد Firebase SDKs المطلوبة
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { 
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc 
+} from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
-function save(){
-localStorage.setItem("clients", JSON.stringify(clients));
-}
+// إعدادات Firebase - استبدلها بإعدادات مشروعك الخاصة
+const firebaseConfig = {
+  apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
+  authDomain: "crm-app-7733a.firebaseapp.com",
+  projectId: "crm-app-7733a",
+  storageBucket: "crm-app-7733a.firebasestorage.app",
+  messagingSenderId: "87718820034",
+  appId: "1:87718820034:web:fe6127bb92917ab4c2235b",
+  measurementId: "G-2EVKP20HYH"
+};
 
-function addOrUpdate(){
-let name = nameInput.value;
-let phone = phoneInput.value;
-let date = dateInput.value;
-let status = statusInput.value;
-let notes = notesInput.value;
+// تهيئة Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-if(!name || !phone){
-alert("Please fill in all required fields");
-return;
-}
-
-let client = {name, phone, date, status, notes};
-
-if(editIndex === -1){
-clients.push(client);
-}else{
-clients[editIndex] = client;
-editIndex = -1;
-}
-
-save();
-clearForm();
-render();
-}
-
-function editClient(i){
-let c = clients[i];
-nameInput.value = c.name;
-phoneInput.value = c.phone;
-dateInput.value = c.date;
-statusInput.value = c.status;
-notesInput.value = c.notes;
-
-editIndex = i;
-}
-
-function deleteClient(i){
-clients.splice(i,1);
-save();
-render();
-}
-
-function clearForm(){
-nameInput.value="";
-phoneInput.value="";
-dateInput.value="";
-notesInput.value="";
-}
-
-function render(){
-let search = document.getElementById("search").value.toLowerCase();
-let filter = document.getElementById("filter").value;
-
-let table = document.getElementById("table");
-table.innerHTML="";
-
-let total=0, interested=0, working=0, done=0;
-
-clients.forEach((c,i)=>{
-if(
-(c.name.toLowerCase().includes(search) || c.phone.includes(search)) &&
-(filter==="" || c.status===filter)
-){
-total++;
-if(c.status==="Interested") interested++;
-if(c.status==="In Progress") working++;
-if(c.status==="Completed") done++;
-
-table.innerHTML += `
-<tr>
-<td>${c.name}</td>
-<td>${c.phone}</td>
-<td>${c.date}</td>
-<td>${c.status}</td>
-<td>${c.notes}</td>
-<td>
-<button onclick="editClient(${i})">✏️</button>
-<button onclick="deleteClient(${i})">❌</button>
-</td>
-</tr>
-`;
-}
-});
-
-document.getElementById("total").innerText = "👥 Total: " + total;
-document.getElementById("interested").innerText = "🎯 Interested: " + interested;
-document.getElementById("working").innerText = "🔧 In Progress: " + working;
-document.getElementById("done").innerText = "✅ Completed: " + done;
-}
+let clients = [];
+let editId = null;
 
 const nameInput = document.getElementById("name");
 const phoneInput = document.getElementById("phone");
@@ -189,7 +115,117 @@ const dateInput = document.getElementById("date");
 const statusInput = document.getElementById("status");
 const notesInput = document.getElementById("notes");
 
-render();
+// جلب البيانات من Firestore وعرضها
+async function loadClients() {
+  const querySnapshot = await getDocs(collection(db, "clients"));
+  clients = [];
+  querySnapshot.forEach((docSnap) => {
+    clients.push({ id: docSnap.id, ...docSnap.data() });
+  });
+  render();
+}
+
+// حفظ أو تعديل بيانات عميل
+window.addOrUpdate = async function() {
+  let name = nameInput.value.trim();
+  let phone = phoneInput.value.trim();
+  let date = dateInput.value;
+  let status = statusInput.value;
+  let notes = notesInput.value.trim();
+
+  if (!name || !phone) {
+    alert("Please fill in all required fields");
+    return;
+  }
+
+  let client = { name, phone, date, status, notes };
+
+  if (editId === null) {
+    await addDoc(collection(db, "clients"), client);
+  } else {
+    await updateDoc(doc(db, "clients", editId), client);
+    editId = null;
+  }
+
+  clearForm();
+  loadClients();
+}
+
+// تعديل بيانات عميل
+window.editClient = function(i) {
+  let c = clients[i];
+  nameInput.value = c.name;
+  phoneInput.value = c.phone;
+  dateInput.value = c.date;
+  statusInput.value = c.status;
+  notesInput.value = c.notes;
+
+  editId = c.id;
+}
+
+// حذف عميل
+window.deleteClient = async function(i) {
+  await deleteDoc(doc(db, "clients", clients[i].id));
+  loadClients();
+}
+
+// تفريغ النموذج
+function clearForm() {
+  nameInput.value = "";
+  phoneInput.value = "";
+  dateInput.value = "";
+  notesInput.value = "";
+  statusInput.value = "Interested";
+  editId = null;
+}
+
+// عرض البيانات في الجدول
+function render() {
+  let search = document.getElementById("search").value.toLowerCase();
+  let filter = document.getElementById("filter").value;
+
+  let table = document.getElementById("table");
+  table.innerHTML = "";
+
+  let total = 0,
+    interested = 0,
+    working = 0,
+    done = 0;
+
+  clients.forEach((c, i) => {
+    if (
+      (c.name.toLowerCase().includes(search) || c.phone.includes(search)) &&
+      (filter === "" || c.status === filter)
+    ) {
+      total++;
+      if (c.status === "Interested") interested++;
+      if (c.status === "In Progress") working++;
+      if (c.status === "Completed") done++;
+
+      table.innerHTML += `
+      <tr>
+      <td>${c.name}</td>
+      <td>${c.phone}</td>
+      <td>${c.date}</td>
+      <td>${c.status}</td>
+      <td>${c.notes}</td>
+      <td>
+        <button onclick="editClient(${i})">✏️</button>
+        <button onclick="deleteClient(${i})">❌</button>
+      </td>
+      </tr>`;
+    }
+  });
+
+  document.getElementById("total").innerText = "👥 Total: " + total;
+  document.getElementById("interested").innerText = "🎯 Interested: " + interested;
+  document.getElementById("working").innerText = "🔧 In Progress: " + working;
+  document.getElementById("done").innerText = "✅ Completed: " + done;
+}
+
+// تشغيل أول مرة لتحميل البيانات
+loadClients();
+
 </script>
 
 </body>
