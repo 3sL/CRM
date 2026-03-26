@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Login - CRM</title>
+
+<style>
+body { font-family: Arial; background:#f0f2f5; display:flex; justify-content:center; align-items:center; height:100vh;}
+.box { background:#fff; padding:30px; border-radius:10px; width:300px; text-align:center;}
+input, button { width:100%; padding:10px; margin:10px 0; }
+button { background:#222; color:#fff; border:none; cursor:pointer;}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+<h2>🔐 Login</h2>
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">Login</button>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+
+import {
+  getAuth,
+  signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
+  authDomain: "crm-app-7733a.firebaseapp.com",
+  projectId: "crm-app-7733a",
+  storageBucket: "crm-app-7733a.firebasestorage.app",
+  messagingSenderId: "87718820034",
+  appId: "1:87718820034:web:fe6127bb92917ab4c2235b"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    window.location.href = "dashboard.html";
+  } catch (error) {
+    alert("❌ Wrong email or password");
+  }
+}
+
+window.login = login;
+
+</script>
+
+</body>
+</html>
