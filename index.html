@@ -2,7 +2,7 @@
 <html lang="en" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM Full - Firestore Version</title>
+<title>CRM Full - Firestore Ready</title>
 <style>
 body { font-family: Arial; background:#f0f2f5; padding:20px;}
 .container { max-width:1000px; margin:auto; background:#fff; padding:20px; border-radius:10px;}
@@ -82,157 +82,154 @@ th { background:#222; color:#fff;}
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-  // =======================
-  // 1️⃣ Firebase Config
-  // =======================
-  const firebaseConfig = {
-    apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
-    authDomain: "crm-app-7733a.firebaseapp.com",
-    projectId: "crm-app-7733a",
-    storageBucket: "crm-app-7733a.firebasestorage.app",
-    messagingSenderId: "87718820034",
-    appId: "1:87718820034:web:fe6127bb92917ab4c2235b"
+// =======================
+// 1️⃣ Firebase Config
+// =======================
+const firebaseConfig = {
+  apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
+  authDomain: "crm-app-7733a.firebaseapp.com",
+  projectId: "crm-app-7733a",
+  storageBucket: "crm-app-7733a.firebasestorage.app",
+  messagingSenderId: "87718820034",
+  appId: "1:87718820034:web:fe6127bb92917ab4c2235b"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const clientsCol = collection(db, "clients");
+
+let editId = null;
+
+// =======================
+// 2️⃣ Add / Update Client
+// =======================
+async function addOrUpdate() {
+  const client = {
+    name: nameInput.value,
+    phone: phoneInput.value,
+    date: dateInput.value,
+    status: statusInput.value,
+    notes: notesInput.value
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const clientsCol = collection(db, "clients");
+  if (!client.name || !client.phone) {
+    alert("Please fill in all required fields");
+    return;
+  }
 
-  let editId = null;
-
-  // =======================
-  // 2️⃣ Add / Update Client
-  // =======================
-  async function addOrUpdate() {
-    const client = {
-      name: nameInput.value,
-      phone: phoneInput.value,
-      date: dateInput.value,
-      status: statusInput.value,
-      notes: notesInput.value
-    };
-
-    if (!client.name || !client.phone) {
-      alert("Please fill in all required fields");
-      return;
+  try {
+    if (editId) {
+      await updateDoc(doc(db, "clients", editId), client);
+      editId = null;
+    } else {
+      await addDoc(clientsCol, client);
     }
-
-    try {
-      if (editId) {
-        const clientDoc = doc(db, "clients", editId);
-        await updateDoc(clientDoc, client);
-        editId = null;
-      } else {
-        await addDoc(clientsCol, client);
-      }
-      clearForm();
-      render();
-    } catch (e) {
-      console.error("Error saving client: ", e);
-    }
+    clearForm();
+    render();
+  } catch (e) {
+    console.error("Error saving client: ", e);
   }
+}
 
-  // =======================
-  // 3️⃣ Delete Client
-  // =======================
-  async function deleteClient(id) {
-    if (confirm("Are you sure you want to delete this client?")) {
-      await deleteDoc(doc(db, "clients", id));
-      render();
-    }
+// =======================
+// 3️⃣ Delete Client
+// =======================
+async function deleteClient(id) {
+  if (confirm("Are you sure you want to delete this client?")) {
+    await deleteDoc(doc(db, "clients", id));
+    render();
   }
+}
 
-  // =======================
-  // 4️⃣ Edit Client
-  // =======================
-  async function editClient(id) {
-    const clientDoc = doc(db, "clients", id);
-    const snapshot = await getDocs(clientsCol);
-    snapshot.forEach(docSnap => {
-      if (docSnap.id === id) {
-        const c = docSnap.data();
-        nameInput.value = c.name;
-        phoneInput.value = c.phone;
-        dateInput.value = c.date;
-        statusInput.value = c.status;
-        notesInput.value = c.notes;
-        editId = id;
-      }
-    });
-  }
-
-  // =======================
-  // 5️⃣ Clear Form
-  // =======================
-  function clearForm() {
-    nameInput.value = "";
-    phoneInput.value = "";
-    dateInput.value = "";
-    notesInput.value = "";
-    editId = null;
-  }
-
-  // =======================
-  // 6️⃣ Render Table
-  // =======================
-  async function render() {
-    const search = document.getElementById("search").value.toLowerCase();
-    const filter = document.getElementById("filter").value;
-
-    const table = document.getElementById("table");
-    table.innerHTML = "";
-
-    let total = 0, interested = 0, working = 0, done = 0;
-
-    const snapshot = await getDocs(clientsCol);
-    snapshot.forEach(docSnap => {
+// =======================
+// 4️⃣ Edit Client
+// =======================
+async function editClient(id) {
+  const snapshot = await getDocs(clientsCol);
+  snapshot.forEach(docSnap => {
+    if (docSnap.id === id) {
       const c = docSnap.data();
-      c.id = docSnap.id;
-      if (
-        (c.name.toLowerCase().includes(search) || c.phone.includes(search)) &&
-        (filter === "" || c.status === filter)
-      ) {
-        total++;
-        if (c.status === "Interested") interested++;
-        if (c.status === "In Progress") working++;
-        if (c.status === "Completed") done++;
+      nameInput.value = c.name;
+      phoneInput.value = c.phone;
+      dateInput.value = c.date;
+      statusInput.value = c.status;
+      notesInput.value = c.notes;
+      editId = id;
+    }
+  });
+}
 
-        table.innerHTML += `
-          <tr>
-            <td>${c.name}</td>
-            <td>${c.phone}</td>
-            <td>${c.date}</td>
-            <td>${c.status}</td>
-            <td>${c.notes}</td>
-            <td>
-              <button onclick="editClient('${c.id}')">✏️</button>
-              <button onclick="deleteClient('${c.id}')">❌</button>
-            </td>
-          </tr>
-        `;
-      }
-    });
+// =======================
+// 5️⃣ Clear Form
+// =======================
+function clearForm() {
+  nameInput.value = "";
+  phoneInput.value = "";
+  dateInput.value = "";
+  notesInput.value = "";
+  editId = null;
+}
 
-    document.getElementById("total").innerText = "👥 Total: " + total;
-    document.getElementById("interested").innerText = "🎯 Interested: " + interested;
-    document.getElementById("working").innerText = "🔧 In Progress: " + working;
-    document.getElementById("done").innerText = "✅ Completed: " + done;
-  }
+// =======================
+// 6️⃣ Render Table
+// =======================
+async function render() {
+  const search = document.getElementById("search").value.toLowerCase();
+  const filter = document.getElementById("filter").value;
 
-  // =======================
-  // 7️⃣ Inputs
-  // =======================
-  const nameInput = document.getElementById("name");
-  const phoneInput = document.getElementById("phone");
-  const dateInput = document.getElementById("date");
-  const statusInput = document.getElementById("status");
-  const notesInput = document.getElementById("notes");
+  const table = document.getElementById("table");
+  table.innerHTML = "";
 
-  // Initial render
-  render();
+  let total = 0, interested = 0, working = 0, done = 0;
+
+  const snapshot = await getDocs(clientsCol);
+  snapshot.forEach(docSnap => {
+    const c = docSnap.data();
+    c.id = docSnap.id;
+
+    if ((c.name.toLowerCase().includes(search) || c.phone.includes(search)) &&
+        (filter === "" || c.status === filter)) {
+      total++;
+      if (c.status === "Interested") interested++;
+      if (c.status === "In Progress") working++;
+      if (c.status === "Completed") done++;
+
+      table.innerHTML += `
+        <tr>
+          <td>${c.name}</td>
+          <td>${c.phone}</td>
+          <td>${c.date}</td>
+          <td>${c.status}</td>
+          <td>${c.notes}</td>
+          <td>
+            <button onclick="editClient('${c.id}')">✏️</button>
+            <button onclick="deleteClient('${c.id}')">❌</button>
+          </td>
+        </tr>
+      `;
+    }
+  });
+
+  document.getElementById("total").innerText = "👥 Total: " + total;
+  document.getElementById("interested").innerText = "🎯 Interested: " + interested;
+  document.getElementById("working").innerText = "🔧 In Progress: " + working;
+  document.getElementById("done").innerText = "✅ Completed: " + done;
+}
+
+// =======================
+// 7️⃣ Inputs
+// =======================
+const nameInput = document.getElementById("name");
+const phoneInput = document.getElementById("phone");
+const dateInput = document.getElementById("date");
+const statusInput = document.getElementById("status");
+const notesInput = document.getElementById("notes");
+
+// Initial render
+render();
 </script>
 
 </body>
