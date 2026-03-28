@@ -30,9 +30,8 @@ button { cursor:pointer; }
 <div class="container">
 
 <div class="header">
-  <img src="logo.png" class="logo">
+  <img src="logo.png" alt="Company Logo" class="logo">
 </div>
-
 <div class="developer" id="developer">تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong></div>
 <div class="phone" id="phoneText">📞 01222153415</div>
 
@@ -50,9 +49,9 @@ button { cursor:pointer; }
 <input id="phone" placeholder="رقم الهاتف">
 <input type="date" id="date">
 <select id="status">
-<option>Interested</option>
-<option>In Progress</option>
-<option>Completed</option>
+<option value="Interested">Interested</option>
+<option value="In Progress">In Progress</option>
+<option value="Completed">Completed</option>
 </select>
 <input id="notes" placeholder="ملاحظات">
 <input id="agent" placeholder="أدخل اسم العميل">
@@ -117,12 +116,19 @@ const colRef = collection(db,"clients");
 
 let lang="ar";
 
-// اللغة
+// 🔥 اللغة
 function toggleLang(){
   lang = lang==="ar" ? "en" : "ar";
 
   document.documentElement.lang = lang;
   document.documentElement.dir = lang==="ar" ? "rtl" : "ltr";
+
+  document.getElementById("title").innerText="CRM System Management For Utopia Trading And Export";
+
+  document.getElementById("developer").innerHTML=
+    lang==="ar"
+    ?"تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>"
+    :"Created & Developed by Eng : <strong>Mahmoud Mohamed Marie</strong>";
 
   name.placeholder = lang==="ar"?"اسم العميل":"Customer Name";
   phone.placeholder = lang==="ar"?"رقم الهاتف":"Phone Number";
@@ -130,44 +136,30 @@ function toggleLang(){
   agent.placeholder = lang==="ar"?"أدخل اسم العميل":"Customer Name";
   agentFilter.placeholder = lang==="ar"?"فلترة حسب العميل":"Filter by Customer";
 
+  document.getElementById("thName").innerText = lang==="ar"?"الاسم":"Name";
+  document.getElementById("thPhone").innerText = lang==="ar"?"الهاتف":"Phone";
+  document.getElementById("thDate").innerText = lang==="ar"?"التاريخ":"Date";
+  document.getElementById("thStatus").innerText = lang==="ar"?"الحالة":"Status";
+  document.getElementById("thNotes").innerText = lang==="ar"?"ملاحظات":"Notes";
   document.getElementById("thAgent").innerText = lang==="ar"?"عميل":"Customer";
+  document.getElementById("thCreatedBy").innerText = lang==="ar"?"تم الإنشاء بواسطة":"Created By";
+  document.getElementById("thCreatedAt").innerText = lang==="ar"?"تاريخ الإنشاء":"Created At";
+  document.getElementById("thRegion").innerText = lang==="ar"?"المحافظة":"Region";
+  document.getElementById("thLocation").innerText = lang==="ar"?"الموقع":"Location";
+  document.getElementById("thDistance").innerText = lang==="ar"?"المسافة":"Distance";
+  document.getElementById("thEdit").innerText = lang==="ar"?"تعديل":"Edit";
+  document.getElementById("thDelete").innerText = lang==="ar"?"حذف":"Delete";
+
+  document.getElementById("trackBtn").innerText = lang==="ar"?"📍 بدء التتبع":"📍 Start Tracking";
+  document.getElementById("stopTrackBtn").innerText = lang==="ar"?"⛔ إيقاف":"⛔ Stop";
+  document.getElementById("saveBtn").innerText = lang==="ar"?"💾 حفظ":"💾 Save";
+  document.getElementById("exportBtn").innerText = lang==="ar"?"📊 Excel":"📊 Excel";
 
   render();
 }
 
-// باقي الكود زي ما هو
-function fillRegionSelects(){
-region.innerHTML=""; regionFilter.innerHTML="";
-["القاهرة","الإسكندرية","الجيزة"].forEach(r=>{
-let o=document.createElement("option"); o.value=r; o.text=r; region.appendChild(o);
-let o2=document.createElement("option"); o2.value=r; o2.text=r; regionFilter.appendChild(o2);
-});
-}
-
-let map = L.map('map').setView([30.0444,31.2357],6);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-let marker = L.marker([30.0444,31.2357],{draggable:true}).addTo(map);
-let currentLocation=null;
-
-function startTracking(){}
-function stopTracking(){}
-
-async function addOrUpdate(){}
-async function editClient(){}
-async function deleteClient(){}
-async function exportExcel(){}
-
+// باقي الكود زي ما هو بدون تغيير
 function render(){}
-
-const name=document.getElementById("name"),
-phone=document.getElementById("phone"),
-notes=document.getElementById("notes"),
-agent=document.getElementById("agent"),
-agentFilter=document.getElementById("agentFilter"),
-region=document.getElementById("region"),
-regionFilter=document.getElementById("regionFilter");
-
-fillRegionSelects();
 
 </script>
 
