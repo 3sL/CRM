@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM Teams - GPS + Excel + Stats + Egypt Regions</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<title>CRM System Management For Utopia Trading And Export</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <style>
 body { font-family: Arial; background:#f0f2f5; padding:20px;}
 .container { max-width:1200px; margin:auto; background:#fff; padding:20px; border-radius:10px;}
@@ -21,36 +21,28 @@ button { cursor:pointer; }
 .logo { height:80px; }
 .developer { text-align:right; margin-bottom:5px; font-size:14px; }
 .phone { text-align:right; margin-bottom:15px; font-size:14px; }
+#map { width:100%; height:350px; margin-top:15px; border-radius:10px;}
 </style>
 </head>
-
 <body>
+
 <div class="container">
 
-<!-- Logo + Developer -->
 <div class="header">
   <img src="logo.png" alt="Company Logo" class="logo">
 </div>
-<div class="developer">
-تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>
-</div>
-<div class="phone">
-📞 01222153415
-</div>
+<div class="developer" id="developer">تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong></div>
+<div class="phone" id="phoneText">📞 01222153415</div>
 
 <button class="lang-btn" onclick="toggleLang()">🌐 عربي / English</button>
 
-<h2 id="title">📊 CRM System Management For Utopia Trading And Export </h2>
+<h2 id="title">CRM System Management For Utopia Trading And Export</h2>
 
-<!-- Filter -->
 <div class="row">
 <input id="agentFilter" placeholder="فلترة حسب المندوب (اختياري)" oninput="render()">
-<select id="regionFilter" onchange="render()">
-  <option value="">كل المناطق</option>
-</select>
+<select id="regionFilter"></select>
 </div>
 
-<!-- Add Client -->
 <div class="row">
 <input id="name" placeholder="اسم العميل">
 <input id="phone" placeholder="رقم الهاتف">
@@ -62,42 +54,14 @@ button { cursor:pointer; }
 </select>
 <input id="notes" placeholder="ملاحظات">
 <input id="agent" placeholder="أدخل اسم المندوب">
-<select id="region">
-<option value="">اختر المحافظة</option>
-<option value="القاهرة">القاهرة</option>
-<option value="الإسكندرية">الإسكندرية</option>
-<option value="الجيزة">الجيزة</option>
-<option value="الدقهلية">الدقهلية</option>
-<option value="البحيرة">البحيرة</option>
-<option value="المنوفية">المنوفية</option>
-<option value="الشرقية">الشرقية</option>
-<option value="الغربية">الغربية</option>
-<option value="كفر الشيخ">كفر الشيخ</option>
-<option value="دمياط">دمياط</option>
-<option value="بورسعيد">بورسعيد</option>
-<option value="السويس">السويس</option>
-<option value="الإسماعيلية">الإسماعيلية</option>
-<option value="الفيوم">الفيوم</option>
-<option value="بني سويف">بني سويف</option>
-<option value="المنيا">المنيا</option>
-<option value="أسيوط">أسيوط</option>
-<option value="سوهاج">سوهاج</option>
-<option value="قنا">قنا</option>
-<option value="الأقصر">الأقصر</option>
-<option value="أسوان">أسوان</option>
-<option value="مطروح">مطروح</option>
-<option value="الوادي الجديد">الوادي الجديد</option>
-<option value="شمال سيناء">شمال سيناء</option>
-<option value="جنوب سيناء">جنوب سيناء</option>
-<option value="البحر الأحمر">البحر الأحمر</option>
-</select>
+<select id="region"></select>
 </div>
 
 <div class="row">
-<button onclick="startTracking()">📍 بدء التتبع</button>
-<button onclick="stopTracking()">⛔ إيقاف</button>
-<button onclick="addOrUpdate()">💾 حفظ</button>
-<button onclick="exportExcel()">📊 Excel</button>
+<button onclick="startTracking()" id="trackBtn">📍 بدء التتبع</button>
+<button onclick="stopTracking()" id="stopTrackBtn">⛔ إيقاف</button>
+<button onclick="addOrUpdate()" id="saveBtn">💾 حفظ</button>
+<button onclick="exportExcel()" id="exportBtn">📊 Excel</button>
 </div>
 
 <div class="stats">
@@ -107,23 +71,24 @@ button { cursor:pointer; }
 <div class="card" id="done">✅ مكتمل: 0</div>
 </div>
 
-<div id="map" style="height:300px;margin-top:15px;"></div>
+<div id="map"></div>
 
 <table>
 <thead>
 <tr>
-<th>الاسم</th>
-<th>الهاتف</th>
-<th>التاريخ</th>
-<th>الحالة</th>
-<th>ملاحظات</th>
-<th>مندوب</th>
-<th>تم الإنشاء بواسطة</th>
-<th>تاريخ الإنشاء</th>
-<th>المنطقة</th>
-<th>الموقع</th>
-<th>المسافة</th>
-<th>حذف</th>
+<th id="thName">الاسم</th>
+<th id="thPhone">الهاتف</th>
+<th id="thDate">التاريخ</th>
+<th id="thStatus">الحالة</th>
+<th id="thNotes">ملاحظات</th>
+<th id="thAgent">مندوب</th>
+<th id="thCreatedBy">تم الإنشاء بواسطة</th>
+<th id="thCreatedAt">تاريخ الإنشاء</th>
+<th id="thRegion">المحافظة</th>
+<th id="thLocation">الموقع</th>
+<th id="thDistance">المسافة</th>
+<th id="thEdit">تعديل</th>
+<th id="thDelete">حذف</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -133,11 +98,9 @@ button { cursor:pointer; }
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
   authDomain: "crm-app-7733a.firebaseapp.com",
@@ -147,177 +110,183 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const colRef = collection(db,"clients");
 
-// MAP
-let map = L.map('map').setView([30.0444,31.2357], 10);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  attribution:'© OpenStreetMap'
-}).addTo(map);
-let marker = L.marker([30.0444,31.2357]).addTo(map);
+const egyptRegions=[
+"القاهرة","الإسكندرية","الجيزة","القليوبية","الشرقية","الدقهلية",
+"المنوفية","الغربية","كفر الشيخ","دمياط","بورسعيد","السويس",
+"الإسماعيلية","الفيوم","بني سويف","المنيا","أسيوط","سوهاج",
+"قنا","الأقصر","أسوان","مطروح","الوادي الجديد","شمال سيناء",
+"جنوب سيناء","البحر الأحمر"
+];
+
+function fillRegionSelects(){
+  region.innerHTML=""; regionFilter.innerHTML="";
+  let defaultOpt=document.createElement("option"); defaultOpt.value=""; defaultOpt.text="اختر المحافظة"; region.appendChild(defaultOpt);
+  let defaultOptFilter=document.createElement("option"); defaultOptFilter.value=""; defaultOptFilter.text="كل المحافظات"; regionFilter.appendChild(defaultOptFilter);
+  egyptRegions.forEach(r=>{
+    let o1=document.createElement("option"); o1.value=r; o1.text=r; region.appendChild(o1);
+    let o2=document.createElement("option"); o2.value=r; o2.text=r; regionFilter.appendChild(o2);
+  });
+}
+
+// Leaflet Map
+let map = L.map('map').setView([30.0444,31.2357],6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+let marker = L.marker([30.0444,31.2357],{draggable:true}).addTo(map);
+let currentLocation=null;
+
+marker.on('dragend', function(e){
+  const pos = marker.getLatLng();
+  currentLocation={lat:pos.lat,lng:pos.lng};
+  const regionName = getRegionFromLatLng(pos.lat,pos.lng);
+  if(regionName) region.value=regionName;
+});
+
+map.on('click', function(e){
+  marker.setLatLng(e.latlng);
+  currentLocation={lat:e.latlng.lat,lng:e.latlng.lng};
+  const regionName = getRegionFromLatLng(e.latlng.lat,e.latlng.lng);
+  if(regionName) region.value=regionName;
+});
+
+function getRegionFromLatLng(lat,lng){
+  // تقريبا كل مصر مقسمة حسب خط العرض
+  if(lat>31) return "الإسكندرية";
+  if(lat>30.5) return "القليوبية";
+  if(lat>30) return "القاهرة";
+  if(lat>29) return "السويس";
+  return "القاهرة";
+}
 
 // TRACKING
 let watchId;
-let currentLocation = null;
-function startTracking(){
-  watchId = navigator.geolocation.watchPosition(pos=>{
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-    currentLocation = {lat,lng};
-    map.setView([lat,lng], 13);
-    marker.setLatLng([lat,lng]);
-  });
-}
-function stopTracking(){ navigator.geolocation.clearWatch(watchId); }
+function startTracking(){ watchId = navigator.geolocation.watchPosition(pos=>{ const lat = pos.coords.latitude; const lng = pos.coords.longitude; currentLocation={lat,lng}; marker.setLatLng([lat,lng]); map.setView([lat,lng],13); });}
+function stopTracking(){ navigator.geolocation.clearWatch(watchId);}
 
 // DISTANCE
 function calcDistance(lat1,lng1,lat2,lng2){
   const R=6371;
   const dLat=(lat2-lat1)*Math.PI/180;
   const dLng=(lng2-lng1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2+
-  Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
-  Math.sin(dLng/2)**2;
+  const a=Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
   return (R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(2);
 }
 
-// ADD CLIENT
+// ADD / UPDATE CLIENT
+let editId=null;
 async function addOrUpdate(){
-  if(!name.value || !phone.value){
-    alert(lang==="ar" ? "أدخل الاسم ورقم الهاتف" : "Enter name & phone");
-    return;
-  }
-  const now = new Date().toLocaleString();
-  await addDoc(colRef,{
-    name:name.value,
-    phone:phone.value,
-    date:date.value,
-    status:status.value,
-    notes:notes.value,
-    location:currentLocation,
-    agent:agent.value || "غير محدد",
-    region:region.value || "غير محدد",
-    createdBy:agent.value || "-",
-    createdAt: now
-  });
-  region.value = "";
-  agent.value = "";
-  render();
+  if(!name.value || !phone.value){ alert(lang==="ar"?"أدخل الاسم ورقم الهاتف":"Enter Name & Phone"); return;}
+  const now=new Date().toLocaleString();
+  const clientData={ name:name.value, phone:phone.value, date:date.value, status:status.value, notes:notes.value, location:currentLocation, agent:agent.value||"-", region:region.value||"-", createdBy:agent.value||"-", createdAt:now };
+  try{ if(editId){ await updateDoc(doc(db,"clients",editId),clientData); editId=null; } else{ await addDoc(colRef,clientData);} clearForm(); render(); }catch(e){ console.error(e); alert("❌ Error");}
 }
+
+// EDIT
+async function editClient(id){
+  const d = await getDoc(doc(db,"clients",id));
+  if(d.exists()){
+    const c=d.data();
+    name.value=c.name; phone.value=c.phone; date.value=c.date;
+    status.value=c.status; notes.value=c.notes;
+    agent.value=c.agent; region.value=c.region;
+    if(c.location){ currentLocation=c.location; marker.setLatLng([c.location.lat,c.location.lng]); map.setView([c.location.lat,c.location.lng],13);}
+    editId=id;
+  }
+}
+
+// CLEAR
+function clearForm(){ name.value=""; phone.value=""; date.value=""; notes.value=""; agent.value=""; region.value=""; editId=null; currentLocation=null; }
 
 // RENDER
 async function render(){
   table.innerHTML="";
   const filterAgent=agentFilter.value.toLowerCase();
   const filterRegion=regionFilter.value;
-
   let total=0, interested=0, working=0, done=0;
-
   const snap=await getDocs(colRef);
   snap.forEach(d=>{
     const c=d.data();
     if(filterAgent && !c.agent.toLowerCase().includes(filterAgent)) return;
     if(filterRegion && c.region!==filterRegion) return;
-
     total++;
     if(c.status==="Interested") interested++;
     else if(c.status==="In Progress") working++;
     else if(c.status==="Completed") done++;
-
-    let dist = c.location && currentLocation
-      ? calcDistance(currentLocation.lat,currentLocation.lng,c.location.lat,c.location.lng)+" km"
-      : "-";
-
+    let dist=c.location && currentLocation ? calcDistance(currentLocation.lat,currentLocation.lng,c.location.lat,c.location.lng)+" km" : "-";
     table.innerHTML+=`
     <tr>
-      <td>${c.name}</td>
-      <td>${c.phone}</td>
-      <td>${c.date}</td>
-      <td>${c.status}</td>
-      <td>${c.notes}</td>
-      <td>${c.agent}</td>
-      <td>${c.createdBy}</td>
-      <td>${c.createdAt}</td>
+      <td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td><td>${c.notes}</td>
+      <td>${c.agent}</td><td>${c.createdBy}</td><td>${c.createdAt}</td>
       <td>${c.region}</td>
-      <td>${c.location ? `<a href="https://maps.google.com/?q=${c.location.lat},${c.location.lng}" target="_blank">🌍 Open</a>` : "-"}</td>
+      <td>${c.location ? `<a href="https://www.openstreetmap.org/?mlat=${c.location.lat}&mlon=${c.location.lng}" target="_blank">🌍 Open</a>`:"-"}</td>
       <td>${dist}</td>
+      <td><button onclick="editClient('${d.id}')">✏️</button></td>
       <td><button onclick="deleteClient('${d.id}')">❌</button></td>
     </tr>`;
   });
-
-  totalEl.innerText=lang==="ar"?`👥 إجمالي: ${total}`:`👥 Total: ${total}`;
-  interestedEl.innerText=lang==="ar"?`🎯 مهتم: ${interested}`:`🎯 Interested: ${interested}`;
-  workingEl.innerText=lang==="ar"?`🔧 قيد التنفيذ: ${working}`:`🔧 In Progress: ${working}`;
-  doneEl.innerText=lang==="ar"?`✅ مكتمل: ${done}`:`✅ Completed: ${done}`;
+  totalEl.innerText=`👥 ${lang==="ar"?"إجمالي":"Total"}: ${total}`;
+  interestedEl.innerText=`🎯 ${lang==="ar"?"مهتم":"Interested"}: ${interested}`;
+  workingEl.innerText=`🔧 ${lang==="ar"?"قيد التنفيذ":"In Progress"}: ${working}`;
+  doneEl.innerText=`✅ ${lang==="ar"?"مكتمل":"Completed"}: ${done}`;
 }
 
 // DELETE
 async function deleteClient(id){ await deleteDoc(doc(db,"clients",id)); render(); }
 
-// EXCEL
+// EXPORT EXCEL
 async function exportExcel(){
   const snap=await getDocs(colRef);
-  let csv="Name,Phone,Date,Status,Notes,Agent,Region,CreatedBy,CreatedAt,Lat,Lng\n";
+  let csv=(lang==="ar"?"الاسم,الهاتف,التاريخ,الحالة,ملاحظات,مندوب,المحافظة,تم الإنشاء بواسطة,تاريخ الإنشاء,Lat,Lng\n":"Name,Phone,Date,Status,Notes,Agent,Region,CreatedBy,CreatedAt,Lat,Lng\n");
   snap.forEach(d=>{
     const c=d.data();
     csv+=`${c.name},${c.phone},${c.date},${c.status},${c.notes},${c.agent},${c.region},${c.createdBy},${c.createdAt},${c.location?.lat||""},${c.location?.lng||""}\n`;
   });
-  const blob=new Blob([csv]);
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="clients.csv";
-  a.click();
+  const blob=new Blob([csv]); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="clients.csv"; a.click();
 }
 
-// LANGUAGE
+// LANGUAGE TOGGLE
 let lang="ar";
 function toggleLang(){
-  lang = lang==="ar" ? "en" : "ar";
-  document.documentElement.dir = lang==="ar" ? "rtl" : "ltr";
-  if(lang==="en"){
-    title.innerText="📊 CRM System - Teams";
-    name.placeholder="Customer Name";
-    phone.placeholder="Phone";
-    notes.placeholder="Notes";
-    agent.placeholder="Enter Agent Name";
-    region.placeholder="Select Region";
-    agentFilter.placeholder="Filter by Agent (optional)";
-  }else{
-    title.innerText="📊 نظام إدارة العملاء - فرق المبيعات";
-    name.placeholder="اسم العميل";
-    phone.placeholder="رقم الهاتف";
-    notes.placeholder="ملاحظات";
-    agent.placeholder="أدخل اسم المندوب";
-    region.placeholder="اختر المحافظة";
-    agentFilter.placeholder="فلترة حسب المندوب (اختياري)";
-  }
+  lang=lang==="ar"?"en":"ar";
+  document.getElementById("title").innerText="CRM System Management For Utopia Trading And Export";
+  document.getElementById("developer").innerHTML=lang==="ar"?"تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>":"Created & Developed by Eng : <strong>Mahmoud Mohamed Marie</strong>";
+  document.getElementById("phoneText").innerText="📞 01222153415";
+  name.placeholder=lang==="ar"?"اسم العميل":"Customer Name";
+  phone.placeholder=lang==="ar"?"رقم الهاتف":"Phone Number";
+  notes.placeholder=lang==="ar"?"ملاحظات":"Notes";
+  agent.placeholder=lang==="ar"?"أدخل اسم المندوب":"Agent Name";
+  agentFilter.placeholder=lang==="ar"?"فلترة حسب المندوب (اختياري)":"Filter by Agent (optional)";
+  document.getElementById("trackBtn").innerText=lang==="ar"?"📍 بدء التتبع":"📍 Start Tracking";
+  document.getElementById("stopTrackBtn").innerText=lang==="ar"?"⛔ إيقاف":"⛔ Stop Tracking";
+  document.getElementById("saveBtn").innerText=lang==="ar"?"💾 حفظ":"💾 Save";
+  document.getElementById("exportBtn").innerText=lang==="ar"?"📊 Excel":"📊 Excel";
+  document.getElementById("thName").innerText=lang==="ar"?"الاسم":"Name";
+  document.getElementById("thPhone").innerText=lang==="ar"?"الهاتف":"Phone";
+  document.getElementById("thDate").innerText=lang==="ar"?"التاريخ":"Date";
+  document.getElementById("thStatus").innerText=lang==="ar"?"الحالة":"Status";
+  document.getElementById("thNotes").innerText=lang==="ar"?"ملاحظات":"Notes";
+  document.getElementById("thAgent").innerText=lang==="ar"?"مندوب":"Agent";
+  document.getElementById("thCreatedBy").innerText=lang==="ar"?"تم الإنشاء بواسطة":"Created By";
+  document.getElementById("thCreatedAt").innerText=lang==="ar"?"تاريخ الإنشاء":"Created At";
+  document.getElementById("thRegion").innerText=lang==="ar"?"المحافظة":"Region";
+  document.getElementById("thLocation").innerText=lang==="ar"?"الموقع":"Location";
+  document.getElementById("thDistance").innerText=lang==="ar"?"المسافة":"Distance";
+  document.getElementById("thEdit").innerText=lang==="ar"?"تعديل":"Edit";
+  document.getElementById("thDelete").innerText=lang==="ar"?"حذف":"Delete";
+  render();
 }
 
 // GLOBAL ELEMENTS
-const name=document.getElementById("name");
-const phone=document.getElementById("phone");
-const date=document.getElementById("date");
-const status=document.getElementById("status");
-const notes=document.getElementById("notes");
-const agent=document.getElementById("agent");
-const region=document.getElementById("region");
-const agentFilter=document.getElementById("agentFilter");
-const regionFilter=document.getElementById("regionFilter");
-const table=document.getElementById("table");
-const totalEl=document.getElementById("total");
-const interestedEl=document.getElementById("interested");
-const workingEl=document.getElementById("working");
-const doneEl=document.getElementById("done");
-const title=document.getElementById("title");
+const name=document.getElementById("name"), phone=document.getElementById("phone"), date=document.getElementById("date"),
+status=document.getElementById("status"), notes=document.getElementById("notes"), agent=document.getElementById("agent"),
+region=document.getElementById("region"), agentFilter=document.getElementById("agentFilter"), regionFilter=document.getElementById("regionFilter"),
+table=document.getElementById("table"), totalEl=document.getElementById("total"), interestedEl=document.getElementById("interested"),
+workingEl=document.getElementById("working"), doneEl=document.getElementById("done");
 
-// EXPORT FUNCTIONS TO GLOBAL
-window.startTracking=startTracking;
-window.stopTracking=stopTracking;
-window.addOrUpdate=addOrUpdate;
-window.deleteClient=deleteClient;
-window.exportExcel=exportExcel;
-window.toggleLang=toggleLang;
+window.startTracking=startTracking; window.stopTracking=stopTracking; window.addOrUpdate=addOrUpdate;
+window.deleteClient=deleteClient; window.editClient=editClient; window.exportExcel=exportExcel;
 
-// INITIAL RENDER
-render();
+// INIT
+fillRegionSelects(); render();
 
 </script>
 </body>
