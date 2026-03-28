@@ -18,25 +18,17 @@ button { cursor:pointer; }
 .stats { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
 .card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px;}
 .header { text-align:center; margin-bottom:10px;}
-.logo {
-  height:200px;
-  width:auto;
-  display: block;
-  margin: 0 auto 20px auto;
-}
+.logo { height:200px; width:auto; display: block; margin: 0 auto 20px auto; }
 .developer { text-align:right; margin-bottom:5px; font-size:14px; }
 .phone { text-align:right; margin-bottom:15px; font-size:14px; }
 #map { width:100%; height:350px; margin-top:15px; border-radius:10px;}
 </style>
 
-<!-- إضافة مكتبة SheetJS للتصدير -->
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-
 </head>
 <body>
 
 <div class="container">
-
 <div class="header">
   <img src="logo.png" alt="Company Logo" class="logo">
 </div>
@@ -56,11 +48,7 @@ button { cursor:pointer; }
 <input id="name" placeholder="اسم العميل">
 <input id="phone" placeholder="رقم الهاتف">
 <input type="date" id="date">
-<select id="status">
-<option>Interested</option>
-<option>In Progress</option>
-<option>Completed</option>
-</select>
+<select id="status"></select>
 <input id="notes" placeholder="ملاحظات">
 <input id="agent" placeholder="أدخل اسم العميل">
 <select id="region"></select>
@@ -110,22 +98,12 @@ button { cursor:pointer; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
-  authDomain: "crm-app-7733a.firebaseapp.com",
-  projectId: "crm-app-7733a",
-};
+const firebaseConfig = { apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g", authDomain: "crm-app-7733a.firebaseapp.com", projectId: "crm-app-7733a" };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const colRef = collection(db,"clients");
 
-const egyptRegions=[
-"القاهرة","الإسكندرية","الجيزة","القليوبية","الشرقية","الدقهلية",
-"المنوفية","الغربية","كفر الشيخ","دمياط","بورسعيد","السويس",
-"الإسماعيلية","الفيوم","بني سويف","المنيا","أسيوط","سوهاج",
-"قنا","الأقصر","أسوان","مطروح","الوادي الجديد","شمال سيناء",
-"جنوب سيناء","البحر الأحمر"
-];
+const egyptRegions = ["القاهرة","الإسكندرية","الجيزة","القليوبية","الشرقية","الدقهلية","المنوفية","الغربية","كفر الشيخ","دمياط","بورسعيد","السويس","الإسماعيلية","الفيوم","بني سويف","المنيا","أسيوط","سوهاج","قنا","الأقصر","أسوان","مطروح","الوادي الجديد","شمال سيناء","جنوب سيناء","البحر الأحمر"];
 
 function fillRegionSelects(){
   region.innerHTML=""; regionFilter.innerHTML="";
@@ -204,6 +182,10 @@ async function editClient(id){
 // CLEAR
 function clearForm(){ name.value=""; phone.value=""; date.value=""; notes.value=""; agent.value=""; region.value=""; editId=null; currentLocation=null; }
 
+// LANGUAGE SETTINGS
+let lang="ar";
+const statusOptions = { ar:["مهتم","قيد التنفيذ","مكتمل"], en:["Interested","In Progress","Completed"] };
+
 // RENDER
 async function render(){
   table.innerHTML="";
@@ -216,93 +198,97 @@ async function render(){
     if(filterAgent && !c.agent.toLowerCase().includes(filterAgent)) return;
     if(filterRegion && c.region!==filterRegion) return;
     total++;
-    if(c.status==="Interested") interested++;
-    else if(c.status==="In Progress") working++;
-    else if(c.status==="Completed") done++;
+    if(c.status==="Interested" || c.status==="مهتم") interested++;
+    else if(c.status==="In Progress" || c.status==="قيد التنفيذ") working++;
+    else if(c.status==="Completed" || c.status==="مكتمل") done++;
+
     let dist=c.location && currentLocation ? calcDistance(currentLocation.lat,currentLocation.lng,c.location.lat,c.location.lng)+" km" : "-";
+
+    let displayStatus = c.status;
+    if(lang==="ar"){
+      if(c.status==="Interested") displayStatus="مهتم";
+      else if(c.status==="In Progress") displayStatus="قيد التنفيذ";
+      else if(c.status==="Completed") displayStatus="مكتمل";
+    } else {
+      if(c.status==="مهتم") displayStatus="Interested";
+      else if(c.status==="قيد التنفيذ") displayStatus="In Progress";
+      else if(c.status==="مكتمل") displayStatus="Completed";
+    }
+
     table.innerHTML+=`
     <tr>
-      <td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td><td>${c.notes}</td>
+      <td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${displayStatus}</td><td>${c.notes}</td>
       <td>${c.agent}</td><td>${c.createdBy}</td><td>${c.createdAt}</td>
       <td>${c.region}</td>
-      <td>${c.location ? <a href="https://www.openstreetmap.org/?mlat=${c.location.lat}&mlon=${c.location.lng}" target="_blank">🌍 Open</a>:"-"}</td>
+      <td>${c.location ? `<a href="https://www.openstreetmap.org/?mlat=${c.location.lat}&mlon=${c.location.lng}" target="_blank">🌍 Open</a>`:"-"}</td>
       <td>${dist}</td>
       <td><button onclick="editClient('${d.id}')">✏️</button></td>
       <td><button onclick="deleteClient('${d.id}')">❌</button></td>
     </tr>`;
   });
-  totalEl.innerText=👥 ${lang==="ar"?"إجمالي":"Total"}: ${total};
-  interestedEl.innerText=🎯 ${lang==="ar"?"مهتم":"Interested"}: ${interested};
-  workingEl.innerText=🔧 ${lang==="ar"?"قيد التنفيذ":"In Progress"}: ${working};
-  doneEl.innerText=✅ ${lang==="ar"?"مكتمل":"Completed"}: ${done};
+
+  totalEl.innerText=`👥 ${lang==="ar"?"إجمالي":"Total"}: ${total}`;
+  interestedEl.innerText=`🎯 ${lang==="ar"?"مهتم":"Interested"}: ${interested}`;
+  workingEl.innerText=`🔧 ${lang==="ar"?"قيد التنفيذ":"In Progress"}: ${working}`;
+  doneEl.innerText=`✅ ${lang==="ar"?"مكتمل":"Completed"}: ${done}`;
 }
 
 // DELETE
 async function deleteClient(id){ await deleteDoc(doc(db,"clients",id)); render(); }
 
-// EXPORT Excel حقيقي (.xlsx) باستخدام SheetJS
+// EXPORT
 async function exportExcel(){
   const snap = await getDocs(colRef);
-
   const data = [];
-  const headers = lang === "ar"
-    ? ["الاسم","الهاتف","التاريخ","الحالة","ملاحظات","العميل","المحافظة","الادمن","تاريخ الإنشاء","Lat","Lng"]
-    : ["Name","Phone","Date","Status","Notes","Agent","Region","CreatedBy","CreatedAt","Lat","Lng"];
+  const headers = lang==="ar" ? ["الاسم","الهاتف","التاريخ","الحالة","ملاحظات","العميل","المحافظة","الادمن","تاريخ الإنشاء","Lat","Lng"] : ["Name","Phone","Date","Status","Notes","Agent","Region","CreatedBy","CreatedAt","Lat","Lng"];
   data.push(headers);
-
-  snap.forEach(d => {
-    const c = d.data();
-    data.push([
-      c.name || "",
-      c.phone || "",
-      c.date || "",
-      c.status || "",
-      c.notes || "",
-      c.agent || "",
-      c.region || "",
-      c.createdBy || "",
-      c.createdAt || "",
-      c.location?.lat || "",
-      c.location?.lng || ""
-    ]);
+  snap.forEach(d=>{
+    const c=d.data();
+    data.push([c.name||"",c.phone||"",c.date||"",c.status||"",c.notes||"",c.agent||"",c.region||"",c.createdBy||"",c.createdAt||"",c.location?.lat||"",c.location?.lng||""]);
   });
-
   const worksheet = XLSX.utils.aoa_to_sheet(data);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Clients");
-
   XLSX.writeFile(workbook, "clients.xlsx");
 }
 
 // LANGUAGE TOGGLE
-let lang="ar";
 function toggleLang(){
-  lang=lang==="ar"?"en":"ar";
-  document.getElementById("title").innerText="CRM System Management For Utopia Trading And Export";
-  document.getElementById("developer").innerHTML=lang==="ar"?"تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>":"Created & Developed by Eng : <strong>Mahmoud Mohamed Marie</strong>";
+  lang = lang==="ar"?"en":"ar";
+  document.getElementById("title").innerText = lang==="ar" ? "CRM System Management For Utopia Trading And Export" : "CRM System Management For Utopia Trading And Export";
+  document.getElementById("developer").innerHTML = lang==="ar"?"تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>":"Created & Developed by Eng : <strong>Mahmoud Mohamed Marie</strong>";
   document.getElementById("phoneText").innerText="📞 01222153415";
-  name.placeholder=lang==="ar"?"اسم العميل":"Customer Name";
-  phone.placeholder=lang==="ar"?"رقم الهاتف":"Phone Number";
-  notes.placeholder=lang==="ar"?"ملاحظات":"Notes";
-  agent.placeholder=lang==="ar"?"أدخل اسم العميل":"Agent Name";
-  agentFilter.placeholder=lang==="ar"?"فلترة حسب العميل (اختياري)":"Filter by Agent (optional)";
-  document.getElementById("trackBtn").innerText=lang==="ar"?"📍 بدء التتبع":"📍 Start Tracking";
-  document.getElementById("stopTrackBtn").innerText=lang==="ar"?"⛔ إيقاف":"⛔ Stop Tracking";
-  document.getElementById("saveBtn").innerText=lang==="ar"?"💾 حفظ":"💾 Save";
-  document.getElementById("exportBtn").innerText=lang==="ar"?"📊 Excel":"📊 Excel";
-  document.getElementById("thName").innerText=lang==="ar"?"الاسم":"Name";
-  document.getElementById("thPhone").innerText=lang==="ar"?"الهاتف":"Phone";
-  document.getElementById("thDate").innerText=lang==="ar"?"التاريخ":"Date";
-  document.getElementById("thStatus").innerText=lang==="ar"?"الحالة":"Status";
-  document.getElementById("thNotes").innerText=lang==="ar"?"ملاحظات":"Notes";
-  document.getElementById("thAgent").innerText=lang==="ar"?"مكان العميل":"Agent";
-  document.getElementById("thCreatedBy").innerText=lang==="ar"?"الأدمن":"Created By";
-  document.getElementById("thCreatedAt").innerText=lang==="ar"?"تاريخ الإنشاء":"Created At";
-  document.getElementById("thRegion").innerText=lang==="ar"?"المحافظة":"Region";
-  document.getElementById("thLocation").innerText=lang==="ar"?"الموقع":"Location";
-  document.getElementById("thDistance").innerText=lang==="ar"?"المسافة":"Distance";
-  document.getElementById("thEdit").innerText=lang==="ar"?"تعديل":"Edit";
-  document.getElementById("thDelete").innerText=lang==="ar"?"حذف":"Delete";
+  name.placeholder = lang==="ar"?"اسم العميل":"Customer Name";
+  phone.placeholder = lang==="ar"?"رقم الهاتف":"Phone Number";
+  notes.placeholder = lang==="ar"?"ملاحظات":"Notes";
+  agent.placeholder = lang==="ar"?"أدخل اسم العميل":"Agent Name";
+  agentFilter.placeholder = lang==="ar"?"فلترة حسب العميل (اختياري)":"Filter by Agent (optional)";
+  document.getElementById("trackBtn").innerText = lang==="ar"?"📍 بدء التتبع":"📍 Start Tracking";
+  document.getElementById("stopTrackBtn").innerText = lang==="ar"?"⛔ إيقاف":"⛔ Stop Tracking";
+  document.getElementById("saveBtn").innerText = lang==="ar"?"💾 حفظ":"💾 Save";
+  document.getElementById("exportBtn").innerText = lang==="ar"?"📊 Excel":"📊 Excel";
+
+  // تحديث قائمة الحالة
+  status.innerHTML="";
+  statusOptions[lang].forEach(s=>{
+    const opt = document.createElement("option");
+    opt.value=s; opt.text=s; status.appendChild(opt);
+  });
+
+  document.getElementById("thName").innerText = lang==="ar"?"الاسم":"Name";
+  document.getElementById("thPhone").innerText = lang==="ar"?"الهاتف":"Phone";
+  document.getElementById("thDate").innerText = lang==="ar"?"التاريخ":"Date";
+  document.getElementById("thStatus").innerText = lang==="ar"?"الحالة":"Status";
+  document.getElementById("thNotes").innerText = lang==="ar"?"ملاحظات":"Notes";
+  document.getElementById("thAgent").innerText = lang==="ar"?"مكان العميل":"Agent";
+  document.getElementById("thCreatedBy").innerText = lang==="ar"?"الأدمن":"Created By";
+  document.getElementById("thCreatedAt").innerText = lang==="ar"?"تاريخ الإنشاء":"Created At";
+  document.getElementById("thRegion").innerText = lang==="ar"?"المحافظة":"Region";
+  document.getElementById("thLocation").innerText = lang==="ar"?"الموقع":"Location";
+  document.getElementById("thDistance").innerText = lang==="ar"?"المسافة":"Distance";
+  document.getElementById("thEdit").innerText = lang==="ار"?"تعديل":"Edit";
+  document.getElementById("thDelete").innerText = lang==="ar"?"حذف":"Delete";
+
   render();
 }
 
@@ -317,7 +303,7 @@ window.startTracking=startTracking; window.stopTracking=stopTracking; window.add
 window.deleteClient=deleteClient; window.editClient=editClient; window.exportExcel=exportExcel;
 
 // INIT
-fillRegionSelects(); render();
+fillRegionSelects(); toggleLang(); render();
 
 </script>
 </body>
