@@ -91,7 +91,7 @@ button { cursor:pointer; }
 <th id="thStatus">الحالة</th>
 <th id="thNotes">ملاحظات</th>
 <th id="thAgent">العميل</th>
-<th id="thCreatedBy">تم الإنشاء بواسطة</th>
+<th id="thCreatedBy">الادمن</th>
 <th id="thCreatedAt">تاريخ الإنشاء</th>
 <th id="thRegion">المحافظة</th>
 <th id="thLocation">الموقع</th>
@@ -246,7 +246,7 @@ async function exportExcel(){
 
   const data = [];
   const headers = lang === "ar"
-    ? ["الاسم","الهاتف","التاريخ","الحالة","ملاحظات","العميل","المحافظة","تم الإنشاء بواسطة الادمن","تاريخ الإنشاء","Lat","Lng"]
+    ? ["الاسم","الهاتف","التاريخ","الحالة","ملاحظات","العميل","المحافظة","الادمن","تاريخ الإنشاء","Lat","Lng"]
     : ["Name","Phone","Date","Status","Notes","Agent","Region","CreatedBy","CreatedAt","Lat","Lng"];
   data.push(headers);
 
