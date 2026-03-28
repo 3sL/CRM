@@ -1,84 +1,78 @@
 <!DOCTYPE html>
-<html lang="en" dir="rtl">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM Full - Firestore Ready</title>
+<title>CRM PRO - كامل + GPS + Excel + Stats</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
 body { font-family: Arial; background:#f0f2f5; padding:20px;}
-.container { max-width:1000px; margin:auto; background:#fff; padding:20px; border-radius:10px;}
-input, select, textarea, button { padding:10px; margin:5px; width:100%; }
-.row { display:flex; gap:10px; }
-.row > * { flex:1; }
+.container { max-width:1200px; margin:auto; background:#fff; padding:20px; border-radius:10px;}
+input, select, button { padding:10px; margin:5px; width:100%; }
+.row { display:flex; gap:10px; flex-wrap:wrap; }
+.row > * { flex:1; min-width:150px; }
 table { width:100%; margin-top:20px; border-collapse: collapse;}
 th, td { padding:10px; border:1px solid #ddd; text-align:center;}
 th { background:#222; color:#fff;}
-.stats { display:flex; gap:10px; margin-top:10px;}
-.card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; }
 button { cursor:pointer; }
+.lang-btn { width:auto; margin-bottom:15px;}
+.stats { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+.card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px;}
 </style>
+
 </head>
 
 <body>
 
 <div class="container">
 
-<div style="text-align:center; margin-bottom:10px;">
-  <img src="logo.png" alt="Company Logo" style="height:80px;">
-</div>
+<button class="lang-btn" onclick="toggleLang()">🌐 عربي / English</button>
 
-<div style="text-align:right; margin-bottom:15px;">
-  Developed by: <strong>Mahmoud Mohamed Marie</strong> 👋<br>
-  Phone: <strong>01222153415</strong>
-</div>
-
-<h2>📊 CRM Customer Management For Utopia Trading</h2>
+<h2 id="title">📊 نظام إدارة العملاء</h2>
 
 <div class="row">
-<input type="text" id="name" placeholder="Customer Name">
-<input type="text" id="phone" placeholder="Phone Number">
+<input id="name" placeholder="اسم العميل">
+<input id="phone" placeholder="رقم الهاتف">
 <input type="date" id="date">
 </div>
 
 <div class="row">
 <select id="status">
-<option value="Interested">Interested</option>
-<option value="In Progress">In Progress</option>
-<option value="Completed">Completed</option>
+<option>Interested</option>
+<option>In Progress</option>
+<option>Completed</option>
 </select>
-<input type="text" id="notes" placeholder="Notes">
+<input id="notes" placeholder="ملاحظات">
 </div>
 
-<button onclick="addOrUpdate()">💾 Save</button>
-
-<hr>
-
 <div class="row">
-<input type="text" id="search" placeholder="🔍 Search..." onkeyup="render()">
-<select id="filter" onchange="render()">
-<option value="">All Statuses</option>
-<option value="Interested">Interested</option>
-<option value="In Progress">In Progress</option>
-<option value="Completed">Completed</option>
-</select>
+<button onclick="startTracking()">📍 بدء التتبع</button>
+<button onclick="stopTracking()">⛔ إيقاف</button>
+<button onclick="addOrUpdate()">💾 حفظ</button>
+<button onclick="exportExcel()">📊 Excel</button>
 </div>
 
 <div class="stats">
-<div class="card" id="total"></div>
-<div class="card" id="interested"></div>
-<div class="card" id="working"></div>
-<div class="card" id="done"></div>
+<div class="card" id="total">👥 إجمالي: 0</div>
+<div class="card" id="interested">🎯 مهتم: 0</div>
+<div class="card" id="working">🔧 قيد التنفيذ: 0</div>
+<div class="card" id="done">✅ مكتمل: 0</div>
 </div>
+
+<div id="map" style="height:300px;margin-top:15px;"></div>
 
 <table>
 <thead>
 <tr>
-<th>Name</th>
-<th>Phone</th>
-<th>Date</th>
-<th>Status</th>
-<th>Notes</th>
-<th>Actions</th>
+<th>الاسم</th>
+<th>الهاتف</th>
+<th>التاريخ</th>
+<th>الحالة</th>
+<th>ملاحظات</th>
+<th>الموقع</th>
+<th>المسافة</th>
+<th>حذف</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -86,196 +80,185 @@ button { cursor:pointer; }
 
 </div>
 
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc,
-  updateDoc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-
-
-// =======================
 // Firebase Config
-// =======================
 const firebaseConfig = {
   apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
   authDomain: "crm-app-7733a.firebaseapp.com",
   projectId: "crm-app-7733a",
-  storageBucket: "crm-app-7733a.firebasestorage.app",
-  messagingSenderId: "87718820034",
-  appId: "1:87718820034:web:fe6127bb92917ab4c2235b"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const clientsCol = collection(db, "clients");
+const colRef = collection(db,"clients");
 
-let editId = null;
+// ================= MAP =================
+let map = L.map('map').setView([30.0444,31.2357], 10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  attribution:'© OpenStreetMap'
+}).addTo(map);
+let marker = L.marker([30.0444,31.2357]).addTo(map);
 
+// ================= TRACKING =================
+let watchId;
+let currentLocation = null;
 
-// =======================
-// Add / Update
-// =======================
-async function addOrUpdate() {
+function startTracking(){
+  watchId = navigator.geolocation.watchPosition(pos=>{
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
 
-  const client = {
-    name: nameInput.value.trim(),
-    phone: phoneInput.value.trim(),
-    date: dateInput.value,
-    status: statusInput.value,
-    notes: notesInput.value.trim()
-  };
+    currentLocation = {lat,lng};
+    map.setView([lat,lng], 13);
+    marker.setLatLng([lat,lng]);
+  });
+}
 
-  if (!client.name || !client.phone) {
-    alert("❗ Please enter name and phone");
+function stopTracking(){
+  navigator.geolocation.clearWatch(watchId);
+}
+
+// ================= DISTANCE =================
+function calcDistance(lat1,lng1,lat2,lng2){
+  const R=6371;
+  const dLat=(lat2-lat1)*Math.PI/180;
+  const dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+
+  Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+  Math.sin(dLng/2)**2;
+  return (R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(2);
+}
+
+// ================= ADD =================
+async function addOrUpdate(){
+  if(!name.value || !phone.value){
+    alert("أدخل الاسم ورقم الهاتف");
     return;
   }
 
-  try {
-    if (editId) {
-      await updateDoc(doc(db, "clients", editId), client);
-      alert("✅ Updated successfully");
-      editId = null;
-    } else {
-      await addDoc(clientsCol, client);
-      alert("✅ Added successfully");
-    }
-
-    clearForm();
-    render();
-
-  } catch (e) {
-    console.error(e);
-    alert("❌ Error saving data");
-  }
-}
-
-
-// =======================
-// Delete
-// =======================
-async function deleteClient(id) {
-  if (confirm("Delete this client?")) {
-    await deleteDoc(doc(db, "clients", id));
-    render();
-  }
-}
-
-
-// =======================
-// Edit (محسن)
-// =======================
-async function editClient(id) {
-
-  const docRef = doc(db, "clients", id);
-  const docSnap = await getDoc(docRef);
-
-  if (docSnap.exists()) {
-    const c = docSnap.data();
-
-    nameInput.value = c.name;
-    phoneInput.value = c.phone;
-    dateInput.value = c.date;
-    statusInput.value = c.status;
-    notesInput.value = c.notes;
-
-    editId = id;
-  }
-}
-
-
-// =======================
-// Clear
-// =======================
-function clearForm() {
-  nameInput.value = "";
-  phoneInput.value = "";
-  dateInput.value = "";
-  notesInput.value = "";
-  editId = null;
-}
-
-
-// =======================
-// Render
-// =======================
-async function render() {
-
-  const search = document.getElementById("search").value.toLowerCase();
-  const filter = document.getElementById("filter").value;
-
-  const table = document.getElementById("table");
-  table.innerHTML = "";
-
-  let total = 0, interested = 0, working = 0, done = 0;
-
-  const snapshot = await getDocs(clientsCol);
-
-  snapshot.forEach(docSnap => {
-
-    const c = docSnap.data();
-    c.id = docSnap.id;
-
-    if (
-      (c.name.toLowerCase().includes(search) || c.phone.includes(search)) &&
-      (filter === "" || c.status === filter)
-    ) {
-
-      total++;
-
-      if (c.status === "Interested") interested++;
-      if (c.status === "In Progress") working++;
-      if (c.status === "Completed") done++;
-
-      table.innerHTML += `
-        <tr>
-          <td>${c.name}</td>
-          <td>${c.phone}</td>
-          <td>${c.date}</td>
-          <td>${c.status}</td>
-          <td>${c.notes}</td>
-          <td>
-            <button onclick="editClient('${c.id}')">✏️</button>
-            <button onclick="deleteClient('${c.id}')">❌</button>
-          </td>
-        </tr>
-      `;
-    }
-
+  await addDoc(colRef,{
+    name:name.value,
+    phone:phone.value,
+    date:date.value,
+    status:status.value,
+    notes:notes.value,
+    location:currentLocation
   });
 
-  document.getElementById("total").innerText = "👥 Total: " + total;
-  document.getElementById("interested").innerText = "🎯 Interested: " + interested;
-  document.getElementById("working").innerText = "🔧 In Progress: " + working;
-  document.getElementById("done").innerText = "✅ Completed: " + done;
+  render();
 }
 
+// ================= RENDER =================
+async function render(){
 
-// =======================
-// Inputs
-// =======================
-const nameInput = document.getElementById("name");
-const phoneInput = document.getElementById("phone");
-const dateInput = document.getElementById("date");
-const statusInput = document.getElementById("status");
-const notesInput = document.getElementById("notes");
+  table.innerHTML="";
+  let total=0, interested=0, working=0, done=0;
 
+  const snap = await getDocs(colRef);
+  snap.forEach(d=>{
+    const c=d.data();
 
-// =======================
-// Fix buttons (IMPORTANT)
-// =======================
-window.addOrUpdate = addOrUpdate;
-window.editClient = editClient;
-window.deleteClient = deleteClient;
+    // تحديث العدادات
+    total++;
+    if(c.status==="Interested") interested++;
+    else if(c.status==="In Progress") working++;
+    else if(c.status==="Completed") done++;
 
+    let dist = c.location && currentLocation
+      ? calcDistance(currentLocation.lat,currentLocation.lng,c.location.lat,c.location.lng)+" كم"
+      : "-";
+
+    table.innerHTML+=`
+    <tr>
+      <td>${c.name}</td>
+      <td>${c.phone}</td>
+      <td>${c.date}</td>
+      <td>${c.status}</td>
+      <td>${c.notes}</td>
+      <td>${c.location ? `<a href="https://maps.google.com/?q=${c.location.lat},${c.location.lng}" target="_blank">🌍 فتح</a>` : "-"}</td>
+      <td>${dist}</td>
+      <td><button onclick="deleteClient('${d.id}')">❌</button></td>
+    </tr>`;
+  });
+
+  // تحديث إحصائيات
+  totalEl.innerText = `👥 إجمالي: ${total}`;
+  interestedEl.innerText = `🎯 مهتم: ${interested}`;
+  workingEl.innerText = `🔧 قيد التنفيذ: ${working}`;
+  doneEl.innerText = `✅ مكتمل: ${done}`;
+}
+
+// ================= DELETE =================
+async function deleteClient(id){
+  await deleteDoc(doc(db,"clients",id));
+  render();
+}
+
+// ================= EXCEL =================
+async function exportExcel(){
+  const snap=await getDocs(colRef);
+  let csv="Name,Phone,Date,Status,Notes,Lat,Lng\n";
+
+  snap.forEach(d=>{
+    const c=d.data();
+    csv+=`${c.name},${c.phone},${c.date},${c.status},${c.notes},${c.location?.lat||""},${c.location?.lng||""}\n`;
+  });
+
+  const blob=new Blob([csv]);
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="clients.csv";
+  a.click();
+}
+
+// ================= LANGUAGE =================
+let lang="ar";
+function toggleLang(){
+  lang = lang==="ar" ? "en" : "ar";
+  document.documentElement.dir = lang==="ar" ? "rtl" : "ltr";
+
+  if(lang==="en"){
+    title.innerText="📊 CRM System";
+    name.placeholder="Customer Name";
+    phone.placeholder="Phone";
+    notes.placeholder="Notes";
+    totalEl.innerText="👥 Total: 0";
+    interestedEl.innerText="🎯 Interested: 0";
+    workingEl.innerText="🔧 In Progress: 0";
+    doneEl.innerText="✅ Completed: 0";
+  }else{
+    title.innerText="📊 نظام إدارة العملاء";
+    name.placeholder="اسم العميل";
+    phone.placeholder="رقم الهاتف";
+    notes.placeholder="ملاحظات";
+  }
+}
+
+// ================= GLOBAL =================
+const name=document.getElementById("name");
+const phone=document.getElementById("phone");
+const date=document.getElementById("date");
+const status=document.getElementById("status");
+const notes=document.getElementById("notes");
+
+const table=document.getElementById("table");
+const totalEl=document.getElementById("total");
+const interestedEl=document.getElementById("interested");
+const workingEl=document.getElementById("working");
+const doneEl=document.getElementById("done");
+
+window.startTracking=startTracking;
+window.stopTracking=stopTracking;
+window.addOrUpdate=addOrUpdate;
+window.deleteClient=deleteClient;
+window.exportExcel=exportExcel;
+window.toggleLang=toggleLang;
 
 // Initial load
 render();
