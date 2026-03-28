@@ -236,11 +236,17 @@ async function deleteClient(id){ await deleteDoc(doc(db,"clients",id)); render()
 async function exportExcel(){
   const snap=await getDocs(colRef);
   let csv=(lang==="ar"?"الاسم,الهاتف,التاريخ,الحالة,ملاحظات,مندوب,المحافظة,تم الإنشاء بواسطة,تاريخ الإنشاء,Lat,Lng\n":"Name,Phone,Date,Status,Notes,Agent,Region,CreatedBy,CreatedAt,Lat,Lng\n");
+  
   snap.forEach(d=>{
     const c=d.data();
     csv+=`${c.name},${c.phone},${c.date},${c.status},${c.notes},${c.agent},${c.region},${c.createdBy},${c.createdAt},${c.location?.lat||""},${c.location?.lng||""}\n`;
   });
-  const blob=new Blob([csv]); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="clients.csv"; a.click();
+
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="clients.csv";
+  a.click();
 }
 
 // LANGUAGE TOGGLE
