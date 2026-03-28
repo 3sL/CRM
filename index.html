@@ -90,7 +90,7 @@ button { cursor:pointer; }
 <th id="thDate">التاريخ</th>
 <th id="thStatus">الحالة</th>
 <th id="thNotes">ملاحظات</th>
-<th id="thAgent">مندوب</th>
+<th id="thAgent">العميل</th>
 <th id="thCreatedBy">تم الإنشاء بواسطة</th>
 <th id="thCreatedAt">تاريخ الإنشاء</th>
 <th id="thRegion">المحافظة</th>
@@ -246,7 +246,7 @@ async function exportExcel(){
 
   const data = [];
   const headers = lang === "ar"
-    ? ["الاسم","الهاتف","التاريخ","الحالة","ملاحظات","مندوب","المحافظة","تم الإنشاء بواسطة","تاريخ الإنشاء","Lat","Lng"]
+    ? ["الاسم","الهاتف","التاريخ","الحالة","ملاحظات","العميل","المحافظة","تم الإنشاء بواسطة","تاريخ الإنشاء","Lat","Lng"]
     : ["Name","Phone","Date","Status","Notes","Agent","Region","CreatedBy","CreatedAt","Lat","Lng"];
   data.push(headers);
 
@@ -295,7 +295,7 @@ function toggleLang(){
   document.getElementById("thDate").innerText=lang==="ar"?"التاريخ":"Date";
   document.getElementById("thStatus").innerText=lang==="ar"?"الحالة":"Status";
   document.getElementById("thNotes").innerText=lang==="ar"?"ملاحظات":"Notes";
-  document.getElementById("thAgent").innerText=lang==="ar"?"مندوب":"Agent";
+  document.getElementById("thAgent").innerText=lang==="ar"?"الادمن":"Agent";
   document.getElementById("thCreatedBy").innerText=lang==="ar"?"تم الإنشاء بواسطة":"Created By";
   document.getElementById("thCreatedAt").innerText=lang==="ar"?"تاريخ الإنشاء":"Created At";
   document.getElementById("thRegion").innerText=lang==="ar"?"المحافظة":"Region";
