@@ -246,7 +246,7 @@ async function exportExcel(){
 
   const data = [];
   const headers = lang === "ar"
-    ? ["الاسم","الهاتف","التاريخ","الحالة","ملاحظات","العميل","المحافظة","تم الإنشاء بواسطة","تاريخ الإنشاء","Lat","Lng"]
+    ? ["الاسم","الهاتف","التاريخ","الحالة","ملاحظات","العميل","المحافظة","تم الإنشاء بواسطة الادمن","تاريخ الإنشاء","Lat","Lng"]
     : ["Name","Phone","Date","Status","Notes","Agent","Region","CreatedBy","CreatedAt","Lat","Lng"];
   data.push(headers);
 
@@ -295,8 +295,8 @@ function toggleLang(){
   document.getElementById("thDate").innerText=lang==="ar"?"التاريخ":"Date";
   document.getElementById("thStatus").innerText=lang==="ar"?"الحالة":"Status";
   document.getElementById("thNotes").innerText=lang==="ar"?"ملاحظات":"Notes";
-  document.getElementById("thAgent").innerText=lang==="ar"?"الادمن":"Agent";
-  document.getElementById("thCreatedBy").innerText=lang==="ar"?"تم الإنشاء بواسطة":"Created By";
+  document.getElementById("thAgent").innerText=lang==="ar"?"مكان العميل":"Agent";
+  document.getElementById("thCreatedBy").innerText=lang==="ar"?"الأدمن":"Created By";
   document.getElementById("thCreatedAt").innerText=lang==="ar"?"تاريخ الإنشاء":"Created At";
   document.getElementById("thRegion").innerText=lang==="ar"?"المحافظة":"Region";
   document.getElementById("thLocation").innerText=lang==="ar"?"الموقع":"Location";
