@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM System Management For Utopia Trading And Export</title>
+<title>CRM System</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <style>
 body { font-family: Arial; background:#f0f2f5; padding:20px;}
@@ -14,81 +15,36 @@ table { width:100%; margin-top:20px; border-collapse: collapse;}
 th, td { padding:10px; border:1px solid #ddd; text-align:center;}
 th { background:#222; color:#fff;}
 button { cursor:pointer; }
-.lang-btn { width:auto; margin-bottom:15px;}
-.stats { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
-.card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px;}
-.header { text-align:center; margin-bottom:10px;}
-.logo { height:80px; }
-.developer { text-align:right; margin-bottom:5px; font-size:14px; }
-.phone { text-align:right; margin-bottom:15px; font-size:14px; }
-#map { width:100%; height:350px; margin-top:15px; border-radius:10px;}
 </style>
 </head>
 <body>
 
 <div class="container">
 
-<div class="header">
-  <img src="logo.png" alt="Company Logo" class="logo">
-</div>
-<div class="developer" id="developer">تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong></div>
-<div class="phone" id="phoneText">📞 01222153415</div>
+<button onclick="toggleLang()">🌐 عربي / English</button>
 
-<button class="lang-btn" onclick="toggleLang()">🌐 عربي / English</button>
-
-<h2 id="title">CRM System Management For Utopia Trading And Export</h2>
+<h2 id="title"></h2>
 
 <div class="row">
-<input id="agentFilter" placeholder="فلترة حسب المندوب (اختياري)" oninput="render()">
-<select id="regionFilter"></select>
+<input id="name">
+<input id="phone">
+<select id="status"></select>
+<input id="agent">
 </div>
 
-<div class="row">
-<input id="name" placeholder="اسم العميل">
-<input id="phone" placeholder="رقم الهاتف">
-<input type="date" id="date">
-<select id="status">
-<option>Interested</option>
-<option>In Progress</option>
-<option>Completed</option>
-</select>
-<input id="notes" placeholder="ملاحظات">
-<input id="agent" placeholder="أدخل اسم المندوب">
-<select id="region"></select>
-</div>
+<button onclick="addOrUpdate()" id="saveBtn"></button>
 
-<div class="row">
-<button onclick="startTracking()" id="trackBtn">📍 بدء التتبع</button>
-<button onclick="stopTracking()" id="stopTrackBtn">⛔ إيقاف</button>
-<button onclick="addOrUpdate()" id="saveBtn">💾 حفظ</button>
-<button onclick="exportExcel()" id="exportBtn">📊 Excel</button>
-</div>
-
-<div class="stats">
-<div class="card" id="total">👥 إجمالي: 0</div>
-<div class="card" id="interested">🎯 مهتم: 0</div>
-<div class="card" id="working">🔧 قيد التنفيذ: 0</div>
-<div class="card" id="done">✅ مكتمل: 0</div>
-</div>
-
-<div id="map"></div>
+<div id="map" style="height:300px;"></div>
 
 <table>
 <thead>
 <tr>
-<th id="thName">الاسم</th>
-<th id="thPhone">الهاتف</th>
-<th id="thDate">التاريخ</th>
-<th id="thStatus">الحالة</th>
-<th id="thNotes">ملاحظات</th>
-<th id="thAgent">مندوب</th>
-<th id="thCreatedBy">تم الإنشاء بواسطة</th>
-<th id="thCreatedAt">تاريخ الإنشاء</th>
-<th id="thRegion">المحافظة</th>
-<th id="thLocation">الموقع</th>
-<th id="thDistance">المسافة</th>
-<th id="thEdit">تعديل</th>
-<th id="thDelete">حذف</th>
+<th id="thName"></th>
+<th id="thPhone"></th>
+<th id="thStatus"></th>
+<th id="thAgent"></th>
+<th id="thEdit"></th>
+<th id="thDelete"></th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -97,197 +53,151 @@ button { cursor:pointer; }
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
-  authDomain: "crm-app-7733a.firebaseapp.com",
-  projectId: "crm-app-7733a",
-};
-const app = initializeApp(firebaseConfig);
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey:"AIza...",
+  projectId:"crm-app-7733a"
+});
+
 const db = getFirestore(app);
 const colRef = collection(db,"clients");
 
-const egyptRegions=[
-"القاهرة","الإسكندرية","الجيزة","القليوبية","الشرقية","الدقهلية",
-"المنوفية","الغربية","كفر الشيخ","دمياط","بورسعيد","السويس",
-"الإسماعيلية","الفيوم","بني سويف","المنيا","أسيوط","سوهاج",
-"قنا","الأقصر","أسوان","مطروح","الوادي الجديد","شمال سيناء",
-"جنوب سيناء","البحر الأحمر"
-];
-
-function fillRegionSelects(){
-  region.innerHTML=""; regionFilter.innerHTML="";
-  let defaultOpt=document.createElement("option"); defaultOpt.value=""; defaultOpt.text="اختر المحافظة"; region.appendChild(defaultOpt);
-  let defaultOptFilter=document.createElement("option"); defaultOptFilter.value=""; defaultOptFilter.text="كل المحافظات"; regionFilter.appendChild(defaultOptFilter);
-  egyptRegions.forEach(r=>{
-    let o1=document.createElement("option"); o1.value=r; o1.text=r; region.appendChild(o1);
-    let o2=document.createElement("option"); o2.value=r; o2.text=r; regionFilter.appendChild(o2);
-  });
-}
-
-// Leaflet Map
-let map = L.map('map').setView([30.0444,31.2357],6);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
-let marker = L.marker([30.0444,31.2357],{draggable:true}).addTo(map);
-let currentLocation=null;
-
-marker.on('dragend', function(e){
-  const pos = marker.getLatLng();
-  currentLocation={lat:pos.lat,lng:pos.lng};
-  const regionName = getRegionFromLatLng(pos.lat,pos.lng);
-  if(regionName) region.value=regionName;
-});
-
-map.on('click', function(e){
-  marker.setLatLng(e.latlng);
-  currentLocation={lat:e.latlng.lat,lng:e.latlng.lng};
-  const regionName = getRegionFromLatLng(e.latlng.lat,e.latlng.lng);
-  if(regionName) region.value=regionName;
-});
-
-function getRegionFromLatLng(lat,lng){
-  // تقريبا كل مصر مقسمة حسب خط العرض
-  if(lat>31) return "الإسكندرية";
-  if(lat>30.5) return "القليوبية";
-  if(lat>30) return "القاهرة";
-  if(lat>29) return "السويس";
-  return "القاهرة";
-}
-
-// TRACKING
-let watchId;
-function startTracking(){ watchId = navigator.geolocation.watchPosition(pos=>{ const lat = pos.coords.latitude; const lng = pos.coords.longitude; currentLocation={lat,lng}; marker.setLatLng([lat,lng]); map.setView([lat,lng],13); });}
-function stopTracking(){ navigator.geolocation.clearWatch(watchId);}
-
-// DISTANCE
-function calcDistance(lat1,lng1,lat2,lng2){
-  const R=6371;
-  const dLat=(lat2-lat1)*Math.PI/180;
-  const dLng=(lng2-lng1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-  return (R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(2);
-}
-
-// ADD / UPDATE CLIENT
-let editId=null;
-async function addOrUpdate(){
-  if(!name.value || !phone.value){ alert(lang==="ar"?"أدخل الاسم ورقم الهاتف":"Enter Name & Phone"); return;}
-  const now=new Date().toLocaleString();
-  const clientData={ name:name.value, phone:phone.value, date:date.value, status:status.value, notes:notes.value, location:currentLocation, agent:agent.value||"-", region:region.value||"-", createdBy:agent.value||"-", createdAt:now };
-  try{ if(editId){ await updateDoc(doc(db,"clients",editId),clientData); editId=null; } else{ await addDoc(colRef,clientData);} clearForm(); render(); }catch(e){ console.error(e); alert("❌ Error");}
-}
-
-// EDIT
-async function editClient(id){
-  const d = await getDoc(doc(db,"clients",id));
-  if(d.exists()){
-    const c=d.data();
-    name.value=c.name; phone.value=c.phone; date.value=c.date;
-    status.value=c.status; notes.value=c.notes;
-    agent.value=c.agent; region.value=c.region;
-    if(c.location){ currentLocation=c.location; marker.setLatLng([c.location.lat,c.location.lng]); map.setView([c.location.lat,c.location.lng],13);}
-    editId=id;
-  }
-}
-
-// CLEAR
-function clearForm(){ name.value=""; phone.value=""; date.value=""; notes.value=""; agent.value=""; region.value=""; editId=null; currentLocation=null; }
-
-// RENDER
-async function render(){
-  table.innerHTML="";
-  const filterAgent=agentFilter.value.toLowerCase();
-  const filterRegion=regionFilter.value;
-  let total=0, interested=0, working=0, done=0;
-  const snap=await getDocs(colRef);
-  snap.forEach(d=>{
-    const c=d.data();
-    if(filterAgent && !c.agent.toLowerCase().includes(filterAgent)) return;
-    if(filterRegion && c.region!==filterRegion) return;
-    total++;
-    if(c.status==="Interested") interested++;
-    else if(c.status==="In Progress") working++;
-    else if(c.status==="Completed") done++;
-    let dist=c.location && currentLocation ? calcDistance(currentLocation.lat,currentLocation.lng,c.location.lat,c.location.lng)+" km" : "-";
-    table.innerHTML+=`
-    <tr>
-      <td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td><td>${c.notes}</td>
-      <td>${c.agent}</td><td>${c.createdBy}</td><td>${c.createdAt}</td>
-      <td>${c.region}</td>
-      <td>${c.location ? `<a href="https://www.openstreetmap.org/?mlat=${c.location.lat}&mlon=${c.location.lng}" target="_blank">🌍 Open</a>`:"-"}</td>
-      <td>${dist}</td>
-      <td><button onclick="editClient('${d.id}')">✏️</button></td>
-      <td><button onclick="deleteClient('${d.id}')">❌</button></td>
-    </tr>`;
-  });
-  totalEl.innerText=`👥 ${lang==="ar"?"إجمالي":"Total"}: ${total}`;
-  interestedEl.innerText=`🎯 ${lang==="ar"?"مهتم":"Interested"}: ${interested}`;
-  workingEl.innerText=`🔧 ${lang==="ar"?"قيد التنفيذ":"In Progress"}: ${working}`;
-  doneEl.innerText=`✅ ${lang==="ar"?"مكتمل":"Completed"}: ${done}`;
-}
-
-// DELETE
-async function deleteClient(id){ await deleteDoc(doc(db,"clients",id)); render(); }
-
-// EXPORT EXCEL
-async function exportExcel(){
-  const snap=await getDocs(colRef);
-  let csv=(lang==="ar"?"الاسم,الهاتف,التاريخ,الحالة,ملاحظات,مندوب,المحافظة,تم الإنشاء بواسطة,تاريخ الإنشاء,Lat,Lng\n":"Name,Phone,Date,Status,Notes,Agent,Region,CreatedBy,CreatedAt,Lat,Lng\n");
-  snap.forEach(d=>{
-    const c=d.data();
-    csv+=`${c.name},${c.phone},${c.date},${c.status},${c.notes},${c.agent},${c.region},${c.createdBy},${c.createdAt},${c.location?.lat||""},${c.location?.lng||""}\n`;
-  });
-  const blob=new Blob([csv]); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="clients.csv"; a.click();
-}
-
-// LANGUAGE TOGGLE
 let lang="ar";
-function toggleLang(){
-  lang=lang==="ar"?"en":"ar";
-  document.getElementById("title").innerText="CRM System Management For Utopia Trading And Export";
-  document.getElementById("developer").innerHTML=lang==="ar"?"تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>":"Created & Developed by Eng : <strong>Mahmoud Mohamed Marie</strong>";
-  document.getElementById("phoneText").innerText="📞 01222153415";
-  name.placeholder=lang==="ar"?"اسم العميل":"Customer Name";
-  phone.placeholder=lang==="ar"?"رقم الهاتف":"Phone Number";
-  notes.placeholder=lang==="ar"?"ملاحظات":"Notes";
-  agent.placeholder=lang==="ar"?"أدخل اسم العميل":"Agent Name";
-  agentFilter.placeholder=lang==="ar"?"فلترة حسب المندوب (اختياري)":"Filter by Agent (optional)";
-  document.getElementById("trackBtn").innerText=lang==="ar"?"📍 بدء التتبع":"📍 Start Tracking";
-  document.getElementById("stopTrackBtn").innerText=lang==="ar"?"⛔ إيقاف":"⛔ Stop Tracking";
-  document.getElementById("saveBtn").innerText=lang==="ar"?"💾 حفظ":"💾 Save";
-  document.getElementById("exportBtn").innerText=lang==="ar"?"📊 Excel":"📊 Excel";
-  document.getElementById("thName").innerText=lang==="ar"?"الاسم":"Name";
-  document.getElementById("thPhone").innerText=lang==="ar"?"الهاتف":"Phone";
-  document.getElementById("thDate").innerText=lang==="ar"?"التاريخ":"Date";
-  document.getElementById("thStatus").innerText=lang==="ar"?"الحالة":"Status";
-  document.getElementById("thNotes").innerText=lang==="ar"?"ملاحظات":"Notes";
-  document.getElementById("thAgent").innerText=lang==="ar"?"مندوب":"Agent";
-  document.getElementById("thCreatedBy").innerText=lang==="ar"?"تم الإنشاء بواسطة":"Created By";
-  document.getElementById("thCreatedAt").innerText=lang==="ar"?"تاريخ الإنشاء":"Created At";
-  document.getElementById("thRegion").innerText=lang==="ar"?"المحافظة":"Region";
-  document.getElementById("thLocation").innerText=lang==="ar"?"الموقع":"Location";
-  document.getElementById("thDistance").innerText=lang==="ar"?"المسافة":"Distance";
-  document.getElementById("thEdit").innerText=lang==="ar"?"تعديل":"Edit";
-  document.getElementById("thDelete").innerText=lang==="ar"?"حذف":"Delete";
-  render();
+
+// 🌍 الترجمة
+const T = {
+ar:{
+title:"نظام إدارة العملاء",
+name:"اسم العميل",
+phone:"رقم الهاتف",
+agent:"اسم العميل",
+status:["مهتم","قيد التنفيذ","مكتمل"],
+save:"حفظ",
+edit:"تعديل",
+del:"حذف",
+thName:"الاسم",
+thPhone:"الهاتف",
+thStatus:"الحالة",
+thAgent:"عميل"
+},
+en:{
+title:"CRM System",
+name:"Customer Name",
+phone:"Phone",
+agent:"Customer Name",
+status:["Interested","In Progress","Completed"],
+save:"Save",
+edit:"Edit",
+del:"Delete",
+thName:"Name",
+thPhone:"Phone",
+thStatus:"Status",
+thAgent:"Customer"
+}
+};
+
+// عناصر
+const name=document.getElementById("name");
+const phone=document.getElementById("phone");
+const status=document.getElementById("status");
+const agent=document.getElementById("agent");
+const table=document.getElementById("table");
+
+// 🌍 تطبيق اللغة
+function applyLang(){
+
+document.documentElement.dir = lang==="ar"?"rtl":"ltr";
+
+const t=T[lang];
+
+document.getElementById("title").innerText=t.title;
+
+name.placeholder=t.name;
+phone.placeholder=t.phone;
+agent.placeholder=t.agent;
+
+document.getElementById("saveBtn").innerText=t.save;
+
+document.getElementById("thName").innerText=t.thName;
+document.getElementById("thPhone").innerText=t.thPhone;
+document.getElementById("thStatus").innerText=t.thStatus;
+document.getElementById("thAgent").innerText=t.thAgent;
+document.getElementById("thEdit").innerText=t.edit;
+document.getElementById("thDelete").innerText=t.del;
+
+// الحالات
+status.innerHTML="";
+t.status.forEach(s=>{
+let o=document.createElement("option");
+o.value=s;
+o.text=s;
+status.appendChild(o);
+});
+
 }
 
-// GLOBAL ELEMENTS
-const name=document.getElementById("name"), phone=document.getElementById("phone"), date=document.getElementById("date"),
-status=document.getElementById("status"), notes=document.getElementById("notes"), agent=document.getElementById("agent"),
-region=document.getElementById("region"), agentFilter=document.getElementById("agentFilter"), regionFilter=document.getElementById("regionFilter"),
-table=document.getElementById("table"), totalEl=document.getElementById("total"), interestedEl=document.getElementById("interested"),
-workingEl=document.getElementById("working"), doneEl=document.getElementById("done");
+// 🔁 تغيير اللغة
+window.toggleLang=function(){
+lang = lang==="ar"?"en":"ar";
+applyLang();
+render();
+}
 
-window.startTracking=startTracking; window.stopTracking=stopTracking; window.addOrUpdate=addOrUpdate;
-window.deleteClient=deleteClient; window.editClient=editClient; window.exportExcel=exportExcel;
+// 🗺️ خريطة
+let map = L.map('map').setView([30,31],6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// ➕ إضافة
+window.addOrUpdate=async function(){
+if(!name.value || !phone.value) return;
+
+await addDoc(colRef,{
+name:name.value,
+phone:phone.value,
+status:status.value,
+agent:agent.value
+});
+
+name.value=""; phone.value=""; agent.value="";
+render();
+}
+
+// ❌ حذف
+window.deleteClient=async function(id){
+await deleteDoc(doc(db,"clients",id));
+render();
+}
+
+// 📊 عرض
+async function render(){
+table.innerHTML="";
+const snap=await getDocs(colRef);
+
+snap.forEach(d=>{
+const c=d.data();
+
+table.innerHTML+=`
+<tr>
+<td>${c.name}</td>
+<td>${c.phone}</td>
+<td>${c.status}</td>
+<td>${c.agent}</td>
+<td><button onclick="deleteClient('${d.id}')">✏️</button></td>
+<td><button onclick="deleteClient('${d.id}')">❌</button></td>
+</tr>`;
+});
+}
 
 // INIT
-fillRegionSelects(); render();
+applyLang();
+render();
 
 </script>
+
 </body>
 </html>
