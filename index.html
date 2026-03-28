@@ -18,16 +18,23 @@ button { cursor:pointer; }
 .stats { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
 .card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px;}
 .header { text-align:center; margin-bottom:10px;}
-.logo { height:200px; width:auto; display: block; margin: 0 auto 20px auto;}
+.logo {
+  height:200px;
+  width:auto;
+  display: block;
+  margin: 0 auto 20px auto;
+}
 .developer { text-align:right; margin-bottom:5px; font-size:14px; }
 .phone { text-align:right; margin-bottom:15px; font-size:14px; }
 #map { width:100%; height:350px; margin-top:15px; border-radius:10px;}
 </style>
+
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
 <div class="container">
+
 <div class="header">
   <img src="logo.png" alt="Company Logo" class="logo">
 </div>
@@ -40,7 +47,7 @@ button { cursor:pointer; }
 
 <div class="row">
 <input id="agentFilter" placeholder="فلترة حسب العميل (اختياري)" oninput="render()">
-<select id="regionFilter" onchange="render()"></select>
+<select id="regionFilter"></select>
 </div>
 
 <div class="row">
@@ -93,6 +100,7 @@ button { cursor:pointer; }
 </thead>
 <tbody id="table"></tbody>
 </table>
+
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -100,7 +108,7 @@ button { cursor:pointer; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// ===== Firebase =====
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
   authDomain: "crm-app-7733a.firebaseapp.com",
@@ -110,7 +118,17 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const colRef = collection(db,"clients");
 
-// ===== المحافظات =====
+// عناصر الصفحة
+const name=document.getElementById("name"), phone=document.getElementById("phone"), date=document.getElementById("date"),
+status=document.getElementById("status"), notes=document.getElementById("notes"), agent=document.getElementById("agent"),
+region=document.getElementById("region"), agentFilter=document.getElementById("agentFilter"), regionFilter=document.getElementById("regionFilter"),
+table=document.getElementById("table"), totalEl=document.getElementById("total"), interestedEl=document.getElementById("interested"),
+workingEl=document.getElementById("working"), doneEl=document.getElementById("done");
+
+// اللغة
+let lang="ar";
+
+// المحافظات
 const egyptRegions=[
 "القاهرة","الإسكندرية","الجيزة","القليوبية","الشرقية","الدقهلية",
 "المنوفية","الغربية","كفر الشيخ","دمياط","بورسعيد","السويس",
@@ -119,56 +137,48 @@ const egyptRegions=[
 "جنوب سيناء","البحر الأحمر"
 ];
 
-// ===== الترجمة =====
-let lang="ar";
-const translations = {
-  ar:{
-    statuses: { "Interested":"مهتم", "In Progress":"قيد التنفيذ", "Completed":"مكتمل" }
-  },
-  en:{
-    statuses: { "Interested":"Interested", "In Progress":"In Progress", "Completed":"Completed" }
-  }
-};
-
-// ===== عناصر الصفحة =====
-const name=document.getElementById("name"), phone=document.getElementById("phone"), date=document.getElementById("date"),
-status=document.getElementById("status"), notes=document.getElementById("notes"), agent=document.getElementById("agent"),
-region=document.getElementById("region"), agentFilter=document.getElementById("agentFilter"), regionFilter=document.getElementById("regionFilter"),
-table=document.getElementById("table"), totalEl=document.getElementById("total"), interestedEl=document.getElementById("interested"),
-workingEl=document.getElementById("working"), doneEl=document.getElementById("done");
-
-// ===== ملء قوائم المحافظات =====
+// ملء القوائم
 function fillRegionSelects(){
   region.innerHTML=""; regionFilter.innerHTML="";
-  let defaultOpt=document.createElement("option"); defaultOpt.value=""; defaultOpt.text="اختر المحافظة"; region.appendChild(defaultOpt);
-  let defaultOptFilter=document.createElement("option"); defaultOptFilter.value=""; defaultOptFilter.text="كل المحافظات"; regionFilter.appendChild(defaultOptFilter);
+  let defaultOpt=document.createElement("option"); defaultOpt.value=""; defaultOpt.text=lang==="ar"?"اختر المحافظة":"Select Region"; region.appendChild(defaultOpt);
+  let defaultOptFilter=document.createElement("option"); defaultOptFilter.value=""; defaultOptFilter.text=lang==="ar"?"كل المحافظات":"All Regions"; regionFilter.appendChild(defaultOptFilter);
   egyptRegions.forEach(r=>{
     let o1=document.createElement("option"); o1.value=r; o1.text=r; region.appendChild(o1);
     let o2=document.createElement("option"); o2.value=r; o2.text=r; regionFilter.appendChild(o2);
   });
 }
 
-// ===== خريطة Leaflet =====
+// Leaflet Map
 let map = L.map('map').setView([30.0444,31.2357],6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
 let marker = L.marker([30.0444,31.2357],{draggable:true}).addTo(map);
 let currentLocation=null;
-marker.on('dragend', e => { const pos = marker.getLatLng(); currentLocation={lat:pos.lat,lng:pos.lng}; });
-map.on('click', e => { marker.setLatLng(e.latlng); currentLocation={lat:e.latlng.lat,lng:e.latlng.lng}; });
 
-// ===== التتبع =====
+marker.on('dragend', function(e){
+  const pos = marker.getLatLng();
+  currentLocation={lat:pos.lat,lng:pos.lng};
+});
+
+map.on('click', function(e){
+  marker.setLatLng(e.latlng);
+  currentLocation={lat:e.latlng.lat,lng:e.latlng.lng};
+});
+
+// TRACKING
 let watchId;
-function startTracking(){ watchId = navigator.geolocation.watchPosition(pos=>{ const lat=pos.coords.latitude,lng=pos.coords.longitude; currentLocation={lat,lng}; marker.setLatLng([lat,lng]); map.setView([lat,lng],13); });}
-function stopTracking(){ navigator.geolocation.clearWatch(watchId); }
+function startTracking(){ watchId = navigator.geolocation.watchPosition(pos=>{ const lat = pos.coords.latitude; const lng = pos.coords.longitude; currentLocation={lat,lng}; marker.setLatLng([lat,lng]); map.setView([lat,lng],13); });}
+function stopTracking(){ navigator.geolocation.clearWatch(watchId);}
 
-// ===== المسافة =====
+// DISTANCE
 function calcDistance(lat1,lng1,lat2,lng2){
-  const R=6371; const dLat=(lat2-lat1)*Math.PI/180; const dLng=(lng2-lng1)*Math.PI/180;
+  const R=6371;
+  const dLat=(lat2-lat1)*Math.PI/180;
+  const dLng=(lng2-lng1)*Math.PI/180;
   const a=Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
   return (R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(2);
 }
 
-// ===== إضافة / تعديل =====
+// ADD / UPDATE CLIENT
 let editId=null;
 async function addOrUpdate(){
   if(!name.value || !phone.value){ alert(lang==="ar"?"أدخل الاسم ورقم الهاتف":"Enter Name & Phone"); return;}
@@ -177,22 +187,23 @@ async function addOrUpdate(){
   try{ if(editId){ await updateDoc(doc(db,"clients",editId),clientData); editId=null; } else{ await addDoc(colRef,clientData);} clearForm(); render(); }catch(e){ console.error(e); alert("❌ Error");}
 }
 
-// ===== تحرير =====
+// EDIT
 async function editClient(id){
   const d = await getDoc(doc(db,"clients",id));
   if(d.exists()){
     const c=d.data();
     name.value=c.name; phone.value=c.phone; date.value=c.date;
-    status.value=c.status; notes.value=c.notes; agent.value=c.agent; region.value=c.region;
+    status.value=c.status; notes.value=c.notes;
+    agent.value=c.agent; region.value=c.region;
     if(c.location){ currentLocation=c.location; marker.setLatLng([c.location.lat,c.location.lng]); map.setView([c.location.lat,c.location.lng],13);}
     editId=id;
   }
 }
 
-// ===== مسح النموذج =====
+// CLEAR
 function clearForm(){ name.value=""; phone.value=""; date.value=""; notes.value=""; agent.value=""; region.value=""; editId=null; currentLocation=null; }
 
-// ===== عرض البيانات =====
+// RENDER
 async function render(){
   table.innerHTML="";
   const filterAgent=agentFilter.value.toLowerCase();
@@ -201,7 +212,6 @@ async function render(){
   const snap=await getDocs(colRef);
   snap.forEach(d=>{
     const c=d.data();
-    const displayStatus = translations[lang].statuses[c.status] || c.status;
     if(filterAgent && !c.agent.toLowerCase().includes(filterAgent)) return;
     if(filterRegion && c.region!==filterRegion) return;
     total++;
@@ -211,7 +221,7 @@ async function render(){
     let dist=c.location && currentLocation ? calcDistance(currentLocation.lat,currentLocation.lng,c.location.lat,c.location.lng)+" km" : "-";
     table.innerHTML+=`
     <tr>
-      <td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${displayStatus}</td><td>${c.notes}</td>
+      <td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td><td>${c.notes}</td>
       <td>${c.agent}</td><td>${c.createdBy}</td><td>${c.createdAt}</td>
       <td>${c.region}</td>
       <td>${c.location ? `<a href="https://www.openstreetmap.org/?mlat=${c.location.lat}&mlon=${c.location.lng}" target="_blank">🌍 Open</a>`:"-"}</td>
@@ -221,15 +231,15 @@ async function render(){
     </tr>`;
   });
   totalEl.innerText=`👥 ${lang==="ar"?"إجمالي":"Total"}: ${total}`;
-  interestedEl.innerText=`🎯 ${translations[lang].statuses["Interested"]}: ${interested}`;
-  workingEl.innerText=`🔧 ${translations[lang].statuses["In Progress"]}: ${working}`;
-  doneEl.innerText=`✅ ${translations[lang].statuses["Completed"]}: ${done}`;
+  interestedEl.innerText=`🎯 ${lang==="ar"?"مهتم":"Interested"}: ${interested}`;
+  workingEl.innerText=`🔧 ${lang==="ar"?"قيد التنفيذ":"In Progress"}: ${working}`;
+  doneEl.innerText=`✅ ${lang==="ar"?"مكتمل":"Completed"}: ${done}`;
 }
 
-// ===== حذف =====
+// DELETE
 async function deleteClient(id){ await deleteDoc(doc(db,"clients",id)); render(); }
 
-// ===== تصدير Excel =====
+// EXPORT Excel
 async function exportExcel(){
   const snap = await getDocs(colRef);
   const data = [];
@@ -239,7 +249,11 @@ async function exportExcel(){
   data.push(headers);
   snap.forEach(d => {
     const c = d.data();
-    data.push([ c.name||"", c.phone||"", c.date||"", c.status||"", c.notes||"", c.agent||"", c.region||"", c.createdBy||"", c.createdAt||"", c.location?.lat||"", c.location?.lng||"" ]);
+    data.push([
+      c.name||"", c.phone||"", c.date||"", c.status||"", c.notes||"",
+      c.agent||"", c.region||"", c.createdBy||"", c.createdAt||"",
+      c.location?.lat||"", c.location?.lng||""
+    ]);
   });
   const worksheet = XLSX.utils.aoa_to_sheet(data);
   const workbook = XLSX.utils.book_new();
@@ -247,43 +261,54 @@ async function exportExcel(){
   XLSX.writeFile(workbook, "clients.xlsx");
 }
 
-// ===== تبديل اللغة =====
+// TOGGLE LANGUAGE
 function toggleLang(){
   lang = lang==="ar"?"en":"ar";
-  document.getElementById("title").innerText="CRM System Management For Utopia Trading And Export";
-  document.getElementById("developer").innerHTML=lang==="ar"?"تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>":"Created & Developed by Eng : <strong>Mahmoud Mohamed Marie</strong>";
-  name.placeholder=lang==="ar"?"اسم العميل":"Customer Name";
-  phone.placeholder=lang==="ar"?"رقم الهاتف":"Phone Number";
-  notes.placeholder=lang==="ar"?"ملاحظات":"Notes";
-  agent.placeholder=lang==="ar"?"أدخل اسم العميل":"Agent Name";
-  agentFilter.placeholder=lang==="ar"?"فلترة حسب العميل (اختياري)":"Filter by Agent (optional)";
+  updateUIText();
+  fillRegionSelects();
+  render();
+}
+
+function updateUIText(){
+  document.getElementById("title").innerText = lang==="ar"?"CRM System Management For Utopia Trading And Export":"CRM System Management For Utopia Trading And Export";
+  document.getElementById("developer").innerHTML = lang==="ar"?"تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>":"Created & Developed by Eng : <strong>Mahmoud Mohamed Marie</strong>";
+  document.getElementById("phoneText").innerText="📞 01222153415";
+  name.placeholder = lang==="ar"?"اسم العميل":"Customer Name";
+  phone.placeholder = lang==="ar"?"رقم الهاتف":"Phone Number";
+  notes.placeholder = lang==="ar"?"ملاحظات":"Notes";
+  agent.placeholder = lang==="ar"?"أدخل اسم العميل":"Agent Name";
+  agentFilter.placeholder = lang==="ar"?"فلترة حسب العميل (اختياري)":"Filter by Agent (optional)";
   document.getElementById("trackBtn").innerText=lang==="ar"?"📍 بدء التتبع":"📍 Start Tracking";
   document.getElementById("stopTrackBtn").innerText=lang==="ar"?"⛔ إيقاف":"⛔ Stop Tracking";
   document.getElementById("saveBtn").innerText=lang==="ar"?"💾 حفظ":"💾 Save";
   document.getElementById("exportBtn").innerText=lang==="ar"?"📊 Excel":"📊 Excel";
-  document.getElementById("thName").innerText=lang==="ar"?"الاسم":"Name";
-  document.getElementById("thPhone").innerText=lang==="ar"?"الهاتف":"Phone";
-  document.getElementById("thDate").innerText=lang==="ar"?"التاريخ":"Date";
-  document.getElementById("thStatus").innerText=lang==="ar"?"الحالة":"Status";
-  document.getElementById("thNotes").innerText=lang==="ar"?"ملاحظات":"Notes";
-  document.getElementById("thAgent").innerText=lang==="ar"?"مكان العميل":"Agent";
-  document.getElementById("thCreatedBy").innerText=lang==="ar"?"الأدمن":"Created By";
-  document.getElementById("thCreatedAt").innerText=lang==="ar"?"تاريخ الإنشاء":"Created At";
-  document.getElementById("thRegion").innerText=lang==="ar"?"المحافظة":"Region";
-  document.getElementById("thLocation").innerText=lang==="ar"?"الموقع":"Location";
-  document.getElementById("thDistance").innerText=lang==="ar"?"المسافة":"Distance";
-  document.getElementById("thEdit").innerText=lang==="ar"?"تعديل":"Edit";
-  document.getElementById("thDelete").innerText=lang==="ar"?"حذف":"Delete";
-  render();
+  document.getElementById("thName").innerText = lang==="ar"?"الاسم":"Name";
+  document.getElementById("thPhone").innerText = lang==="ar"?"الهاتف":"Phone";
+  document.getElementById("thDate").innerText = lang==="ar"?"التاريخ":"Date";
+  document.getElementById("thStatus").innerText = lang==="ar"?"الحالة":"Status";
+  document.getElementById("thNotes").innerText = lang==="ar"?"ملاحظات":"Notes";
+  document.getElementById("thAgent").innerText = lang==="ar"?"مكان العميل":"Agent";
+  document.getElementById("thCreatedBy").innerText = lang==="ar"?"الأدمن":"Created By";
+  document.getElementById("thCreatedAt").innerText = lang==="ar"?"تاريخ الإنشاء":"Created At";
+  document.getElementById("thRegion").innerText = lang==="ar"?"المحافظة":"Region";
+  document.getElementById("thLocation").innerText = lang==="ar"?"الموقع":"Location";
+  document.getElementById("thDistance").innerText = lang==="ar"?"المسافة":"Distance";
+  document.getElementById("thEdit").innerText = lang==="ar"?"تعديل":"Edit";
+  document.getElementById("thDelete").innerText = lang==="ar"?"حذف":"Delete";
 }
 
-// ===== واجهة عالمية =====
+// LANGUAGE AUTO-SELECT BASED ON BROWSER
+const userLang = navigator.language || navigator.userLanguage;
+if(userLang.startsWith("ar")) lang="ar"; else lang="en";
+updateUIText();
+
+// EXPORT FUNCTIONS TO WINDOW
 window.startTracking=startTracking; window.stopTracking=stopTracking; window.addOrUpdate=addOrUpdate;
 window.deleteClient=deleteClient; window.editClient=editClient; window.exportExcel=exportExcel;
 
-// ===== تهيئة =====
-fillRegionSelects();
-render();
+// INIT
+fillRegionSelects(); render();
+
 </script>
 </body>
 </html>
