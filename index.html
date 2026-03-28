@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM Teams - GPS + Excel + Stats + Open Fields</title>
+<title>CRM Teams - GPS + Excel + Stats + Egypt Regions</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <style>
 body { font-family: Arial; background:#f0f2f5; padding:20px;}
@@ -19,7 +19,8 @@ button { cursor:pointer; }
 .card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px;}
 .header { text-align:center; margin-bottom:10px;}
 .logo { height:80px; }
-.developer { text-align:right; margin-bottom:15px; font-size:14px; }
+.developer { text-align:right; margin-bottom:5px; font-size:14px; }
+.phone { text-align:right; margin-bottom:15px; font-size:14px; }
 </style>
 </head>
 
@@ -31,13 +32,15 @@ button { cursor:pointer; }
   <img src="logo.png" alt="Company Logo" class="logo">
 </div>
 <div class="developer">
-تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong><br>
-Developed, Designed & Built by Eng: <strong>Mahmoud Mohamed Marie</strong>
+تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>
+</div>
+<div class="phone">
+📞 01222153415
 </div>
 
 <button class="lang-btn" onclick="toggleLang()">🌐 عربي / English</button>
 
-<h2 id="title">📊 نظام إدارة العملاء شركة يوتوبيا للتجارة والتصديـر - CRM </h2>
+<h2 id="title">📊 CRM System Management For Utopia Trading And Export </h2>
 
 <!-- Filter -->
 <div class="row">
@@ -59,7 +62,35 @@ Developed, Designed & Built by Eng: <strong>Mahmoud Mohamed Marie</strong>
 </select>
 <input id="notes" placeholder="ملاحظات">
 <input id="agent" placeholder="أدخل اسم المندوب">
-<input id="region" placeholder="أدخل المنطقة">
+<select id="region">
+<option value="">اختر المحافظة</option>
+<option value="القاهرة">القاهرة</option>
+<option value="الإسكندرية">الإسكندرية</option>
+<option value="الجيزة">الجيزة</option>
+<option value="الدقهلية">الدقهلية</option>
+<option value="البحيرة">البحيرة</option>
+<option value="المنوفية">المنوفية</option>
+<option value="الشرقية">الشرقية</option>
+<option value="الغربية">الغربية</option>
+<option value="كفر الشيخ">كفر الشيخ</option>
+<option value="دمياط">دمياط</option>
+<option value="بورسعيد">بورسعيد</option>
+<option value="السويس">السويس</option>
+<option value="الإسماعيلية">الإسماعيلية</option>
+<option value="الفيوم">الفيوم</option>
+<option value="بني سويف">بني سويف</option>
+<option value="المنيا">المنيا</option>
+<option value="أسيوط">أسيوط</option>
+<option value="سوهاج">سوهاج</option>
+<option value="قنا">قنا</option>
+<option value="الأقصر">الأقصر</option>
+<option value="أسوان">أسوان</option>
+<option value="مطروح">مطروح</option>
+<option value="الوادي الجديد">الوادي الجديد</option>
+<option value="شمال سيناء">شمال سيناء</option>
+<option value="جنوب سيناء">جنوب سيناء</option>
+<option value="البحر الأحمر">البحر الأحمر</option>
+</select>
 </div>
 
 <div class="row">
@@ -163,7 +194,7 @@ async function addOrUpdate(){
     notes:notes.value,
     location:currentLocation,
     agent:agent.value || "غير محدد",
-    region:region.value.trim() || "غير محدد",
+    region:region.value || "غير محدد",
     createdBy:agent.value || "-",
     createdAt: now
   });
@@ -175,17 +206,14 @@ async function addOrUpdate(){
 // RENDER
 async function render(){
   table.innerHTML="";
-  regionFilter.innerHTML='<option value="">كل المناطق</option>';
-  let total=0, interested=0, working=0, done=0;
   const filterAgent=agentFilter.value.toLowerCase();
   const filterRegion=regionFilter.value;
 
-  const snap=await getDocs(colRef);
-  const regionsSet = new Set();
+  let total=0, interested=0, working=0, done=0;
 
+  const snap=await getDocs(colRef);
   snap.forEach(d=>{
     const c=d.data();
-    regionsSet.add(c.region);
     if(filterAgent && !c.agent.toLowerCase().includes(filterAgent)) return;
     if(filterRegion && c.region!==filterRegion) return;
 
@@ -213,10 +241,6 @@ async function render(){
       <td>${dist}</td>
       <td><button onclick="deleteClient('${d.id}')">❌</button></td>
     </tr>`;
-  });
-
-  regionsSet.forEach(r=>{
-    regionFilter.innerHTML += `<option value="${r}">${r}</option>`;
   });
 
   totalEl.innerText=lang==="ar"?`👥 إجمالي: ${total}`:`👥 Total: ${total}`;
@@ -254,7 +278,7 @@ function toggleLang(){
     phone.placeholder="Phone";
     notes.placeholder="Notes";
     agent.placeholder="Enter Agent Name";
-    region.placeholder="Enter Region";
+    region.placeholder="Select Region";
     agentFilter.placeholder="Filter by Agent (optional)";
   }else{
     title.innerText="📊 نظام إدارة العملاء - فرق المبيعات";
@@ -262,7 +286,7 @@ function toggleLang(){
     phone.placeholder="رقم الهاتف";
     notes.placeholder="ملاحظات";
     agent.placeholder="أدخل اسم المندوب";
-    region.placeholder="أدخل المنطقة";
+    region.placeholder="اختر المحافظة";
     agentFilter.placeholder="فلترة حسب المندوب (اختياري)";
   }
 }
