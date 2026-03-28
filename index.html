@@ -28,7 +28,10 @@ button { cursor:pointer; }
 .phone { text-align:right; margin-bottom:15px; font-size:14px; }
 #map { width:100%; height:350px; margin-top:15px; border-radius:10px;}
 </style>
+
+<!-- إضافة مكتبة SheetJS للتصدير -->
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
 </head>
 <body>
 
@@ -53,7 +56,11 @@ button { cursor:pointer; }
 <input id="name" placeholder="اسم العميل">
 <input id="phone" placeholder="رقم الهاتف">
 <input type="date" id="date">
-<select id="status"></select>
+<select id="status">
+<option>Interested</option>
+<option>In Progress</option>
+<option>Completed</option>
+</select>
 <input id="notes" placeholder="ملاحظات">
 <input id="agent" placeholder="أدخل اسم العميل">
 <select id="region"></select>
@@ -120,24 +127,21 @@ const egyptRegions=[
 "جنوب سيناء","البحر الأحمر"
 ];
 
-// GLOBAL ELEMENTS
-const name=document.getElementById("name"), phone=document.getElementById("phone"), date=document.getElementById("date"),
-status=document.getElementById("status"), notes=document.getElementById("notes"), agent=document.getElementById("agent"),
-region=document.getElementById("region"), agentFilter=document.getElementById("agentFilter"), regionFilter=document.getElementById("regionFilter"),
-table=document.getElementById("table"), totalEl=document.getElementById("total"), interestedEl=document.getElementById("interested"),
-workingEl=document.getElementById("working"), doneEl=document.getElementById("done"),
-trackBtn=document.getElementById("trackBtn"), stopTrackBtn=document.getElementById("stopTrackBtn"),
-saveBtn=document.getElementById("saveBtn"), exportBtn=document.getElementById("exportBtn");
+function fillRegionSelects(){
+  region.innerHTML=""; regionFilter.innerHTML="";
+  let defaultOpt=document.createElement("option"); defaultOpt.value=""; defaultOpt.text="اختر المحافظة"; region.appendChild(defaultOpt);
+  let defaultOptFilter=document.createElement("option"); defaultOptFilter.value=""; defaultOptFilter.text="كل المحافظات"; regionFilter.appendChild(defaultOptFilter);
+  egyptRegions.forEach(r=>{
+    let o1=document.createElement("option"); o1.value=r; o1.text=r; region.appendChild(o1);
+    let o2=document.createElement("option"); o2.value=r; o2.text=r; regionFilter.appendChild(o2);
+  });
+}
 
-let lang="ar"; // اللغة الحالية
-let editId=null;
-let currentLocation=null;
-let watchId;
-
-// MAP
+// Leaflet Map
 let map = L.map('map').setView([30.0444,31.2357],6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
 let marker = L.marker([30.0444,31.2357],{draggable:true}).addTo(map);
+let currentLocation=null;
 
 marker.on('dragend', function(e){
   const pos = marker.getLatLng();
@@ -145,12 +149,14 @@ marker.on('dragend', function(e){
   const regionName = getRegionFromLatLng(pos.lat,pos.lng);
   if(regionName) region.value=regionName;
 });
+
 map.on('click', function(e){
   marker.setLatLng(e.latlng);
   currentLocation={lat:e.latlng.lat,lng:e.latlng.lng};
   const regionName = getRegionFromLatLng(e.latlng.lat,e.latlng.lng);
   if(regionName) region.value=regionName;
 });
+
 function getRegionFromLatLng(lat,lng){
   if(lat>31) return "الإسكندرية";
   if(lat>30.5) return "القليوبية";
@@ -159,18 +165,8 @@ function getRegionFromLatLng(lat,lng){
   return "القاهرة";
 }
 
-// REGION SELECT
-function fillRegionSelects(){
-  region.innerHTML=""; regionFilter.innerHTML="";
-  let defaultOpt=document.createElement("option"); defaultOpt.value=""; defaultOpt.text=lang==="ar"?"اختر المحافظة":"Select Region"; region.appendChild(defaultOpt);
-  let defaultOptFilter=document.createElement("option"); defaultOptFilter.value=""; defaultOptFilter.text=lang==="ar"?"كل المحافظات":"All Regions"; regionFilter.appendChild(defaultOptFilter);
-  egyptRegions.forEach(r=>{
-    let o1=document.createElement("option"); o1.value=o1.text=r; region.appendChild(o1);
-    let o2=document.createElement("option"); o2.value=o2.text=r; regionFilter.appendChild(o2);
-  });
-}
-
 // TRACKING
+let watchId;
 function startTracking(){ watchId = navigator.geolocation.watchPosition(pos=>{ const lat = pos.coords.latitude; const lng = pos.coords.longitude; currentLocation={lat,lng}; marker.setLatLng([lat,lng]); map.setView([lat,lng],13); });}
 function stopTracking(){ navigator.geolocation.clearWatch(watchId);}
 
@@ -179,17 +175,20 @@ function calcDistance(lat1,lng1,lat2,lng2){
   const R=6371;
   const dLat=(lat2-lat1)*Math.PI/180;
   const dLng=(lng2-lng1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  const a=Math.sin(dLat/2)*2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*2;
   return (R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(2);
 }
 
 // ADD / UPDATE CLIENT
+let editId=null;
 async function addOrUpdate(){
   if(!name.value || !phone.value){ alert(lang==="ar"?"أدخل الاسم ورقم الهاتف":"Enter Name & Phone"); return;}
   const now=new Date().toLocaleString();
   const clientData={ name:name.value, phone:phone.value, date:date.value, status:status.value, notes:notes.value, location:currentLocation, agent:agent.value||"-", region:region.value||"-", createdBy:agent.value||"-", createdAt:now };
   try{ if(editId){ await updateDoc(doc(db,"clients",editId),clientData); editId=null; } else{ await addDoc(colRef,clientData);} clearForm(); render(); }catch(e){ console.error(e); alert("❌ Error");}
 }
+
+// EDIT
 async function editClient(id){
   const d = await getDoc(doc(db,"clients",id));
   if(d.exists()){
@@ -201,9 +200,9 @@ async function editClient(id){
     editId=id;
   }
 }
-function clearForm(){ name.value=""; phone.value=""; date.value=""; notes.value=""; agent.value=""; region.value=""; editId=null; currentLocation=null; }
 
-async function deleteClient(id){ await deleteDoc(doc(db,"clients",id)); render(); }
+// CLEAR
+function clearForm(){ name.value=""; phone.value=""; date.value=""; notes.value=""; agent.value=""; region.value=""; editId=null; currentLocation=null; }
 
 // RENDER
 async function render(){
@@ -217,104 +216,108 @@ async function render(){
     if(filterAgent && !c.agent.toLowerCase().includes(filterAgent)) return;
     if(filterRegion && c.region!==filterRegion) return;
     total++;
-    if(c.status==="Interested" || c.status==="مهتم") interested++;
-    else if(c.status==="In Progress" || c.status==="قيد التنفيذ") working++;
-    else if(c.status==="Completed" || c.status==="مكتمل") done++;
+    if(c.status==="Interested") interested++;
+    else if(c.status==="In Progress") working++;
+    else if(c.status==="Completed") done++;
     let dist=c.location && currentLocation ? calcDistance(currentLocation.lat,currentLocation.lng,c.location.lat,c.location.lng)+" km" : "-";
     table.innerHTML+=`
     <tr>
       <td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td><td>${c.notes}</td>
       <td>${c.agent}</td><td>${c.createdBy}</td><td>${c.createdAt}</td>
       <td>${c.region}</td>
-      <td>${c.location ? `<a href="https://www.openstreetmap.org/?mlat=${c.location.lat}&mlon=${c.location.lng}" target="_blank">🌍 Open</a>`:"-"}</td>
+      <td>${c.location ? <a href="https://www.openstreetmap.org/?mlat=${c.location.lat}&mlon=${c.location.lng}" target="_blank">🌍 Open</a>:"-"}</td>
       <td>${dist}</td>
       <td><button onclick="editClient('${d.id}')">✏️</button></td>
       <td><button onclick="deleteClient('${d.id}')">❌</button></td>
     </tr>`;
   });
-  totalEl.innerText=`👥 ${lang==="ar"?"إجمالي":"Total"}: ${total}`;
-  interestedEl.innerText=`🎯 ${lang==="ar"?"مهتم":"Interested"}: ${interested}`;
-  workingEl.innerText=`🔧 ${lang==="ar"?"قيد التنفيذ":"In Progress"}: ${working}`;
-  doneEl.innerText=`✅ ${lang==="ar"?"مكتمل":"Completed"}: ${done}`;
+  totalEl.innerText=👥 ${lang==="ar"?"إجمالي":"Total"}: ${total};
+  interestedEl.innerText=🎯 ${lang==="ar"?"مهتم":"Interested"}: ${interested};
+  workingEl.innerText=🔧 ${lang==="ar"?"قيد التنفيذ":"In Progress"}: ${working};
+  doneEl.innerText=✅ ${lang==="ar"?"مكتمل":"Completed"}: ${done};
 }
 
-// EXPORT Excel
+// DELETE
+async function deleteClient(id){ await deleteDoc(doc(db,"clients",id)); render(); }
+
+// EXPORT Excel حقيقي (.xlsx) باستخدام SheetJS
 async function exportExcel(){
   const snap = await getDocs(colRef);
+
   const data = [];
   const headers = lang === "ar"
     ? ["الاسم","الهاتف","التاريخ","الحالة","ملاحظات","العميل","المحافظة","الادمن","تاريخ الإنشاء","Lat","Lng"]
     : ["Name","Phone","Date","Status","Notes","Agent","Region","CreatedBy","CreatedAt","Lat","Lng"];
   data.push(headers);
+
   snap.forEach(d => {
     const c = d.data();
     data.push([
-      c.name || "", c.phone || "", c.date || "", c.status || "", c.notes || "",
-      c.agent || "", c.region || "", c.createdBy || "", c.createdAt || "",
-      c.location?.lat || "", c.location?.lng || ""
+      c.name || "",
+      c.phone || "",
+      c.date || "",
+      c.status || "",
+      c.notes || "",
+      c.agent || "",
+      c.region || "",
+      c.createdBy || "",
+      c.createdAt || "",
+      c.location?.lat || "",
+      c.location?.lng || ""
     ]);
   });
+
   const worksheet = XLSX.utils.aoa_to_sheet(data);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Clients");
+
   XLSX.writeFile(workbook, "clients.xlsx");
 }
 
 // LANGUAGE TOGGLE
+let lang="ar";
 function toggleLang(){
-  lang = lang==="ar"?"en":"ar";
-  document.documentElement.lang=lang;
-  document.documentElement.dir=lang==="ar"?"rtl":"ltr";
-  document.body.dir=lang==="ar"?"rtl":"ltr";
-
-  document.getElementById("title").innerText = lang==="ar"?"نظام إدارة CRM لشركة يوتوبيا للتجارة والتصدير":"CRM System Management For Utopia Trading And Export";
-  document.getElementById("developer").innerHTML = lang==="ar"?'تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>':'Created & Developed by Eng : <strong>Mahmoud Mohamed Marie</strong>';
+  lang=lang==="ar"?"en":"ar";
+  document.getElementById("title").innerText="CRM System Management For Utopia Trading And Export";
+  document.getElementById("developer").innerHTML=lang==="ar"?"تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>":"Created & Developed by Eng : <strong>Mahmoud Mohamed Marie</strong>";
   document.getElementById("phoneText").innerText="📞 01222153415";
-
-  name.placeholder = lang==="ar"?"اسم العميل":"Customer Name";
-  phone.placeholder = lang==="ar"?"رقم الهاتف":"Phone Number";
-  notes.placeholder = lang==="ar"?"ملاحظات":"Notes";
-  agent.placeholder = lang==="ar"?"أدخل اسم العميل":"Agent Name";
-  agentFilter.placeholder = lang==="ar"?"فلترة حسب العميل (اختياري)":"Filter by Agent (optional)";
-
-  trackBtn.innerText=lang==="ar"?"📍 بدء التتبع":"📍 Start Tracking";
-  stopTrackBtn.innerText=lang==="ar"?"⛔ إيقاف":"⛔ Stop Tracking";
-  saveBtn.innerText=lang==="ar"?"💾 حفظ":"💾 Save";
-  exportBtn.innerText="📊 Excel";
-
-  // Table headers
-  document.getElementById("thName").innerText = lang==="ar"?"الاسم":"Name";
-  document.getElementById("thPhone").innerText = lang==="ar"?"الهاتف":"Phone";
-  document.getElementById("thDate").innerText = lang==="ar"?"التاريخ":"Date";
-  document.getElementById("thStatus").innerText = lang==="ar"?"الحالة":"Status";
-  document.getElementById("thNotes").innerText = lang==="ar"?"ملاحظات":"Notes";
-  document.getElementById("thAgent").innerText = lang==="ar"?"العميل":"Agent";
-  document.getElementById("thCreatedBy").innerText = lang==="ar"?"الأدمن":"Created By";
-  document.getElementById("thCreatedAt").innerText = lang==="ar"?"تاريخ الإنشاء":"Created At";
-  document.getElementById("thRegion").innerText = lang==="ar"?"المحافظة":"Region";
-  document.getElementById("thLocation").innerText = lang==="ar"?"الموقع":"Location";
-  document.getElementById("thDistance").innerText = lang==="ar"?"المسافة":"Distance";
-  document.getElementById("thEdit").innerText = lang==="ar"?"تعديل":"Edit";
-  document.getElementById("thDelete").innerText = lang==="ar"?"حذف":"Delete";
-
-  // Status dropdown
-  const currentStatus=status.value;
-  status.innerHTML="";
-  const options = lang==="ar"?["مهتم","قيد التنفيذ","مكتمل"]:["Interested","In Progress","Completed"];
-  options.forEach(o=>{ const opt=document.createElement("option"); opt.value=opt.text=o; if(o===currentStatus) opt.selected=true; status.appendChild(opt); });
-
-  fillRegionSelects();
+  name.placeholder=lang==="ar"?"اسم العميل":"Customer Name";
+  phone.placeholder=lang==="ar"?"رقم الهاتف":"Phone Number";
+  notes.placeholder=lang==="ar"?"ملاحظات":"Notes";
+  agent.placeholder=lang==="ar"?"أدخل اسم العميل":"Agent Name";
+  agentFilter.placeholder=lang==="ar"?"فلترة حسب العميل (اختياري)":"Filter by Agent (optional)";
+  document.getElementById("trackBtn").innerText=lang==="ar"?"📍 بدء التتبع":"📍 Start Tracking";
+  document.getElementById("stopTrackBtn").innerText=lang==="ar"?"⛔ إيقاف":"⛔ Stop Tracking";
+  document.getElementById("saveBtn").innerText=lang==="ar"?"💾 حفظ":"💾 Save";
+  document.getElementById("exportBtn").innerText=lang==="ar"?"📊 Excel":"📊 Excel";
+  document.getElementById("thName").innerText=lang==="ar"?"الاسم":"Name";
+  document.getElementById("thPhone").innerText=lang==="ar"?"الهاتف":"Phone";
+  document.getElementById("thDate").innerText=lang==="ar"?"التاريخ":"Date";
+  document.getElementById("thStatus").innerText=lang==="ar"?"الحالة":"Status";
+  document.getElementById("thNotes").innerText=lang==="ar"?"ملاحظات":"Notes";
+  document.getElementById("thAgent").innerText=lang==="ar"?"مكان العميل":"Agent";
+  document.getElementById("thCreatedBy").innerText=lang==="ar"?"الأدمن":"Created By";
+  document.getElementById("thCreatedAt").innerText=lang==="ar"?"تاريخ الإنشاء":"Created At";
+  document.getElementById("thRegion").innerText=lang==="ar"?"المحافظة":"Region";
+  document.getElementById("thLocation").innerText=lang==="ar"?"الموقع":"Location";
+  document.getElementById("thDistance").innerText=lang==="ar"?"المسافة":"Distance";
+  document.getElementById("thEdit").innerText=lang==="ar"?"تعديل":"Edit";
+  document.getElementById("thDelete").innerText=lang==="ar"?"حذف":"Delete";
   render();
 }
 
-// INIT
-fillRegionSelects();
-toggleLang(); // لتحديث dropdown status واللغة عند البداية
-render();
+// GLOBAL ELEMENTS
+const name=document.getElementById("name"), phone=document.getElementById("phone"), date=document.getElementById("date"),
+status=document.getElementById("status"), notes=document.getElementById("notes"), agent=document.getElementById("agent"),
+region=document.getElementById("region"), agentFilter=document.getElementById("agentFilter"), regionFilter=document.getElementById("regionFilter"),
+table=document.getElementById("table"), totalEl=document.getElementById("total"), interestedEl=document.getElementById("interested"),
+workingEl=document.getElementById("working"), doneEl=document.getElementById("done");
 
-// Make functions accessible globally
 window.startTracking=startTracking; window.stopTracking=stopTracking; window.addOrUpdate=addOrUpdate;
-window.deleteClient=deleteClient; window.editClient=editClient; window.exportExcel=exportExcel; window.toggleLang=toggleLang;
+window.deleteClient=deleteClient; window.editClient=editClient; window.exportExcel=exportExcel;
+
+// INIT
+fillRegionSelects(); render();
 
 </script>
 </body>
