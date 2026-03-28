@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM Teams - GPS + Excel + Stats</title>
+<title>CRM Teams - GPS + Excel + Stats + Dynamic Region</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <style>
 body { font-family: Arial; background:#f0f2f5; padding:20px;}
@@ -17,23 +17,39 @@ button { cursor:pointer; }
 .lang-btn { width:auto; margin-bottom:15px;}
 .stats { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
 .card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px;}
+.header { text-align:center; margin-bottom:10px;}
+.logo { height:80px; }
+.developer { text-align:right; margin-bottom:15px; font-size:14px; }
 </style>
 </head>
 
 <body>
 <div class="container">
 
+<!-- Logo + Developer -->
+<div class="header">
+  <img src="logo.png" alt="Company Logo" class="logo">
+</div>
+<div class="developer">
+تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong><br>
+Developed, Designed & Built by Eng: <strong>Mahmoud Mohamed Marie</strong>
+</div>
+
 <button class="lang-btn" onclick="toggleLang()">🌐 عربي / English</button>
 
-<h2 id="title">📊 نظام إدارة العملاء - فرق المبيعات</h2>
+<h2 id="title">📊 نظام إدارة العملاء شركة يوتوبيا للتجارة والتصدير - CRM </h2>
 
-<!-- اختيار المندوب -->
+<!-- اختيار المندوب + المنطقة -->
 <div class="row">
 <select id="agentFilter" onchange="render()">
   <option value="">كل المندوبين</option>
   <option value="Ahmed">Ahmed</option>
   <option value="Sara">Sara</option>
   <option value="Ali">Ali</option>
+</select>
+
+<select id="regionFilter" onchange="render()">
+  <option value="">كل المناطق</option>
 </select>
 </div>
 
@@ -52,6 +68,7 @@ button { cursor:pointer; }
   <option value="Sara">Sara</option>
   <option value="Ali">Ali</option>
 </select>
+<input id="region" placeholder="أدخل المنطقة">
 </div>
 
 <div class="row">
@@ -79,6 +96,9 @@ button { cursor:pointer; }
 <th>الحالة</th>
 <th>ملاحظات</th>
 <th>مندوب</th>
+<th>تم الإنشاء بواسطة</th>
+<th>تاريخ الإنشاء</th>
+<th>المنطقة</th>
 <th>الموقع</th>
 <th>المسافة</th>
 <th>حذف</th>
@@ -115,7 +135,6 @@ let marker = L.marker([30.0444,31.2357]).addTo(map);
 // TRACKING
 let watchId;
 let currentLocation = null;
-
 function startTracking(){
   watchId = navigator.geolocation.watchPosition(pos=>{
     const lat = pos.coords.latitude;
@@ -141,9 +160,10 @@ function calcDistance(lat1,lng1,lat2,lng2){
 // ADD
 async function addOrUpdate(){
   if(!name.value || !phone.value){
-    alert("أدخل الاسم ورقم الهاتف");
+    alert(lang==="ar" ? "أدخل الاسم ورقم الهاتف" : "Enter name & phone");
     return;
   }
+  const now = new Date().toLocaleString();
   await addDoc(colRef,{
     name:name.value,
     phone:phone.value,
@@ -151,30 +171,39 @@ async function addOrUpdate(){
     status:status.value,
     notes:notes.value,
     location:currentLocation,
-    agent:agent.value
+    agent:agent.value,
+    region:region.value.trim() || "غير محدد",
+    createdBy:agent.value,
+    createdAt: now
   });
+  region.value = ""; // clear after add
   render();
 }
 
 // RENDER
 async function render(){
   table.innerHTML="";
+  regionFilter.innerHTML='<option value="">كل المناطق</option>'; // dynamic regions
   let total=0, interested=0, working=0, done=0;
   const filterAgent=agentFilter.value;
+  const filterRegion=regionFilter.value;
 
   const snap=await getDocs(colRef);
+  const regionsSet = new Set();
+
   snap.forEach(d=>{
     const c=d.data();
+    regionsSet.add(c.region);
     if(filterAgent && c.agent!==filterAgent) return;
+    if(filterRegion && c.region!==filterRegion) return;
 
-    // العدادات
     total++;
     if(c.status==="Interested") interested++;
     else if(c.status==="In Progress") working++;
     else if(c.status==="Completed") done++;
 
     let dist = c.location && currentLocation
-      ? calcDistance(currentLocation.lat,currentLocation.lng,c.location.lat,c.location.lng)+" كم"
+      ? calcDistance(currentLocation.lat,currentLocation.lng,c.location.lat,c.location.lng)+" km"
       : "-";
 
     table.innerHTML+=`
@@ -185,16 +214,24 @@ async function render(){
       <td>${c.status}</td>
       <td>${c.notes}</td>
       <td>${c.agent}</td>
-      <td>${c.location ? `<a href="https://maps.google.com/?q=${c.location.lat},${c.location.lng}" target="_blank">🌍 فتح</a>` : "-"}</td>
+      <td>${c.createdBy || '-'}</td>
+      <td>${c.createdAt || '-'}</td>
+      <td>${c.region || '-'}</td>
+      <td>${c.location ? `<a href="https://maps.google.com/?q=${c.location.lat},${c.location.lng}" target="_blank">🌍 Open</a>` : "-"}</td>
       <td>${dist}</td>
       <td><button onclick="deleteClient('${d.id}')">❌</button></td>
     </tr>`;
   });
 
-  totalEl.innerText=`👥 إجمالي: ${total}`;
-  interestedEl.innerText=`🎯 مهتم: ${interested}`;
-  workingEl.innerText=`🔧 قيد التنفيذ: ${working}`;
-  doneEl.innerText=`✅ مكتمل: ${done}`;
+  // populate dynamic region filter
+  regionsSet.forEach(r=>{
+    regionFilter.innerHTML += `<option value="${r}">${r}</option>`;
+  });
+
+  totalEl.innerText=lang==="ar"?`👥 إجمالي: ${total}`:`👥 Total: ${total}`;
+  interestedEl.innerText=lang==="ar"?`🎯 مهتم: ${interested}`:`🎯 Interested: ${interested}`;
+  workingEl.innerText=lang==="ar"?`🔧 قيد التنفيذ: ${working}`:`🔧 In Progress: ${working}`;
+  doneEl.innerText=lang==="ar"?`✅ مكتمل: ${done}`:`✅ Completed: ${done}`;
 }
 
 // DELETE
@@ -203,10 +240,10 @@ async function deleteClient(id){ await deleteDoc(doc(db,"clients",id)); render()
 // EXCEL
 async function exportExcel(){
   const snap=await getDocs(colRef);
-  let csv="Name,Phone,Date,Status,Notes,Agent,Lat,Lng\n";
+  let csv="Name,Phone,Date,Status,Notes,Agent,Region,CreatedBy,CreatedAt,Lat,Lng\n";
   snap.forEach(d=>{
     const c=d.data();
-    csv+=`${c.name},${c.phone},${c.date},${c.status},${c.notes},${c.agent},${c.location?.lat||""},${c.location?.lng||""}\n`;
+    csv+=`${c.name},${c.phone},${c.date},${c.status},${c.notes},${c.agent},${c.region},${c.createdBy},${c.createdAt},${c.location?.lat||""},${c.location?.lng||""}\n`;
   });
   const blob=new Blob([csv]);
   const a=document.createElement("a");
@@ -225,10 +262,6 @@ function toggleLang(){
     name.placeholder="Customer Name";
     phone.placeholder="Phone";
     notes.placeholder="Notes";
-    totalEl.innerText="👥 Total: 0";
-    interestedEl.innerText="🎯 Interested: 0";
-    workingEl.innerText="🔧 In Progress: 0";
-    doneEl.innerText="✅ Completed: 0";
   }else{
     title.innerText="📊 نظام إدارة العملاء - فرق المبيعات";
     name.placeholder="اسم العميل";
@@ -237,21 +270,24 @@ function toggleLang(){
   }
 }
 
-// GLOBAL
+// GLOBAL ELEMENTS
 const name=document.getElementById("name");
 const phone=document.getElementById("phone");
 const date=document.getElementById("date");
 const status=document.getElementById("status");
 const notes=document.getElementById("notes");
 const agent=document.getElementById("agent");
+const region=document.getElementById("region");
 const agentFilter=document.getElementById("agentFilter");
-
+const regionFilter=document.getElementById("regionFilter");
 const table=document.getElementById("table");
 const totalEl=document.getElementById("total");
 const interestedEl=document.getElementById("interested");
 const workingEl=document.getElementById("working");
 const doneEl=document.getElementById("done");
+const title=document.getElementById("title");
 
+// EXPORT FUNCTIONS TO GLOBAL
 window.startTracking=startTracking;
 window.stopTracking=stopTracking;
 window.addOrUpdate=addOrUpdate;
@@ -259,6 +295,7 @@ window.deleteClient=deleteClient;
 window.exportExcel=exportExcel;
 window.toggleLang=toggleLang;
 
+// INITIAL RENDER
 render();
 
 </script>
