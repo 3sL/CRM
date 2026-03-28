@@ -2,10 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM PRO - كامل + GPS + Excel + Stats</title>
-
+<title>CRM Teams - GPS + Excel + Stats</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
 <style>
 body { font-family: Arial; background:#f0f2f5; padding:20px;}
 .container { max-width:1200px; margin:auto; background:#fff; padding:20px; border-radius:10px;}
@@ -20,30 +18,40 @@ button { cursor:pointer; }
 .stats { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
 .card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px;}
 </style>
-
 </head>
 
 <body>
-
 <div class="container">
 
 <button class="lang-btn" onclick="toggleLang()">🌐 عربي / English</button>
 
-<h2 id="title">📊 نظام إدارة العملاء</h2>
+<h2 id="title">📊 نظام إدارة العملاء - فرق المبيعات</h2>
+
+<!-- اختيار المندوب -->
+<div class="row">
+<select id="agentFilter" onchange="render()">
+  <option value="">كل المندوبين</option>
+  <option value="Ahmed">Ahmed</option>
+  <option value="Sara">Sara</option>
+  <option value="Ali">Ali</option>
+</select>
+</div>
 
 <div class="row">
 <input id="name" placeholder="اسم العميل">
 <input id="phone" placeholder="رقم الهاتف">
 <input type="date" id="date">
-</div>
-
-<div class="row">
 <select id="status">
 <option>Interested</option>
 <option>In Progress</option>
 <option>Completed</option>
 </select>
 <input id="notes" placeholder="ملاحظات">
+<select id="agent">
+  <option value="Ahmed">Ahmed</option>
+  <option value="Sara">Sara</option>
+  <option value="Ali">Ali</option>
+</select>
 </div>
 
 <div class="row">
@@ -70,6 +78,7 @@ button { cursor:pointer; }
 <th>التاريخ</th>
 <th>الحالة</th>
 <th>ملاحظات</th>
+<th>مندوب</th>
 <th>الموقع</th>
 <th>المسافة</th>
 <th>حذف</th>
@@ -81,31 +90,29 @@ button { cursor:pointer; }
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Firebase Config
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
   authDomain: "crm-app-7733a.firebaseapp.com",
   projectId: "crm-app-7733a",
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const colRef = collection(db,"clients");
 
-// ================= MAP =================
+// MAP
 let map = L.map('map').setView([30.0444,31.2357], 10);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
   attribution:'© OpenStreetMap'
 }).addTo(map);
 let marker = L.marker([30.0444,31.2357]).addTo(map);
 
-// ================= TRACKING =================
+// TRACKING
 let watchId;
 let currentLocation = null;
 
@@ -113,18 +120,14 @@ function startTracking(){
   watchId = navigator.geolocation.watchPosition(pos=>{
     const lat = pos.coords.latitude;
     const lng = pos.coords.longitude;
-
     currentLocation = {lat,lng};
     map.setView([lat,lng], 13);
     marker.setLatLng([lat,lng]);
   });
 }
+function stopTracking(){ navigator.geolocation.clearWatch(watchId); }
 
-function stopTracking(){
-  navigator.geolocation.clearWatch(watchId);
-}
-
-// ================= DISTANCE =================
+// DISTANCE
 function calcDistance(lat1,lng1,lat2,lng2){
   const R=6371;
   const dLat=(lat2-lat1)*Math.PI/180;
@@ -135,36 +138,36 @@ function calcDistance(lat1,lng1,lat2,lng2){
   return (R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(2);
 }
 
-// ================= ADD =================
+// ADD
 async function addOrUpdate(){
   if(!name.value || !phone.value){
     alert("أدخل الاسم ورقم الهاتف");
     return;
   }
-
   await addDoc(colRef,{
     name:name.value,
     phone:phone.value,
     date:date.value,
     status:status.value,
     notes:notes.value,
-    location:currentLocation
+    location:currentLocation,
+    agent:agent.value
   });
-
   render();
 }
 
-// ================= RENDER =================
+// RENDER
 async function render(){
-
   table.innerHTML="";
   let total=0, interested=0, working=0, done=0;
+  const filterAgent=agentFilter.value;
 
-  const snap = await getDocs(colRef);
+  const snap=await getDocs(colRef);
   snap.forEach(d=>{
     const c=d.data();
+    if(filterAgent && c.agent!==filterAgent) return;
 
-    // تحديث العدادات
+    // العدادات
     total++;
     if(c.status==="Interested") interested++;
     else if(c.status==="In Progress") working++;
@@ -181,35 +184,30 @@ async function render(){
       <td>${c.date}</td>
       <td>${c.status}</td>
       <td>${c.notes}</td>
+      <td>${c.agent}</td>
       <td>${c.location ? `<a href="https://maps.google.com/?q=${c.location.lat},${c.location.lng}" target="_blank">🌍 فتح</a>` : "-"}</td>
       <td>${dist}</td>
       <td><button onclick="deleteClient('${d.id}')">❌</button></td>
     </tr>`;
   });
 
-  // تحديث إحصائيات
-  totalEl.innerText = `👥 إجمالي: ${total}`;
-  interestedEl.innerText = `🎯 مهتم: ${interested}`;
-  workingEl.innerText = `🔧 قيد التنفيذ: ${working}`;
-  doneEl.innerText = `✅ مكتمل: ${done}`;
+  totalEl.innerText=`👥 إجمالي: ${total}`;
+  interestedEl.innerText=`🎯 مهتم: ${interested}`;
+  workingEl.innerText=`🔧 قيد التنفيذ: ${working}`;
+  doneEl.innerText=`✅ مكتمل: ${done}`;
 }
 
-// ================= DELETE =================
-async function deleteClient(id){
-  await deleteDoc(doc(db,"clients",id));
-  render();
-}
+// DELETE
+async function deleteClient(id){ await deleteDoc(doc(db,"clients",id)); render(); }
 
-// ================= EXCEL =================
+// EXCEL
 async function exportExcel(){
   const snap=await getDocs(colRef);
-  let csv="Name,Phone,Date,Status,Notes,Lat,Lng\n";
-
+  let csv="Name,Phone,Date,Status,Notes,Agent,Lat,Lng\n";
   snap.forEach(d=>{
     const c=d.data();
-    csv+=`${c.name},${c.phone},${c.date},${c.status},${c.notes},${c.location?.lat||""},${c.location?.lng||""}\n`;
+    csv+=`${c.name},${c.phone},${c.date},${c.status},${c.notes},${c.agent},${c.location?.lat||""},${c.location?.lng||""}\n`;
   });
-
   const blob=new Blob([csv]);
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
@@ -217,14 +215,13 @@ async function exportExcel(){
   a.click();
 }
 
-// ================= LANGUAGE =================
+// LANGUAGE
 let lang="ar";
 function toggleLang(){
   lang = lang==="ar" ? "en" : "ar";
   document.documentElement.dir = lang==="ar" ? "rtl" : "ltr";
-
   if(lang==="en"){
-    title.innerText="📊 CRM System";
+    title.innerText="📊 CRM System - Teams";
     name.placeholder="Customer Name";
     phone.placeholder="Phone";
     notes.placeholder="Notes";
@@ -233,19 +230,21 @@ function toggleLang(){
     workingEl.innerText="🔧 In Progress: 0";
     doneEl.innerText="✅ Completed: 0";
   }else{
-    title.innerText="📊 نظام إدارة العملاء";
+    title.innerText="📊 نظام إدارة العملاء - فرق المبيعات";
     name.placeholder="اسم العميل";
     phone.placeholder="رقم الهاتف";
     notes.placeholder="ملاحظات";
   }
 }
 
-// ================= GLOBAL =================
+// GLOBAL
 const name=document.getElementById("name");
 const phone=document.getElementById("phone");
 const date=document.getElementById("date");
 const status=document.getElementById("status");
 const notes=document.getElementById("notes");
+const agent=document.getElementById("agent");
+const agentFilter=document.getElementById("agentFilter");
 
 const table=document.getElementById("table");
 const totalEl=document.getElementById("total");
@@ -260,10 +259,8 @@ window.deleteClient=deleteClient;
 window.exportExcel=exportExcel;
 window.toggleLang=toggleLang;
 
-// Initial load
 render();
 
 </script>
-
 </body>
 </html>
