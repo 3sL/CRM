@@ -3,7 +3,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM System</title>
+<title>CRM System Management For Utopia Trading And Export</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
@@ -20,6 +20,10 @@ th { background:#222; color:#fff;}
 .card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px;}
 #map { height:300px; margin-top:10px;}
 .holdRow { background:#fff3cd; }
+
+.logo { height:200px; display:block; margin:auto; }
+.developer { text-align:right; margin:10px 0; }
+.phone { text-align:right; margin-bottom:10px; }
 
 #notification {
 position:fixed;
@@ -42,34 +46,39 @@ font-weight:bold;
 
 <div class="container">
 
-<h2>CRM System</h2>
+<img src="logo.png" class="logo">
+<div class="developer">تم التطوير بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong></div>
+<div class="phone">📞 01222153415</div>
+
+<h2 id="title">CRM System Management For Utopia</h2>
+<button onclick="toggleLang()">🌐 عربي / English</button>
 
 <div class="row">
-<input id="name" placeholder="اسم العميل">
-<input id="phone" placeholder="رقم الهاتف">
+<input id="name">
+<input id="phone">
 <input type="date" id="date">
 
 <select id="status">
-<option>Interested</option>
-<option>In Progress</option>
-<option>Hold</option>
-<option>Completed</option>
+<option value="Interested">Interested</option>
+<option value="In Progress">In Progress</option>
+<option value="Hold">Hold</option>
+<option value="Completed">Completed</option>
 </select>
 
-<input id="notes" placeholder="ملاحظات">
-<input id="agent" placeholder="اسم المندوب">
-<input type="number" id="reminderDays" placeholder="Reminder بالأيام">
+<input id="notes">
+<input id="agent">
+<input type="number" id="reminderDays">
 </div>
 
 <div class="row">
-<button onclick="startTracking()">📍 تتبع</button>
-<button onclick="stopTracking()">⛔ إيقاف</button>
-<button onclick="addOrUpdate()">💾 حفظ</button>
+<button onclick="startTracking()">📍</button>
+<button onclick="stopTracking()">⛔</button>
+<button onclick="addOrUpdate()">💾</button>
 </div>
 
 <div class="stats">
-<div class="card" id="total">Total: 0</div>
-<div class="card" id="hold">Hold: 0</div>
+<div class="card" id="total">0</div>
+<div class="card" id="hold">0</div>
 </div>
 
 <div id="map"></div>
@@ -77,15 +86,16 @@ font-weight:bold;
 <table>
 <thead>
 <tr>
-<th>الاسم</th>
-<th>الهاتف</th>
-<th>التاريخ</th>
-<th>الحالة</th>
-<th>ملاحظات</th>
+<th id="thName"></th>
+<th id="thPhone"></th>
+<th id="thDate"></th>
+<th id="thStatus"></th>
+<th id="thNotes"></th>
 <th>Reminder</th>
-<th>واتساب</th>
-<th>الموقع</th>
-<th>حذف</th>
+<th>WhatsApp</th>
+<th>Location</th>
+<th>Edit</th>
+<th>Delete</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -97,9 +107,9 @@ font-weight:bold;
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// 🔥 Firebase (زي ما هو بدون تغيير)
+// Firebase (كما هو)
 const firebaseConfig = {
   apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
   authDomain: "crm-app-7733a.firebaseapp.com",
@@ -120,6 +130,38 @@ const agentEl=document.getElementById("agent");
 const reminderEl=document.getElementById("reminderDays");
 const table=document.getElementById("table");
 
+let lang="ar";
+let editId=null;
+
+// 🌐 اللغة
+window.toggleLang=()=>{
+  lang = lang==="ar"?"en":"ar";
+  updateUIText();
+  render();
+}
+
+function updateUIText(){
+  nameEl.placeholder = lang==="ar"?"اسم العميل":"Customer Name";
+  phoneEl.placeholder = lang==="ar"?"رقم الهاتف":"Phone";
+  notesEl.placeholder = lang==="ar"?"ملاحظات":"Notes";
+  agentEl.placeholder = lang==="ar"?"اسم المندوب":"Agent";
+  reminderEl.placeholder = lang==="ar"?"Reminder بالأيام":"Reminder Days";
+
+  document.getElementById("thName").innerText = lang==="ar"?"الاسم":"Name";
+  document.getElementById("thPhone").innerText = lang==="ar"?"الهاتف":"Phone";
+  document.getElementById("thDate").innerText = lang==="ar"?"التاريخ":"Date";
+  document.getElementById("thStatus").innerText = lang==="ar"?"الحالة":"Status";
+  document.getElementById("thNotes").innerText = lang==="ar"?"ملاحظات":"Notes";
+
+  statusEl.innerHTML = `
+  <option value="Interested">${lang==="ar"?"مهتم":"Interested"}</option>
+  <option value="In Progress">${lang==="ar"?"قيد التنفيذ":"In Progress"}</option>
+  <option value="Hold">${lang==="ar"?"معلق":"Hold"}</option>
+  <option value="Completed">${lang==="ar"?"مكتمل":"Completed"}</option>`;
+}
+
+updateUIText();
+
 // 🔔 Notification
 function showNotification(msg){
   const n=document.getElementById("notification");
@@ -128,7 +170,7 @@ function showNotification(msg){
   setTimeout(()=>n.style.display="none",3000);
 }
 
-// 🗺️ MAP
+// 🗺️ Map
 let map=L.map('map').setView([30.0444,31.2357],6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 let marker=L.marker([30.0444,31.2357],{draggable:true}).addTo(map);
@@ -139,28 +181,10 @@ marker.on('dragend', e=>{
   currentLocation={lat:p.lat,lng:p.lng};
 });
 
-map.on('click', e=>{
-  marker.setLatLng(e.latlng);
-  currentLocation={lat:e.latlng.lat,lng:e.latlng.lng};
-});
-
-// 📍 tracking
-let watchId;
-window.startTracking=()=> {
-  watchId=navigator.geolocation.watchPosition(pos=>{
-    const lat=pos.coords.latitude;
-    const lng=pos.coords.longitude;
-    currentLocation={lat,lng};
-    marker.setLatLng([lat,lng]);
-    map.setView([lat,lng],13);
-  });
-}
-window.stopTracking=()=> navigator.geolocation.clearWatch(watchId);
-
-// ➕ ADD
+// ➕ ADD / UPDATE
 window.addOrUpdate=async ()=>{
   if(!nameEl.value || !phoneEl.value){
-    alert("أدخل الاسم ورقم الهاتف");
+    alert("أدخل البيانات");
     return;
   }
 
@@ -169,7 +193,7 @@ window.addOrUpdate=async ()=>{
     ? new Date(now.getTime()+reminderEl.value*86400000)
     : null;
 
-  await addDoc(colRef,{
+  const data={
     name:nameEl.value,
     phone:phoneEl.value,
     date:dateEl.value,
@@ -178,20 +202,32 @@ window.addOrUpdate=async ()=>{
     agent:agentEl.value,
     location:currentLocation,
     reminderDate: reminderDate ? reminderDate.toISOString() : null
-  });
+  };
+
+  if(editId){
+    await updateDoc(doc(db,"clients",editId),data);
+    editId=null;
+  }else{
+    await addDoc(colRef,data);
+  }
 
   clearForm();
   render();
 }
 
-// 🧹
-function clearForm(){
-  nameEl.value="";
-  phoneEl.value="";
-  dateEl.value="";
-  notesEl.value="";
-  agentEl.value="";
-  reminderEl.value="";
+// ✏️ EDIT
+window.editClient=async(id)=>{
+  const d=await getDoc(doc(db,"clients",id));
+  if(d.exists()){
+    const c=d.data();
+    nameEl.value=c.name;
+    phoneEl.value=c.phone;
+    dateEl.value=c.date;
+    statusEl.value=c.status;
+    notesEl.value=c.notes;
+    agentEl.value=c.agent;
+    editId=id;
+  }
 }
 
 // 🗑️
@@ -202,20 +238,15 @@ window.deleteClient=async(id)=>{
 
 // 📱 WhatsApp
 function openWhatsApp(phone){
-  let msg="مرحبا، بخصوص الطلب الخاص بك";
-  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
+  window.open(`https://wa.me/${phone}`);
 }
 
 // ⏰ Reminder
 function checkReminder(c){
   if(!c.reminderDate) return "";
-
-  const now=new Date();
-  const r=new Date(c.reminderDate);
-
-  if(now>=r){
-    showNotification("⏰ متابعة مطلوبة: "+c.name);
-    return "⚠️ Reminder";
+  if(new Date() >= new Date(c.reminderDate)){
+    showNotification("⏰ Reminder: "+c.name);
+    return "⚠️";
   }
   return "";
 }
@@ -230,14 +261,13 @@ async function render(){
   snap.forEach(d=>{
     const c=d.data();
 
-    let rowClass=c.status==="Hold"?"holdRow":"";
-
     if(c.status==="Hold"){
       holdCount++;
-      showNotification("⚠️ شغل متوقف: "+c.name);
+      showNotification("⚠️ Hold: "+c.name);
     }
 
-    let reminderMsg=checkReminder(c);
+    let rowClass=c.status==="Hold"?"holdRow":"";
+    let reminder=checkReminder(c);
 
     table.innerHTML+=`
     <tr class="${rowClass}">
@@ -246,9 +276,10 @@ async function render(){
       <td>${c.date}</td>
       <td>${c.status}</td>
       <td>${c.notes}</td>
-      <td>${reminderMsg}</td>
+      <td>${reminder}</td>
       <td><button onclick="openWhatsApp('${c.phone}')">📱</button></td>
-      <td>${c.location ? `<a href="https://maps.google.com/?q=${c.location.lat},${c.location.lng}" target="_blank">🌍</a>`:"-"}</td>
+      <td>${c.location?`🌍`:"-"}</td>
+      <td><button onclick="editClient('${d.id}')">✏️</button></td>
       <td><button onclick="deleteClient('${d.id}')">❌</button></td>
     </tr>`;
   });
@@ -257,9 +288,17 @@ async function render(){
   document.getElementById("hold").innerText="Hold: "+holdCount;
 }
 
-// INIT
-render();
+// 🧹
+function clearForm(){
+  nameEl.value="";
+  phoneEl.value="";
+  dateEl.value="";
+  notesEl.value="";
+  agentEl.value="";
+  reminderEl.value="";
+}
 
+render();
 </script>
 
 </body>
