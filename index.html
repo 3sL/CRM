@@ -2,37 +2,48 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM & ERP System For Utopia Trading And Export</title>
+<title>CRM & ERP Modern Dashboard</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 <style>
-body { font-family: Arial; background:#f0f2f5; padding:20px;}
-.container { max-width:1400px; margin:auto; background:#fff; padding:20px; border-radius:10px;}
-input, select, button { padding:10px; margin:5px; width:100%; box-sizing:border-box;}
-.row { display:flex; gap:10px; flex-wrap:wrap;}
-.row > * { flex:1; min-width:150px;}
-table { width:100%; margin-top:20px; border-collapse: collapse;}
-th, td { padding:10px; border:1px solid #ddd; text-align:center;}
-th { background:#222; color:#fff;}
-button { cursor:pointer;}
-.tabs { display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;}
-.tab-btn { padding:10px 20px; background:#ddd; border:none; cursor:pointer; border-radius:5px;}
-.tab-btn.active { background:#222; color:#fff;}
-.tab-content { display:none; }
+/* --- Reset & Base --- */
+body { margin:0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7fd; color:#333;}
+.container { max-width:1400px; margin:auto; padding:20px; }
+/* --- Header --- */
+.header { text-align:center; margin-bottom:20px; }
+.header h1 { font-size:2rem; color:#0d6efd; }
+/* --- Tabs --- */
+.tabs { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;}
+.tab-btn { flex:1; padding:12px 20px; background:#e9ecef; border:none; cursor:pointer; border-radius:6px; font-weight:bold; transition:0.3s; }
+.tab-btn.active { background:#0d6efd; color:white; box-shadow:0 4px 8px rgba(0,0,0,0.1);}
+.tab-content { display:none; animation:fadeIn 0.5s;}
 .tab-content.active { display:block; }
-.erp-form { background:#f9f9f9; padding:15px; border-radius:8px; margin-top:10px; }
-.erp-form table { margin-top:10px; }
-.erp-form input, .erp-form select { width:100%; padding:5px; margin:2px 0; }
-.erp-btn-add { background:#28a745; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; }
-.erp-btn-submit { background:#007bff; color:#fff; border:none; padding:10px 20px; cursor:pointer; border-radius:5px; margin-top:10px; width:100%; }
-#map { width:100%; height:350px; margin-top:15px; border-radius:10px;}
+/* --- Rows & Forms --- */
+.row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;}
+.row > * { flex:1; min-width:150px;}
+input, select, button { padding:10px; border-radius:6px; border:1px solid #ccc; }
+button { cursor:pointer; transition:0.3s; }
+button:hover { opacity:0.9; }
+/* --- Tables --- */
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+th, td { padding:12px; text-align:center; border-bottom:1px solid #ddd; }
+th { background:#0d6efd; color:white; }
+tr:hover { background:#f1f3f8; }
+/* --- ERP Form --- */
+.erp-form { background:#fff; padding:15px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.05);}
+.erp-btn-add { background:#198754; color:white; border:none; padding:8px 15px; border-radius:5px; margin-top:10px; }
+.erp-btn-submit { background:#0d6efd; color:white; border:none; padding:10px 20px; border-radius:5px; margin-top:15px; width:100%; }
+/* --- Map --- */
+#map { width:100%; height:350px; border-radius:10px; margin-top:15px;}
+/* --- Animations --- */
+@keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
 </style>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script type="module">
+// --- Firebase Setup ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Firebase Config
 const firebaseConfig = {
   apiKey: "ضع هنا apiKey",
   authDomain: "ضع هنا authDomain",
@@ -41,7 +52,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Tabs
+// --- Tabs Function ---
 function showTab(id, btn){
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -49,34 +60,33 @@ function showTab(id, btn){
   btn.classList.add('active');
 }
 
-// CRM
+// --- CRM Functions ---
 const crmListEl = document.getElementById("crmList");
 async function addCRM(){
   const name = document.getElementById("crmName").value;
   const phone = document.getElementById("crmPhone").value;
   if(!name) return alert("ادخل اسم العميل");
-  const docRef = await addDoc(collection(db, "clients"), {name, phone, createdAt: new Date()});
+  await addDoc(collection(db,"clients"), {name, phone, createdAt:new Date()});
   renderCRM();
-  document.getElementById("crmName").value = "";
-  document.getElementById("crmPhone").value = "";
+  document.getElementById("crmName").value="";
+  document.getElementById("crmPhone").value="";
 }
 async function renderCRM(){
   crmListEl.innerHTML="";
   const snapshot = await getDocs(collection(db,"clients"));
   snapshot.forEach(docSnap=>{
-    const data = docSnap.data();
     const li = document.createElement("li");
-    li.textContent = `${data.name} - ${data.phone}`;
+    li.textContent = `${docSnap.data().name} - ${docSnap.data().phone}`;
     crmListEl.appendChild(li);
   });
 }
 
-// Tasks
+// --- Tasks ---
 const taskListEl = document.getElementById("taskList");
 async function addTask(){
   const task = document.getElementById("taskInput").value;
   if(!task) return;
-  await addDoc(collection(db,"tasks"), {task, createdAt: new Date()});
+  await addDoc(collection(db,"tasks"), {task, createdAt:new Date()});
   renderTasks();
   document.getElementById("taskInput").value="";
 }
@@ -90,14 +100,16 @@ async function renderTasks(){
   });
 }
 
-// ERP Accounting
+// --- ERP ---
 const erpTable = document.getElementById("erpTable").querySelector("tbody");
 function addERPRow(){
   const tr = document.createElement("tr");
   tr.innerHTML=`<td><select><option>الصندوق</option><option>البنك</option><option>المبيعات</option></select></td>
-  <td><input type="number" value="0"></td><td><input type="number" value="0"></td>`;
+  <td><input type="number" value="0"></td><td><input type="number" value="0"></td>
+  <td><button onclick="deleteERPRow(this)">🗑 حذف</button></td>`;
   erpTable.appendChild(tr);
 }
+function deleteERPRow(btn){ btn.closest("tr").remove(); }
 async function saveERP(){
   let entries=[];
   erpTable.querySelectorAll("tr").forEach(tr=>{
@@ -110,7 +122,7 @@ async function saveERP(){
   alert("تم حفظ القيد بنجاح");
 }
 
-// Excel
+// --- Excel ---
 function handleFile(e){
   const file = e.target.files[0];
   if(!file) return;
@@ -128,9 +140,9 @@ function renderExcel(data){
   const table = document.getElementById("excelTable");
   table.innerHTML="";
   data.forEach(row=>{
-    const tr = document.createElement("tr");
+    const tr=document.createElement("tr");
     row.forEach(cell=>{
-      const td = document.createElement("td");
+      const td=document.createElement("td");
       td.innerText = cell;
       tr.appendChild(td);
     });
@@ -145,22 +157,23 @@ function exportExcelFile(){
   XLSX.writeFile(wb, "export.xlsx");
 }
 
-// Map
+// --- Map ---
 let map = L.map('map').setView([30.0444,31.2357],6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
 let marker = L.marker([30.0444,31.2357],{draggable:true}).addTo(map);
-let currentLocation=null;
-marker.on('dragend', e=>{ const pos=marker.getLatLng(); currentLocation={lat:pos.lat,lng:pos.lng}; });
-map.on('click', e=>{ marker.setLatLng(e.latlng); currentLocation={lat:e.latlng.lat,lng:e.latlng.lng}; });
+marker.on('dragend', e=>{ const pos=marker.getLatLng(); });
+map.on('click', e=>{ marker.setLatLng(e.latlng); });
 
-// Initialize
+// --- Init ---
 renderCRM();
 renderTasks();
 </script>
 </head>
 <body>
 <div class="container">
-<h2>CRM & ERP System For Utopia Trading And Export</h2>
+<div class="header">
+<h1>CRM & ERP Dashboard</h1>
+</div>
 
 <div class="tabs">
 <button class="tab-btn active" onclick="showTab('crmTab', this)">CRM</button>
@@ -171,7 +184,6 @@ renderTasks();
 
 <!-- CRM -->
 <div id="crmTab" class="tab-content active">
-<h3>CRM</h3>
 <div class="row">
 <input id="crmName" placeholder="اسم العميل">
 <input id="crmPhone" placeholder="رقم الهاتف">
@@ -182,7 +194,6 @@ renderTasks();
 
 <!-- Tasks -->
 <div id="tasksTab" class="tab-content">
-<h3>Tasks</h3>
 <div class="row">
 <input id="taskInput" placeholder="اكتب المهمة">
 <button onclick="addTask()">➕ إضافة المهمة</button>
@@ -192,29 +203,26 @@ renderTasks();
 
 <!-- ERP -->
 <div id="erpTab" class="tab-content">
-<h3>ERP Accounting</h3>
 <div class="erp-form">
-<form id="accountingForm">
 <table id="erpTable">
-<thead><tr><th>الحساب</th><th>مدين</th><th>دائن</th></tr></thead>
+<thead><tr><th>الحساب</th><th>مدين</th><th>دائن</th><th>إجراء</th></tr></thead>
 <tbody>
 <tr>
 <td><select><option>الصندوق</option><option>البنك</option><option>المبيعات</option></select></td>
 <td><input type="number" value="0"></td>
 <td><input type="number" value="0"></td>
+<td><button onclick="deleteERPRow(this)">🗑 حذف</button></td>
 </tr>
 </tbody>
 </table>
-<button type="button" class="erp-btn-add" onclick="addERPRow()">+ إضافة سطر</button>
-<button type="button" class="erp-btn-submit" onclick="saveERP()">💾 حفظ القيد</button>
-</form>
+<button class="erp-btn-add" onclick="addERPRow()">+ إضافة سطر</button>
+<button class="erp-btn-submit" onclick="saveERP()">💾 حفظ القيد</button>
 </div>
 <div id="map"></div>
 </div>
 
 <!-- Excel -->
 <div id="excelTab" class="tab-content">
-<h3>Excel Upload / Export</h3>
 <input type="file" id="excelFile" onchange="handleFile(event)">
 <button onclick="exportExcelFile()">📊 تصدير Excel</button>
 <table id="excelTable" border="1"></table>
