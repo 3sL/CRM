@@ -47,10 +47,10 @@ button { cursor:pointer; }
 <h2 id="title">CRM & ERP System For Utopia Trading And Export</h2>
 
 <div class="tabs">
-  <button class="tab-btn active" onclick="showTab(event,'crmTab')">CRM</button>
-  <button class="tab-btn" onclick="showTab(event,'tasksTab')">Tasks</button>
-  <button class="tab-btn" onclick="showTab(event,'erpTab')">ERP</button>
-  <button class="tab-btn" onclick="showTab(event,'excelTab')">Excel</button>
+  <button class="tab-btn active" onclick="showTab('crmTab',event)">CRM</button>
+  <button class="tab-btn" onclick="showTab('tasksTab',event)">Tasks</button>
+  <button class="tab-btn" onclick="showTab('erpTab',event)">ERP</button>
+  <button class="tab-btn" onclick="showTab('excelTab',event)">Excel</button>
 </div>
 
 <!-- CRM Tab -->
@@ -132,55 +132,13 @@ button { cursor:pointer; }
 </div>
 
 <!-- Excel Tab -->
-<!-- Excel Tab -->
 <div id="excelTab" class="tab-content">
-  <h3>Excel Upload / Edit</h3>
-  <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleFile(event)">
-  <button onclick="exportExcelFile()">📊 تصدير Excel</button>
-  <table id="excelTable" border="1"></table>
+<h3>Excel Upload / Edit</h3>
+<input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleFile(event)">
+<button onclick="exportExcelFile()">📊 تصدير Excel</button>
+<table id="excelTable" border="1"></table>
 </div>
 
-<script>
-let currentExcelData = []; // لتخزين البيانات المرفوعة
-
-function handleFile(e){
-  const file = e.target.files[0];
-  const reader = new FileReader();
-  reader.onload = function(evt){
-    const data = new Uint8Array(evt.target.result);
-    const workbook = XLSX.read(data, {type:"array"});
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    currentExcelData = XLSX.utils.sheet_to_json(worksheet, {header:1});
-    renderExcelTable();
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function renderExcelTable(){
-  const table = document.getElementById("excelTable");
-  table.innerHTML = "";
-  currentExcelData.forEach((row,rowIndex)=>{
-    const tr = document.createElement("tr");
-    row.forEach((cell,colIndex)=>{
-      const td = document.createElement("td");
-      const input = document.createElement("input");
-      input.value = cell || "";
-      input.oninput = function(){ currentExcelData[rowIndex][colIndex] = this.value; };
-      td.appendChild(input);
-      tr.appendChild(td);
-    });
-    table.appendChild(tr);
-  });
-}
-
-function exportExcelFile(){
-  const ws = XLSX.utils.aoa_to_sheet(currentExcelData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-  XLSX.writeFile(wb, "edited.xlsx");
-}
-</script>
 </div>
 
 <script type="module">
@@ -197,7 +155,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const colRef = collection(db,"clients");
 
-// عناصر الصفحة
+// Elements
 const name=document.getElementById("name"), phone=document.getElementById("phone"), date=document.getElementById("date"),
 status=document.getElementById("status"), notes=document.getElementById("notes"), agent=document.getElementById("agent"),
 region=document.getElementById("region"), agentFilter=document.getElementById("agentFilter"), regionFilter=document.getElementById("regionFilter"),
@@ -335,11 +293,11 @@ async function exportExcel(){
 }
 
 // Tabs
-function showTab(e,id){
+function showTab(id,event){
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  e.currentTarget.classList.add('active');
+  if(event) event.currentTarget.classList.add('active');
 }
 
 // Tasks
@@ -365,9 +323,12 @@ function updateUIText(){
   document.getElementById("stopTrackBtn").innerText=lang==="ar"?"⛔ إيقاف":"⛔ Stop Tracking";
   document.getElementById("saveBtn").innerText=lang==="ar"?"💾 حفظ":"💾 Save";
   document.getElementById("exportBtn").innerText=lang==="ar"?"📊 Excel":"📊 Excel";
+  document.querySelectorAll('.tab-btn')[0].innerText=lang==="ar"?"CRM":"CRM";
+  document.querySelectorAll('.tab-btn')[1].innerText=lang==="ar"?"Tasks":"Tasks";
+  document.querySelectorAll('.tab-btn')[2].innerText=lang==="ar"?"ERP":"ERP";
+  document.querySelectorAll('.tab-btn')[3].innerText=lang==="ar"?"Excel":"Excel";
 }
-fillRegionSelects();
-render();
+fillRegionSelects(); render();
 </script>
 </body>
 </html>
