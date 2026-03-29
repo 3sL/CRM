@@ -8,203 +8,259 @@
 <style>
   body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
   .container { max-width: 1200px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; }
-  input, select, button, textarea { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; }
-  textarea { resize: vertical; }
-  .row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .row > * { flex: 1; min-width: 150px; }
-  table { width: 100%; margin-top: 20px; border-collapse: collapse; }
-  th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
-  th { background: #222; color: #fff; }
-  button { cursor: pointer; border-radius: 5px; border: none; }
-  button:hover { opacity: 0.9; }
-  .lang-btn { width: auto; margin-bottom: 15px; float: left; padding: 8px 15px; background: #eee; border: 1px solid #ccc; border-radius: 5px; }
-  .stats { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-  .card { flex: 1; background: #eee; padding: 10px; text-align: center; border-radius: 8px; min-width: 120px; }
-  .header { text-align: center; margin-bottom: 10px; }
+
+  /* Tabs styling */
+  .tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    flex: 1;
+    min-width: 120px;
+    background: #222;
+    color: white;
+    padding: 12px 10px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: bold;
+    text-align: center;
+    transition: background 0.3s ease;
+  }
+  .tab-btn.active {
+    background: #007bff;
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+
+  /* Your existing styles */
+  input, select, button { padding:10px; margin:5px; width:100%; box-sizing: border-box;}
+  .row { display:flex; gap:10px; flex-wrap:wrap; }
+  .row > * { flex:1; min-width:150px; }
+  table { width:100%; margin-top:20px; border-collapse: collapse;}
+  th, td { padding:10px; border:1px solid #ddd; text-align:center;}
+  th { background:#222; color:#fff;}
+  button { cursor:pointer; }
+  .lang-btn { width:auto; margin-bottom:15px;}
+  .stats { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+  .card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px;}
+  .header { text-align:center; margin-bottom:10px;}
   .logo {
-    height: 200px;
-    width: auto;
+    height:200px;
+    width:auto;
     display: block;
     margin: 0 auto 20px auto;
   }
-  .developer { text-align: right; margin-bottom: 5px; font-size: 14px; }
-  .phone { text-align: right; margin-bottom: 15px; font-size: 14px; }
-  #map { width: 100%; height: 350px; margin-top: 15px; border-radius: 10px; }
-  .tab-btn {
-    background: #222; color: white; padding: 12px 20px; border: none; cursor: pointer; margin-bottom: 10px;
-    width: 100%;
-    border-radius: 5px;
-    font-weight: bold;
+  .developer { text-align:right; margin-bottom:5px; font-size:14px; }
+  .phone { text-align:right; margin-bottom:15px; font-size:14px; }
+  #map { width:100%; height:350px; margin-top:15px; border-radius:10px;}
+
+  /* Excel import tab style */
+  #excelImportTab input[type=file] {
+    padding: 5px 0;
   }
-  .tab-btn.active { background: #007bff; }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
-  #whatsappIcon {
-    width: 25px;
-    cursor: pointer;
+  #excelImportTab table {
+    margin-top: 10px;
+    max-width: 100%;
+    border-collapse: collapse;
   }
-  #fileInputExcel {
-    margin: 10px 0;
+  #excelImportTab th, #excelImportTab td {
+    border: 1px solid #ccc;
+    padding: 5px 8px;
+    text-align: center;
   }
 </style>
+
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script type="module" src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
-<script type="module" src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"></script>
 </head>
 <body>
 
 <div class="container">
 
-  <!-- الشعار -->
+  <!-- Header & info -->
   <div class="header">
     <img src="logo.png" alt="Company Logo" class="logo" />
   </div>
-
-  <!-- معلومات المطور -->
   <div class="developer" id="developer">
     تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>
   </div>
   <div class="phone" id="phoneText">📞 01222153415</div>
 
-  <!-- زر اللغة -->
-  <button class="lang-btn" id="langBtn">🌐 English / عربي</button>
+  <!-- Language toggle -->
+  <button class="lang-btn" onclick="toggleLang()">🌐 عربي / English</button>
 
-  <!-- العنوان -->
   <h2 id="title">CRM + ERP System For Utopia Trading And Export</h2>
 
-  <!-- أزرار التبويبات -->
-  <button class="tab-btn active" data-tab="dashboardTab">Dashboard</button>
-  <button class="tab-btn" data-tab="crmTab">CRM</button>
-  <button class="tab-btn" data-tab="erpTab">ERP</button>
-  <button class="tab-btn" data-tab="excelTab">Excel</button>
+  <!-- Tabs Buttons -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="dashboardTab">Dashboard</button>
+    <button class="tab-btn" data-tab="crmTab">CRM</button>
+    <button class="tab-btn" data-tab="erpTab">ERP</button>
+    <button class="tab-btn" data-tab="excelTab">Excel</button>
+  </div>
 
-  <!-- تبويب الـ Dashboard -->
+  <!-- Tabs Content -->
+
+  <!-- Dashboard Tab -->
   <div id="dashboardTab" class="tab-content active">
     <div class="stats">
       <div class="card" id="total">👥 إجمالي: 0</div>
       <div class="card" id="interested">🎯 مهتم: 0</div>
       <div class="card" id="working">🔧 قيد التنفيذ: 0</div>
       <div class="card" id="done">✅ مكتمل: 0</div>
-      <div class="card" id="holdCard">⏸️ Hold: 0</div>
+      <div class="card" id="hold">⏸️ Hold: 0</div>
+      <div class="card" id="tasksCount">📝 المهام: 0</div>
+      <div class="card" id="erpSales">💰 المبيعات: 0</div>
+      <div class="card" id="erpPurchases">🛒 المشتريات: 0</div>
+      <div class="card" id="erpStock">📦 المخزون: 0</div>
     </div>
   </div>
 
-  <!-- تبويب CRM -->
+  <!-- CRM Tab -->
   <div id="crmTab" class="tab-content">
+
+    <div class="row">
+      <input id="agentFilter" placeholder="فلترة حسب العميل (اختياري)" oninput="renderClients()" />
+      <select id="regionFilter"></select>
+    </div>
+
     <div class="row">
       <input id="name" placeholder="اسم العميل" />
       <input id="phone" placeholder="رقم الهاتف" />
       <input type="date" id="date" />
       <select id="status">
-        <option value="Interested">مهتم</option>
-        <option value="In Progress">قيد التنفيذ</option>
-        <option value="Hold">Hold ⏸️</option>
-        <option value="Completed">مكتمل</option>
+        <option>Interested</option>
+        <option>In Progress</option>
+        <option>Hold</option>
+        <option>Completed</option>
       </select>
-    </div>
-    <div class="row">
-      <textarea id="notes" placeholder="ملاحظات"></textarea>
-      <input id="agent" placeholder="اسم العميل" />
+      <input id="notes" placeholder="ملاحظات" />
+      <input id="agent" placeholder="أدخل اسم العميل" />
       <select id="region"></select>
     </div>
+
     <div class="row">
       <button onclick="startTracking()" id="trackBtn">📍 بدء التتبع</button>
       <button onclick="stopTracking()" id="stopTrackBtn">⛔ إيقاف</button>
-      <button onclick="addOrUpdate()" id="saveBtn">💾 حفظ</button>
-      <button onclick="exportExcel()" id="exportBtn">📊 تصدير Excel</button>
+      <button onclick="addOrUpdateClient()" id="saveBtn">💾 حفظ</button>
+      <button onclick="exportExcel()" id="exportBtn">📊 Excel تصدير</button>
+      <button onclick="importExcelPrompt()" id="importBtn">⬆️ Excel استيراد</button>
+      <input type="file" id="importFileInput" style="display:none" accept=".xlsx,.xls" onchange="importExcel(event)" />
     </div>
-    <div class="stats" style="margin-top:10px;">
-      <div class="card" id="totalClients">إجمالي العملاء: 0</div>
-      <div class="card" id="totalHold">حالات Hold: 0</div>
-    </div>
+
     <div id="map"></div>
+
     <table>
       <thead>
         <tr>
-          <th>الاسم</th>
-          <th>الهاتف</th>
-          <th>التاريخ</th>
-          <th>الحالة</th>
-          <th>ملاحظات</th>
-          <th>العميل</th>
-          <th>المحافظة</th>
-          <th>الموقع</th>
-          <th>المسافة</th>
-          <th>تعديل</th>
-          <th>حذف</th>
-          <th>واتساب</th>
+          <th id="thName">الاسم</th>
+          <th id="thPhone">الهاتف</th>
+          <th id="thDate">التاريخ</th>
+          <th id="thStatus">الحالة</th>
+          <th id="thNotes">ملاحظات</th>
+          <th id="thAgent">العميل</th>
+          <th id="thCreatedBy">الادمن</th>
+          <th id="thCreatedAt">تاريخ الإنشاء</th>
+          <th id="thRegion">المحافظة</th>
+          <th id="thLocation">الموقع</th>
+          <th id="thDistance">المسافة</th>
+          <th id="thEdit">تعديل</th>
+          <th id="thDelete">حذف</th>
         </tr>
       </thead>
-      <tbody id="table"></tbody>
+      <tbody id="clientsTable"></tbody>
     </table>
+
   </div>
 
-  <!-- تبويب ERP -->
+  <!-- ERP Tab -->
   <div id="erpTab" class="tab-content">
-    <h3>ERP Module</h3>
-    <p>هنا يمكنك إضافة بيانات المخزون، المبيعات، والمشتريات</p>
+    <h3>نظام ERP (المخزون، المبيعات، المشتريات)</h3>
     <div class="row">
-      <input id="stockItem" placeholder="اسم الصنف" />
-      <input type="number" id="stockQuantity" placeholder="الكمية" min="0" />
-      <button onclick="addStockItem()">إضافة صنف</button>
+      <input id="erpProductName" placeholder="اسم المنتج" />
+      <input type="number" id="erpProductQty" placeholder="الكمية" min="0" />
+      <button onclick="addStock()">➕ إضافة للمخزون</button>
     </div>
+    <div class="row">
+      <input id="erpSellProductName" placeholder="اسم المنتج للبيع" />
+      <input type="number" id="erpSellQty" placeholder="كمية البيع" min="1" />
+      <button onclick="addSale()">بيع</button>
+    </div>
+    <div class="row">
+      <input id="erpPurchaseProductName" placeholder="اسم المنتج للشراء" />
+      <input type="number" id="erpPurchaseQty" placeholder="كمية الشراء" min="1" />
+      <button onclick="addPurchase()">شراء</button>
+    </div>
+
     <table>
       <thead>
-        <tr><th>الصنف</th><th>الكمية</th><th>حذف</th></tr>
+        <tr>
+          <th>المنتج</th>
+          <th>الكمية المتاحة</th>
+        </tr>
       </thead>
-      <tbody id="stockTable"></tbody>
+      <tbody id="erpStockTable"></tbody>
     </table>
   </div>
 
-  <!-- تبويب Excel -->
+  <!-- Excel Tab -->
   <div id="excelTab" class="tab-content">
-    <h3>Excel Module</h3>
-    <input type="file" id="fileInputExcel" accept=".xlsx,.xls" />
-    <button onclick="exportExcel()">تصدير بيانات العملاء Excel</button>
-    <div id="excelData" style="overflow:auto; max-height:400px; margin-top: 10px;"></div>
+    <h3>استيراد وتعديل ملف Excel</h3>
+    <input type="file" id="excelFileInput" accept=".xlsx,.xls" />
+    <button onclick="loadExcelFile()">تحميل الملف</button>
+
+    <div id="excelDataContainer" style="overflow-x:auto; margin-top:15px;"></div>
   </div>
 
 </div>
 
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script type="module">
-// Firebase Initialization (احرص على استبدال القيم إذا أردت ربط Firebase حقيقي، حالياً تستخدم نفس القيم القديمة)
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
+// Firebase config كما في نسختك السابقة
 const firebaseConfig = {
   apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
   authDomain: "crm-app-7733a.firebaseapp.com",
   projectId: "crm-app-7733a",
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const clientsCol = collection(db, "clients");
-const stockCol = collection(db, "stock");
+const clientsCol = collection(db,"clients");
+const tasksCol = collection(db, "tasks");
 
-// عناصر DOM
-const name = document.getElementById("name");
-const phone = document.getElementById("phone");
-const date = document.getElementById("date");
-const status = document.getElementById("status");
-const notes = document.getElementById("notes");
-const agent = document.getElementById("agent");
-const region = document.getElementById("region");
-const table = document.getElementById("table");
-const totalClients = document.getElementById("totalClients");
-const totalHold = document.getElementById("totalHold");
-const holdCard = document.getElementById("holdCard");
-const interestedEl = document.getElementById("interested");
-const workingEl = document.getElementById("working");
-const doneEl = document.getElementById("done");
-const totalEl = document.getElementById("total");
+// عناصر الصفحة
+const name = document.getElementById("name"),
+      phone = document.getElementById("phone"),
+      date = document.getElementById("date"),
+      status = document.getElementById("status"),
+      notes = document.getElementById("notes"),
+      agent = document.getElementById("agent"),
+      region = document.getElementById("region"),
+      agentFilter = document.getElementById("agentFilter"),
+      regionFilter = document.getElementById("regionFilter"),
+      clientsTable = document.getElementById("clientsTable"),
+      totalEl = document.getElementById("total"),
+      interestedEl = document.getElementById("interested"),
+      workingEl = document.getElementById("working"),
+      doneEl = document.getElementById("done"),
+      holdEl = document.getElementById("hold"),
+      tasksCountEl = document.getElementById("tasksCount"),
+      erpSalesEl = document.getElementById("erpSales"),
+      erpPurchasesEl = document.getElementById("erpPurchases"),
+      erpStockEl = document.getElementById("erpStock"),
+      erpStockTable = document.getElementById("erpStockTable");
 
-const stockTable = document.getElementById("stockTable");
-const stockItemInput = document.getElementById("stockItem");
-const stockQuantityInput = document.getElementById("stockQuantity");
+let lang = "ar";
 
-// المحافظات
 const egyptRegions = [
   "القاهرة","الإسكندرية","الجيزة","القليوبية","الشرقية","الدقهلية",
   "المنوفية","الغربية","كفر الشيخ","دمياط","بورسعيد","السويس",
@@ -213,334 +269,379 @@ const egyptRegions = [
   "جنوب سيناء","البحر الأحمر"
 ];
 
-// ملء قائمة المناطق
-function fillRegionSelect(){
+function fillRegionSelects(){
   region.innerHTML = "";
+  regionFilter.innerHTML = "";
   let defaultOpt = document.createElement("option");
   defaultOpt.value = "";
-  defaultOpt.text = "اختر المحافظة";
+  defaultOpt.text = lang === "ar" ? "اختر المحافظة" : "Select Region";
   region.appendChild(defaultOpt);
+
+  let defaultOptFilter = document.createElement("option");
+  defaultOptFilter.value = "";
+  defaultOptFilter.text = lang === "ar" ? "كل المحافظات" : "All Regions";
+  regionFilter.appendChild(defaultOptFilter);
+
   egyptRegions.forEach(r => {
-    const opt = document.createElement("option");
-    opt.value = r;
-    opt.text = r;
-    region.appendChild(opt);
+    let o1 = document.createElement("option");
+    o1.value = r;
+    o1.text = r;
+    region.appendChild(o1);
+
+    let o2 = document.createElement("option");
+    o2.value = r;
+    o2.text = r;
+    regionFilter.appendChild(o2);
   });
 }
-fillRegionSelect();
 
-// Leaflet Map Initialization
-let map = L.map('map').setView([30.0444, 31.2357], 6);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
-let marker = L.marker([30.0444, 31.2357], { draggable: true }).addTo(map);
+// Leaflet Map
+let map = L.map('map').setView([30.0444,31.2357],6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+let marker = L.marker([30.0444,31.2357],{draggable:true}).addTo(map);
 let currentLocation = null;
 
-marker.on('dragend', () => {
+marker.on('dragend', function(e){
   const pos = marker.getLatLng();
-  currentLocation = { lat: pos.lat, lng: pos.lng };
+  currentLocation = {lat:pos.lat,lng:pos.lng};
 });
 
-map.on('click', (e) => {
+map.on('click', function(e){
   marker.setLatLng(e.latlng);
-  currentLocation = { lat: e.latlng.lat, lng: e.latlng.lng };
+  currentLocation = {lat:e.latlng.lat,lng:e.latlng.lng};
 });
 
-// Tracking functions
+// TRACKING
 let watchId;
-function startTracking() {
-  if (!navigator.geolocation) return alert("Geolocation is not supported by your browser");
-  watchId = navigator.geolocation.watchPosition(pos => {
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-    currentLocation = { lat, lng };
-    marker.setLatLng([lat, lng]);
-    map.setView([lat, lng], 13);
-  });
-}
-function stopTracking() {
-  if (watchId) navigator.geolocation.clearWatch(watchId);
-}
+function startTracking(){ watchId = navigator.geolocation.watchPosition(pos=>{
+  const lat = pos.coords.latitude; const lng = pos.coords.longitude;
+  currentLocation = {lat,lng};
+  marker.setLatLng([lat,lng]);
+  map.setView([lat,lng],13);
+});}
+function stopTracking(){ navigator.geolocation.clearWatch(watchId);}
 
-// Distance calculation
-function calcDistance(lat1, lng1, lat2, lng2) {
+// DISTANCE
+function calcDistance(lat1,lng1,lat2,lng2){
   const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(2);
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLng = (lng2-lng1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return (R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(2);
 }
 
-// CRUD for clients
-let editId = null;
-
-async function addOrUpdate() {
-  if (!name.value.trim() || !phone.value.trim()) {
-    alert("الرجاء إدخال الاسم ورقم الهاتف");
-    return;
-  }
+// CLIENTS MANAGEMENT
+let editClientId = null;
+async function addOrUpdateClient(){
+  if(!name.value || !phone.value){ alert(lang==="ar"?"أدخل الاسم ورقم الهاتف":"Enter Name & Phone"); return; }
   const now = new Date().toLocaleString();
   const clientData = {
-    name: name.value.trim(),
-    phone: phone.value.trim(),
-    date: date.value,
-    status: status.value,
-    notes: notes.value.trim(),
-    agent: agent.value.trim() || "-",
-    region: region.value || "-",
-    location: currentLocation,
-    createdBy: agent.value.trim() || "-",
-    createdAt: now
+    name:name.value, phone:phone.value, date:date.value,
+    status:status.value, notes:notes.value, location:currentLocation,
+    agent:agent.value || "-", region:region.value || "-",
+    createdBy:agent.value || "-", createdAt:now
   };
   try {
-    if (editId) {
-      await updateDoc(doc(db, "clients", editId), clientData);
-      editId = null;
+    if(editClientId){
+      await updateDoc(doc(db,"clients",editClientId),clientData);
+      editClientId = null;
     } else {
       await addDoc(clientsCol, clientData);
     }
-    clearForm();
-    await renderClients();
-  } catch (e) {
-    console.error(e);
-    alert("❌ حدث خطأ في الحفظ");
+    clearClientForm();
+    renderClients();
+  } catch(e){ console.error(e); alert("❌ Error"); }
+}
+
+async function editClient(id){
+  const d = await getDoc(doc(db,"clients",id));
+  if(d.exists()){
+    const c = d.data();
+    name.value = c.name; phone.value = c.phone; date.value = c.date;
+    status.value = c.status; notes.value = c.notes;
+    agent.value = c.agent; region.value = c.region;
+    if(c.location){ currentLocation = c.location; marker.setLatLng([c.location.lat,c.location.lng]); map.setView([c.location.lat,c.location.lng],13); }
+    editClientId = id;
+    showTab('crmTab');
   }
 }
 
-async function renderClients() {
-  table.innerHTML = "";
-  let total = 0, interested = 0, working = 0, done = 0, holdCount = 0;
+function clearClientForm(){
+  name.value = ""; phone.value = ""; date.value = ""; notes.value = ""; agent.value = ""; region.value = "";
+  status.value = "Interested";
+  editClientId = null;
+  currentLocation = null;
+}
+
+async function deleteClient(id){
+  if(!confirm(lang === "ar" ? "هل أنت متأكد من الحذف؟" : "Are you sure to delete?")) return;
+  await deleteDoc(doc(db,"clients",id));
+  renderClients();
+}
+
+// RENDER CLIENTS TABLE
+async function renderClients(){
+  clientsTable.innerHTML = "";
+  const filterAgent = agentFilter.value.toLowerCase();
+  const filterRegion = regionFilter.value;
+
+  let total=0, interested=0, working=0, done=0, hold=0;
   const snap = await getDocs(clientsCol);
-  snap.forEach(docSnap => {
-    const c = docSnap.data();
+  snap.forEach(d=>{
+    const c = d.data();
+    if(filterAgent && !c.agent.toLowerCase().includes(filterAgent)) return;
+    if(filterRegion && c.region !== filterRegion) return;
     total++;
-    if (c.status === "Interested") interested++;
-    else if (c.status === "In Progress") working++;
-    else if (c.status === "Completed") done++;
-    else if (c.status === "Hold") holdCount++;
-    let dist = (c.location && currentLocation) ? calcDistance(currentLocation.lat, currentLocation.lng, c.location.lat, c.location.lng) + " km" : "-";
-    table.innerHTML += `
+    if(c.status === "Interested") interested++;
+    else if(c.status === "In Progress") working++;
+    else if(c.status === "Completed") done++;
+    else if(c.status === "Hold") hold++;
+
+    let distanceStr = "-";
+    if(c.location && currentLocation) distanceStr = calcDistance(currentLocation.lat,currentLocation.lng,c.location.lat,c.location.lng) + " كم";
+
+    clientsTable.innerHTML += `
       <tr>
         <td>${c.name}</td>
         <td>${c.phone}</td>
-        <td>${c.date || "-"}</td>
+        <td>${c.date}</td>
         <td>${c.status}</td>
         <td>${c.notes}</td>
         <td>${c.agent}</td>
+        <td>${c.createdBy}</td>
+        <td>${c.createdAt}</td>
         <td>${c.region}</td>
-        <td>${c.location ? `<a href="https://www.openstreetmap.org/?mlat=${c.location.lat}&mlon=${c.location.lng}" target="_blank">🌍</a>` : "-"}</td>
-        <td>${dist}</td>
-        <td><button onclick="editClient('${docSnap.id}')">✏️ تعديل</button></td>
-        <td><button onclick="deleteClient('${docSnap.id}')">❌ حذف</button></td>
-        <td><img id="whatsappIcon" src="https://img.icons8.com/color/48/000000/whatsapp--v1.png" alt="واتساب" onclick="sendWhatsapp('${c.phone}', '${c.name}')" title="إرسال واتساب" /></td>
+        <td>${c.location ? c.location.lat.toFixed(4) + "," + c.location.lng.toFixed(4) : "-"}</td>
+        <td>${distanceStr}</td>
+        <td><button onclick="editClient('${d.id}')">✏️ تعديل</button></td>
+        <td><button onclick="deleteClient('${d.id}')">❌ حذف</button></td>
       </tr>
     `;
   });
-  totalClients.innerText = `إجمالي العملاء: ${total}`;
-  interestedEl.innerText = `🎯 مهتم: ${interested}`;
-  workingEl.innerText = `🔧 قيد التنفيذ: ${working}`;
-  doneEl.innerText = `✅ مكتمل: ${done}`;
-  holdCard.innerText = `⏸️ Hold: ${holdCount}`;
-  totalHold.innerText = `حالات Hold: ${holdCount}`;
-  totalEl.innerText = `👥 إجمالي: ${total}`;
+
+  totalEl.textContent = lang==="ar" ? `👥 إجمالي: ${total}` : `Total: ${total}`;
+  interestedEl.textContent = lang==="ar" ? `🎯 مهتم: ${interested}` : `Interested: ${interested}`;
+  workingEl.textContent = lang==="ar" ? `🔧 قيد التنفيذ: ${working}` : `In Progress: ${working}`;
+  doneEl.textContent = lang==="ar" ? `✅ مكتمل: ${done}` : `Completed: ${done}`;
+  holdEl.textContent = lang==="ar" ? `⏸️ Hold: ${hold}` : `Hold: ${hold}`;
 }
 
-async function editClient(id) {
-  const docSnap = await getDoc(doc(db, "clients", id));
-  if (docSnap.exists()) {
-    const c = docSnap.data();
-    name.value = c.name || "";
-    phone.value = c.phone || "";
-    date.value = c.date || "";
-    status.value = c.status || "Interested";
-    notes.value = c.notes || "";
-    agent.value = c.agent || "";
-    region.value = c.region || "";
-    if (c.location) {
-      currentLocation = c.location;
-      marker.setLatLng([c.location.lat, c.location.lng]);
-      map.setView([c.location.lat, c.location.lng], 13);
-    }
-    editId = id;
-  }
-}
-
-async function deleteClient(id) {
-  if (confirm("هل أنت متأكد من حذف هذا العميل؟")) {
-    await deleteDoc(doc(db, "clients", id));
-    await renderClients();
-  }
-}
-
-function clearForm() {
-  name.value = "";
-  phone.value = "";
-  date.value = "";
-  status.value = "Interested";
-  notes.value = "";
-  agent.value = "";
-  region.value = "";
-  editId = null;
-}
-
-// إرسال رسالة واتساب
-function sendWhatsapp(phone, name) {
-  const message = encodeURIComponent(`مرحبًا ${name}, هذا تذكير من Utopia CRM`);
-  const url = `https://wa.me/${phone}?text=${message}`;
-  window.open(url, '_blank');
-}
-
-// إضافة أصناف المخزون
-let stockItems = [];
-function addStockItem() {
-  const item = stockItemInput.value.trim();
-  const qty = Number(stockQuantityInput.value);
-  if (!item || qty <= 0) {
-    alert("الرجاء إدخال اسم الصنف والكمية بشكل صحيح");
-    return;
-  }
-  stockItems.push({ item, qty });
-  renderStock();
-  stockItemInput.value = "";
-  stockQuantityInput.value = "";
-}
-
-function renderStock() {
-  stockTable.innerHTML = "";
-  stockItems.forEach((s, i) => {
-    stockTable.innerHTML += `
-      <tr>
-        <td>${s.item}</td>
-        <td>${s.qty}</td>
-        <td><button onclick="removeStock(${i})">❌ حذف</button></td>
-      </tr>
-    `;
-  });
-}
-
-function removeStock(index) {
-  stockItems.splice(index, 1);
-  renderStock();
-}
-
-// استيراد Excel وعرضه وتعديله
-const fileInputExcel = document.getElementById("fileInputExcel");
-const excelDataDiv = document.getElementById("excelData");
-let excelJsonData = [];
-
-fileInputExcel.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (evt) => {
-    const data = evt.target.result;
-    const workbook = XLSX.read(data, { type: "binary" });
-    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-    excelJsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
-    renderExcelTable();
-  };
-  reader.readAsBinaryString(file);
-});
-
-function renderExcelTable() {
-  if (excelJsonData.length === 0) {
-    excelDataDiv.innerHTML = "لا يوجد بيانات لعرضها.";
-    return;
-  }
-  let html = `<table border="1" cellpadding="5" cellspacing="0"><thead><tr>`;
-  Object.keys(excelJsonData[0]).forEach(header => {
-    html += `<th contenteditable="true">${header}</th>`;
-  });
-  html += "</tr></thead><tbody>";
-  excelJsonData.forEach(row => {
-    html += "<tr>";
-    Object.values(row).forEach(cell => {
-      html += `<td contenteditable="true">${cell}</td>`;
-    });
-    html += "</tr>";
-  });
-  html += "</tbody></table>";
-  excelDataDiv.innerHTML = html;
-}
-
-// تصدير Excel للعملاء
-async function exportExcel() {
-  const snap = await getDocs(clientsCol);
-  let exportData = [];
-  snap.forEach(docSnap => {
-    const c = docSnap.data();
-    exportData.push({
-      الاسم: c.name,
-      الهاتف: c.phone,
-      التاريخ: c.date,
-      الحالة: c.status,
-      الملاحظات: c.notes,
-      العميل: c.agent,
-      المحافظة: c.region
-    });
-  });
-  const ws = XLSX.utils.json_to_sheet(exportData);
-  const wb = XLSX.utils.book_new();
+// EXCEL EXPORT / IMPORT (CRM DATA)
+function exportExcel(){
+  // Generate Excel file from clientsTable data
+  let wb = XLSX.utils.book_new();
+  const table = document.getElementById('clientsTable');
+  const ws = XLSX.utils.table_to_sheet(table);
   XLSX.utils.book_append_sheet(wb, ws, "Clients");
-  XLSX.writeFile(wb, "ClientsData.xlsx");
+  XLSX.writeFile(wb, "clients.xlsx");
 }
 
-// تبويب العمل
-const tabs = document.querySelectorAll(".tab-btn");
-const contents = document.querySelectorAll(".tab-content");
-tabs.forEach(btn => {
-  btn.addEventListener("click", () => {
-    tabs.forEach(b => b.classList.remove("active"));
-    contents.forEach(c => c.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById(btn.dataset.tab).classList.add("active");
+function importExcelPrompt(){
+  document.getElementById("importFileInput").click();
+}
+
+async function importExcel(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const data = await file.arrayBuffer();
+  const workbook = XLSX.read(data);
+  const ws = workbook.Sheets[workbook.SheetNames[0]];
+  const jsonData = XLSX.utils.sheet_to_json(ws);
+  // Insert imported data to Firestore (clients collection)
+  for(const client of jsonData){
+    await addDoc(clientsCol, {
+      name: client.Name || client.name || "",
+      phone: client.Phone || client.phone || "",
+      date: client.Date || client.date || "",
+      status: client.Status || client.status || "Interested",
+      notes: client.Notes || client.notes || "",
+      agent: client.Agent || client.agent || "-",
+      region: client.Region || client.region || "-",
+      createdBy: client.Agent || client.agent || "-",
+      createdAt: new Date().toLocaleString(),
+      location: null
+    });
+  }
+  renderClients();
+}
+
+// ERP Functions
+
+let erpStock = {}; // { productName: qty }
+let erpSales = 0;
+let erpPurchases = 0;
+
+function addStock(){
+  const name = document.getElementById("erpProductName").value.trim();
+  const qty = parseInt(document.getElementById("erpProductQty").value);
+  if(!name || isNaN(qty) || qty<=0) { alert("أدخل اسم المنتج وكمية صحيحة"); return; }
+  erpStock[name] = (erpStock[name] || 0) + qty;
+  renderERPStock();
+  updateStats();
+}
+
+function addSale(){
+  const name = document.getElementById("erpSellProductName").value.trim();
+  const qty = parseInt(document.getElementById("erpSellQty").value);
+  if(!name || isNaN(qty) || qty<=0) { alert("أدخل اسم المنتج وكمية صحيحة"); return; }
+  if(!erpStock[name] || erpStock[name]<qty){ alert("كمية غير كافية للبيع"); return; }
+  erpStock[name] -= qty;
+  erpSales += qty;
+  renderERPStock();
+  updateStats();
+}
+
+function addPurchase(){
+  const name = document.getElementById("erpPurchaseProductName").value.trim();
+  const qty = parseInt(document.getElementById("erpPurchaseQty").value);
+  if(!name || isNaN(qty) || qty<=0) { alert("أدخل اسم المنتج وكمية صحيحة"); return; }
+  erpStock[name] = (erpStock[name] || 0) + qty;
+  erpPurchases += qty;
+  renderERPStock();
+  updateStats();
+}
+
+function renderERPStock(){
+  erpStockTable.innerHTML = "";
+  for(let p in erpStock){
+    erpStockTable.innerHTML += `<tr><td>${p}</td><td>${erpStock[p]}</td></tr>`;
+  }
+}
+
+function updateStats(){
+  erpSalesEl.textContent = lang==="ar" ? `💰 المبيعات: ${erpSales}` : `Sales: ${erpSales}`;
+  erpPurchasesEl.textContent = lang==="ar" ? `🛒 المشتريات: ${erpPurchases}` : `Purchases: ${erpPurchases}`;
+  erpStockEl.textContent = lang==="ar" ? `📦 المخزون: ${Object.values(erpStock).reduce((a,b)=>a+b,0)}` : `Stock: ${Object.values(erpStock).reduce((a,b)=>a+b,0)}`;
+}
+
+// Excel Tab (upload & edit)
+const excelFileInput = document.getElementById("excelFileInput");
+const excelDataContainer = document.getElementById("excelDataContainer");
+let excelWorkbook = null;
+
+function loadExcelFile(){
+  const file = excelFileInput.files[0];
+  if(!file){ alert("اختر ملف Excel أولاً"); return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const data = new Uint8Array(e.target.result);
+    excelWorkbook = XLSX.read(data, {type:"array"});
+    displayExcelSheet(excelWorkbook.SheetNames[0]);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function displayExcelSheet(sheetName){
+  if(!excelWorkbook) return;
+  const ws = excelWorkbook.Sheets[sheetName];
+  const html = XLSX.utils.sheet_to_html(ws);
+  excelDataContainer.innerHTML = html;
+}
+
+// LANGUAGE TOGGLE
+function toggleLang(){
+  if(lang === "ar") lang = "en";
+  else lang = "ar";
+  applyLang();
+}
+
+function applyLang(){
+  if(lang === "ar"){
+    document.body.dir = "rtl";
+    document.body.lang = "ar";
+    document.getElementById("title").textContent = "نظام CRM + ERP لتجارة يوتوبيا والتصدير";
+    document.getElementById("developer").innerHTML = "تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>";
+    document.getElementById("phoneText").textContent = "📞 01222153415";
+    
+    // Tabs Buttons
+    const tabsBtn = document.querySelectorAll(".tab-btn");
+    tabsBtn[0].textContent = "لوحة التحكم";
+    tabsBtn[1].textContent = "نظام CRM";
+    tabsBtn[2].textContent = "نظام ERP";
+    tabsBtn[3].textContent = "Excel";
+    
+    // CRM placeholders
+    name.placeholder = "اسم العميل";
+    phone.placeholder = "رقم الهاتف";
+    notes.placeholder = "ملاحظات";
+    agent.placeholder = "أدخل اسم العميل";
+    
+    // ERP placeholders
+    document.getElementById("erpProductName").placeholder = "اسم المنتج";
+    document.getElementById("erpSellProductName").placeholder = "اسم المنتج للبيع";
+    document.getElementById("erpPurchaseProductName").placeholder = "اسم المنتج للشراء";
+    
+    // Stats cards
+    totalEl.textContent = "👥 إجمالي: 0";
+    interestedEl.textContent = "🎯 مهتم: 0";
+    workingEl.textContent = "🔧 قيد التنفيذ: 0";
+    doneEl.textContent = "✅ مكتمل: 0";
+    holdEl.textContent = "⏸️ Hold: 0";
+    tasksCountEl.textContent = "📝 المهام: 0";
+    erpSalesEl.textContent = "💰 المبيعات: 0";
+    erpPurchasesEl.textContent = "🛒 المشتريات: 0";
+    erpStockEl.textContent = "📦 المخزون: 0";
+    
+  } else {
+    document.body.dir = "ltr";
+    document.body.lang = "en";
+    document.getElementById("title").textContent = "CRM + ERP System For Utopia Trading And Export";
+    document.getElementById("developer").innerHTML = "Created and developed by Eng : <strong>Mahmoud Mohamed Marie</strong>";
+    document.getElementById("phoneText").textContent = "📞 01222153415";
+
+    const tabsBtn = document.querySelectorAll(".tab-btn");
+    tabsBtn[0].textContent = "Dashboard";
+    tabsBtn[1].textContent = "CRM";
+    tabsBtn[2].textContent = "ERP";
+    tabsBtn[3].textContent = "Excel";
+
+    name.placeholder = "Client Name";
+    phone.placeholder = "Phone Number";
+    notes.placeholder = "Notes";
+    agent.placeholder = "Enter Client Name";
+
+    document.getElementById("erpProductName").placeholder = "Product Name";
+    document.getElementById("erpSellProductName").placeholder = "Product Sell Name";
+    document.getElementById("erpPurchaseProductName").placeholder = "Product Purchase Name";
+
+    totalEl.textContent = "👥 Total: 0";
+    interestedEl.textContent = "🎯 Interested: 0";
+    workingEl.textContent = "🔧 In Progress: 0";
+    doneEl.textContent = "✅ Completed: 0";
+    holdEl.textContent = "⏸️ Hold: 0";
+    tasksCountEl.textContent = "📝 Tasks: 0";
+    erpSalesEl.textContent = "💰 Sales: 0";
+    erpPurchasesEl.textContent = "🛒 Purchases: 0";
+    erpStockEl.textContent = "📦 Stock: 0";
+  }
+  fillRegionSelects();
+  renderClients();
+  updateStats();
+}
+
+function showTab(tabId){
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+  });
+  document.querySelectorAll('.tab-content').forEach(content=>{
+    content.classList.toggle('active', content.id === tabId);
+  });
+}
+
+// Tab buttons event
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', () => {
+    showTab(btn.getAttribute('data-tab'));
   });
 });
 
-// تبديل اللغة (مبسط)
-const langBtn = document.getElementById("langBtn");
-let lang = "ar";
-langBtn.addEventListener("click", () => {
-  if (lang === "ar") {
-    lang = "en";
-    document.getElementById("title").innerText = "CRM + ERP System For Utopia Trading And Export";
-    document.getElementById("developer").innerHTML = `Created & Developed By Eng : <strong>Mahmoud Mohamed Marie</strong>`;
-    document.getElementById("phoneText").innerText = "📞 01222153415";
-    langBtn.innerText = "🌐 عربي / English";
-    tabs[0].innerText = "Dashboard";
-    tabs[1].innerText = "CRM";
-    tabs[2].innerText = "ERP";
-    tabs[3].innerText = "Excel";
-    document.getElementById("total").innerText = "👥 Total: 0";
-    document.getElementById("interested").innerText = "🎯 Interested: 0";
-    document.getElementById("working").innerText = "🔧 In Progress: 0";
-    document.getElementById("done").innerText = "✅ Completed: 0";
-    document.getElementById("holdCard").innerText = "⏸️ Hold: 0";
-    totalClients.innerText = "Total Clients: 0";
-    totalHold.innerText = "Hold Cases: 0";
-  } else {
-    lang = "ar";
-    document.getElementById("title").innerText = "نظام CRM + ERP لتجارة يوتوبيا وتصدير";
-    document.getElementById("developer").innerHTML = `تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>`;
-    document.getElementById("phoneText").innerText = "📞 01222153415";
-    langBtn.innerText = "🌐 English / عربي";
-    tabs[0].innerText = "لوحة التحكم";
-    tabs[1].innerText = "CRM";
-    tabs[2].innerText = "ERP";
-    tabs[3].innerText = "Excel";
-    document.getElementById("total").innerText = "👥 إجمالي: 0";
-    document.getElementById("interested").innerText = "🎯 مهتم: 0";
-    document.getElementById("working").innerText = "🔧 قيد التنفيذ: 0";
-    document.getElementById("done").innerText = "✅ مكتمل: 0";
-    document.getElementById("holdCard").innerText = "⏸️ Hold: 0";
-    totalClients.innerText = "إجمالي العملاء: 0";
-    totalHold.innerText = "حالات Hold: 0";
-  }
-});
-
-// تحميل و عرض البيانات عند بدء التشغيل
-renderClients();
+// Initialize regions and load data on page load
+window.onload = () => {
+  fillRegionSelects();
+  applyLang();
+  renderClients();
+  updateStats();
+};
 
 </script>
 
