@@ -28,6 +28,7 @@ button { cursor:pointer; }
 .tab-content { display:none; }
 .tab-content.active { display:block; }
 #excelTable td { min-width:80px;}
+#excelTable input { width: 100%; box-sizing: border-box; padding:5px; border:none; background: transparent; text-align:center;}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -46,10 +47,10 @@ button { cursor:pointer; }
 <h2 id="title">CRM & ERP System For Utopia Trading And Export</h2>
 
 <div class="tabs">
-  <button class="tab-btn active" onclick="showTab('crmTab')">CRM</button>
-  <button class="tab-btn" onclick="showTab('tasksTab')">Tasks</button>
-  <button class="tab-btn" onclick="showTab('erpTab')">ERP</button>
-  <button class="tab-btn" onclick="showTab('excelTab')">Excel</button>
+  <button class="tab-btn active" onclick="showTab(event,'crmTab')">CRM</button>
+  <button class="tab-btn" onclick="showTab(event,'tasksTab')">Tasks</button>
+  <button class="tab-btn" onclick="showTab(event,'erpTab')">ERP</button>
+  <button class="tab-btn" onclick="showTab(event,'excelTab')">Excel</button>
 </div>
 
 <!-- CRM Tab -->
@@ -217,7 +218,18 @@ async function addOrUpdate(){
   if(!name.value || !phone.value){ alert(lang==="ar"?"أدخل الاسم ورقم الهاتف":"Enter Name & Phone"); return;}
   const now=new Date().toLocaleString();
   const clientData={ name:name.value, phone:phone.value, date:date.value, status:status.value, notes:notes.value, location:currentLocation, agent:agent.value||"-", region:region.value||"-", createdBy:agent.value||"-", createdAt:now };
-  try{ if(editId){ await updateDoc(doc(db,"clients",editId),clientData); editId=null; } else{ await addDoc(colRef,clientData);} clearForm(); render(); }catch(e){ console.error(e); alert("❌ Error");}
+  try{ 
+    if(editId){ 
+      await updateDoc(doc(db,"clients",editId),clientData); 
+      editId=null; 
+    } else{ 
+      await addDoc(colRef,clientData);
+    } 
+    clearForm(); 
+    render(); 
+  }catch(e){ 
+    console.error(e); alert("❌ Error");
+  }
 }
 
 // EDIT CLIENT
@@ -234,7 +246,10 @@ async function editClient(id){
 }
 
 // CLEAR FORM
-function clearForm(){ name.value=""; phone.value=""; date.value=""; notes.value=""; agent.value=""; region.value=""; editId=null; currentLocation=null; status.value="Interested"; }
+function clearForm(){ 
+  name.value=""; phone.value=""; date.value=""; notes.value=""; agent.value=""; region.value=""; 
+  editId=null; currentLocation=null; status.value="Interested"; 
+}
 
 // RENDER
 async function render(){
@@ -262,7 +277,7 @@ async function render(){
       <td>${dist}</td>
       <td><button onclick="editClient('${d.id}')">✏️</button></td>
       <td><button onclick="deleteClient('${d.id}')">❌</button></td>
-      <td><a href="https://wa.me/${c.phone}" target="_blank"><img src="whatsapp.png" alt="WhatsApp" width="24"></a></td>
+      <td><a href="https://wa.me/${c.phone}" target="_blank" style="text-decoration:none; color:#25D366; font-weight:bold;">📱 واتساب</a></td>
     </tr>`;
   });
   totalEl.innerText=`👥 ${lang==="ar"?"إجمالي":"Total"}: ${total}`;
@@ -273,7 +288,16 @@ async function render(){
 }
 
 // DELETE CLIENT
-async function deleteClient(id){ await deleteDoc(doc(db,"clients",id)); render(); }
+async function deleteClient(id){
+  if(!confirm(lang==="ar"?"هل أنت متأكد من الحذف؟":"Are you sure to delete?")) return;
+  try {
+    await deleteDoc(doc(db,"clients",id));
+    render();
+  } catch(e) {
+    alert(lang==="ar"?"حدث خطأ أثناء الحذف":"Error while deleting");
+    console.error(e);
+  }
+}
 
 // EXPORT CRM TO EXCEL
 async function exportExcel(){
@@ -294,7 +318,7 @@ async function exportExcel(){
 }
 
 // TAB FUNCTION
-function showTab(id){
+function showTab(event, id){
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -314,61 +338,93 @@ function toggleLang(){
 function updateUIText(){
   document.getElementById("title").innerText = lang==="ar"?"CRM & ERP System For Utopia Trading And Export":"CRM & ERP System For Utopia Trading And Export";
   document.getElementById("developer").innerHTML = lang==="ar"?"تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>":"Created & Developed by Eng : <strong>Mahmoud Mohamed Marie</strong>";
-  document.getElementById("phoneText").innerText="📞 01222153415";
-  name.placeholder = lang==="ar"?"اسم العميل":"Customer Name";
-  phone.placeholder = lang==="ar"?"رقم الهاتف":"Phone Number";
+  document.getElementById("phoneText").innerText = lang==="ar"?"📞 01222153415":"📞 01222153415";
+  name.placeholder = lang==="ar"?"اسم العميل":"Client Name";
+  phone.placeholder = lang==="ar"?"رقم الهاتف":"Phone";
+  date.placeholder = lang==="ar"?"التاريخ":"Date";
   notes.placeholder = lang==="ar"?"ملاحظات":"Notes";
-  agent.placeholder = lang==="ar"?"أدخل اسم العميل":"Agent Name";
+  agent.placeholder = lang==="ar"?"أدخل اسم العميل":"Enter Agent Name";
   agentFilter.placeholder = lang==="ar"?"فلترة حسب العميل (اختياري)":"Filter by Agent (optional)";
-  document.getElementById("trackBtn").innerText=lang==="ar"?"📍 بدء التتبع":"📍 Start Tracking";
-  document.getElementById("stopTrackBtn").innerText=lang==="ar"?"⛔ إيقاف":"⛔ Stop Tracking";
-  document.getElementById("saveBtn").innerText=lang==="ar"?"💾 حفظ":"💾 Save";
-  document.getElementById("exportBtn").innerText=lang==="ar"?"📊 Excel":"📊 Excel";
-  document.getElementById("tasksTab").innerText=lang==="ar"?"Tasks":"Tasks";
-  document.getElementById("erpTab").innerText=lang==="ar"?"ERP":"ERP";
-  document.getElementById("excelTab").innerText=lang==="ar"?"Excel":"Excel";
+  document.getElementById("thName").innerText = lang==="ar"?"الاسم":"Name";
+  document.getElementById("thPhone").innerText = lang==="ar"?"الهاتف":"Phone";
+  document.getElementById("thDate").innerText = lang==="ar"?"التاريخ":"Date";
+  document.getElementById("thStatus").innerText = lang==="ar"?"الحالة":"Status";
+  document.getElementById("thNotes").innerText = lang==="ar"?"ملاحظات":"Notes";
+  document.getElementById("thAgent").innerText = lang==="ar"?"العميل":"Agent";
+  document.getElementById("thRegion").innerText = lang==="ar"?"المحافظة":"Region";
+  document.getElementById("thCreatedBy").innerText = lang==="ar"?"الادمن":"Admin";
+  document.getElementById("thCreatedAt").innerText = lang==="ar"?"تاريخ الإنشاء":"Created At";
+  document.getElementById("thLocation").innerText = lang==="ar"?"الموقع":"Location";
+  document.getElementById("thDistance").innerText = lang==="ar"?"المسافة":"Distance";
+  document.getElementById("thEdit").innerText = lang==="ar"?"تعديل":"Edit";
+  document.getElementById("thDelete").innerText = lang==="ar"?"حذف":"Delete";
+  document.getElementById("thWhatsApp").innerText = lang==="ar"?"واتساب":"WhatsApp";
+
+  // Update status options
+  status.innerHTML = lang==="ar"
+    ? `<option>مهتم</option><option>قيد التنفيذ</option><option>مكتمل</option><option>Hold</option>`
+    : `<option>Interested</option><option>In Progress</option><option>Completed</option><option>Hold</option>`;
+
+  // Update tabs text
+  document.querySelectorAll(".tab-btn")[0].innerText = lang==="ar"?"CRM":"CRM";
+  document.querySelectorAll(".tab-btn")[1].innerText = lang==="ar"?"المهام":"Tasks";
+  document.querySelectorAll(".tab-btn")[2].innerText = lang==="ar"?"ERP":"ERP";
+  document.querySelectorAll(".tab-btn")[3].innerText = lang==="ar"?"Excel":"Excel";
+
+  // Update buttons
+  document.getElementById("trackBtn").innerText = lang==="ar"?"📍 بدء التتبع":"📍 Start Tracking";
+  document.getElementById("stopTrackBtn").innerText = lang==="ar"?"⛔ إيقاف":"⛔ Stop";
+  document.getElementById("saveBtn").innerText = lang==="ar"?"💾 حفظ":"💾 Save";
+  document.getElementById("exportBtn").innerText = lang==="ar"?"📊 Excel":"📊 Excel";
 }
 
-// EXCEL UPLOAD/EDIT
-let excelData=[];
-function handleFile(e){
-  const file=e.target.files[0];
-  const reader=new FileReader();
-  reader.onload=function(ev){
-    const data=new Uint8Array(ev.target.result);
-    const wb=XLSX.read(data,{type:"array"});
-    const ws=wb.Sheets[wb.SheetNames[0]];
-    excelData=XLSX.utils.sheet_to_json(ws,{header:1});
+// EXCEL TAB
+
+let excelData = [];
+function handleFile(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, {type:"array"});
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    excelData = XLSX.utils.sheet_to_json(firstSheet, {header:1});
     renderExcelTable();
   };
   reader.readAsArrayBuffer(file);
 }
+
 function renderExcelTable(){
-  const tbl=document.getElementById("excelTable");
-  tbl.innerHTML="";
-  excelData.forEach((row,i)=>{
-    const tr=document.createElement("tr");
+  const tbl = document.getElementById("excelTable");
+  tbl.innerHTML = "";
+  excelData.forEach((row, i) => {
+    const tr = document.createElement("tr");
     row.forEach((cell,j)=>{
-      const td=document.createElement("td");
-      const input=document.createElement("input");
-      input.value=cell||"";
-      input.oninput=()=>excelData[i][j]=input.value;
+      const td = document.createElement("td");
+      const input = document.createElement("input");
+      input.value = cell || "";
+      input.oninput = () => { excelData[i][j] = input.value; };
       td.appendChild(input);
       tr.appendChild(td);
     });
     tbl.appendChild(tr);
   });
 }
+
 function exportExcelFile(){
-  const ws=XLSX.utils.aoa_to_sheet(excelData);
-  const wb=XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(excelData);
+  const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-  XLSX.writeFile(wb,"edited.xlsx");
+  XLSX.writeFile(wb, "modified.xlsx");
 }
 
-// INITIALIZATION
+// INITIAL SETUP
 fillRegionSelects();
+updateUIText();
 render();
+renderTasks();
+
 </script>
 </body>
 </html>
