@@ -7,216 +7,142 @@
 <style>
 body { font-family: Arial; background:#f0f2f5; padding:20px;}
 .container { max-width:1400px; margin:auto; background:#fff; padding:20px; border-radius:10px;}
-input, select, button { padding:10px; margin:5px; width:100%; box-sizing:border-box; }
-.row { display:flex; gap:10px; flex-wrap:wrap; }
-.row > * { flex:1; min-width:150px; }
+input, select, button { padding:10px; margin:5px; width:100%; box-sizing:border-box;}
+.row { display:flex; gap:10px; flex-wrap:wrap;}
+.row > * { flex:1; min-width:150px;}
 table { width:100%; margin-top:20px; border-collapse: collapse;}
 th, td { padding:10px; border:1px solid #ddd; text-align:center;}
 th { background:#222; color:#fff;}
-button { cursor:pointer; }
-.lang-btn { width:auto; margin-bottom:15px;}
-.stats { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;}
-.card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px;}
-.header { text-align:center; margin-bottom:10px;}
-.logo { height:200px; width:auto; display: block; margin: 0 auto 20px auto; }
-.developer { text-align:right; margin-bottom:5px; font-size:14px; }
-.phone { text-align:right; margin-bottom:15px; font-size:14px; }
-#map { width:100%; height:350px; margin-top:15px; border-radius:10px;}
+button { cursor:pointer;}
 .tabs { display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;}
 .tab-btn { padding:10px 20px; background:#ddd; border:none; cursor:pointer; border-radius:5px;}
 .tab-btn.active { background:#222; color:#fff;}
 .tab-content { display:none; }
 .tab-content.active { display:block; }
-#excelTable td { min-width:80px;}
-#excelTable input { width:100%; box-sizing:border-box; }
-
-/* ERP Accounting Form */
 .erp-form { background:#f9f9f9; padding:15px; border-radius:8px; margin-top:10px; }
 .erp-form table { margin-top:10px; }
 .erp-form input, .erp-form select { width:100%; padding:5px; margin:2px 0; }
 .erp-btn-add { background:#28a745; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; }
 .erp-btn-submit { background:#007bff; color:#fff; border:none; padding:10px 20px; cursor:pointer; border-radius:5px; margin-top:10px; width:100%; }
+#map { width:100%; height:350px; margin-top:15px; border-radius:10px;}
 </style>
-<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-</head>
-<body>
-<div class="container">
-
-<div class="header">
-  <img src="logo.png" alt="Company Logo" class="logo">
-</div>
-<div class="developer" id="developer">تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong></div>
-<div class="phone" id="phoneText">📞 01222153415</div>
-
-<button class="lang-btn" onclick="toggleLang()">🌐 عربي / English</button>
-
-<h2 id="title">CRM & ERP System For Utopia Trading And Export</h2>
-
-<div class="tabs">
-  <button class="tab-btn active" onclick="showTab('crmTab', this)">CRM</button>
-  <button class="tab-btn" onclick="showTab('tasksTab', this)">Tasks</button>
-  <button class="tab-btn" onclick="showTab('erpTab', this)">ERP</button>
-  <button class="tab-btn" onclick="showTab('excelTab', this)">Excel</button>
-</div>
-
-<!-- CRM Tab -->
-<div id="crmTab" class="tab-content active">
-<div class="row">
-<input id="agentFilter" placeholder="فلترة حسب العميل (اختياري)" oninput="render()">
-<select id="regionFilter" onchange="render()"></select>
-</div>
-
-<div class="row">
-<input id="name" placeholder="اسم العميل">
-<input id="phone" placeholder="رقم الهاتف">
-<input type="date" id="date">
-<select id="status">
-<option>Interested</option>
-<option>In Progress</option>
-<option>Completed</option>
-<option>Hold</option>
-</select>
-<input id="notes" placeholder="ملاحظات">
-<input id="agent" placeholder="أدخل اسم العميل">
-<select id="region"></select>
-</div>
-
-<div class="row">
-<button onclick="startTracking()" id="trackBtn">📍 بدء التتبع</button>
-<button onclick="stopTracking()" id="stopTrackBtn">⛔ إيقاف</button>
-<button onclick="addOrUpdate()" id="saveBtn">💾 حفظ</button>
-<button onclick="exportExcel()" id="exportBtn">📊 Excel</button>
-</div>
-
-<div class="stats">
-<div class="card" id="total">👥 إجمالي: 0</div>
-<div class="card" id="interested">🎯 مهتم: 0</div>
-<div class="card" id="working">🔧 قيد التنفيذ: 0</div>
-<div class="card" id="hold">⏸ Hold: 0</div>
-<div class="card" id="done">✅ مكتمل: 0</div>
-</div>
-
-<div id="map"></div>
-
-<table>
-<thead>
-<tr>
-<th id="thName">الاسم</th>
-<th id="thPhone">الهاتف</th>
-<th id="thDate">التاريخ</th>
-<th id="thStatus">الحالة</th>
-<th id="thNotes">ملاحظات</th>
-<th id="thAgent">العميل</th>
-<th id="thCreatedBy">الادمن</th>
-<th id="thCreatedAt">تاريخ الإنشاء</th>
-<th id="thRegion">المحافظة</th>
-<th id="thLocation">الموقع</th>
-<th id="thDistance">المسافة</th>
-<th id="thEdit">تعديل</th>
-<th id="thDelete">حذف</th>
-<th id="thWhatsApp">واتساب</th>
-</tr>
-</thead>
-<tbody id="table"></tbody>
-</table>
-</div>
-
-<!-- Tasks Tab -->
-<div id="tasksTab" class="tab-content">
-<h3>My Tasks</h3>
-<div class="row">
-<input id="taskInput" placeholder="اكتب المهمة">
-<button onclick="addTask()">➕ إضافة المهمة</button>
-</div>
-<ul id="taskList"></ul>
-</div>
-
-<!-- ERP Tab -->
-<div id="erpTab" class="tab-content">
-<h3>ERP System & Accounting Entry</h3>
-
-<div class="erp-form">
-<form id="accountingForm">
-<div class="row">
-<div class="form-group">
-<label>التاريخ:</label>
-<input type="date" name="accDate" required>
-</div>
-<div class="form-group">
-<label>البيان (الوصف):</label>
-<input type="text" name="accDesc" placeholder="شرح القيد">
-</div>
-</div>
-
-<table id="accountingTable">
-<thead>
-<tr>
-<th>الحساب</th>
-<th>مدين</th>
-<th>دائن</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><select><option>الصندوق</option><option>البنك</option><option>المبيعات</option></select></td>
-<td><input type="number" placeholder="0.00"></td>
-<td><input type="number" placeholder="0.00"></td>
-</tr>
-<tr>
-<td><select><option>الصندوق</option><option>البنك</option><option>المبيعات</option></select></td>
-<td><input type="number" placeholder="0.00"></td>
-<td><input type="number" placeholder="0.00"></td>
-</tr>
-</tbody>
-</table>
-<button type="button" class="erp-btn-add" onclick="addAccountingRow()">+ إضافة سطر</button>
-<button type="button" class="erp-btn-submit" onclick="submitAccountingForm()">حفظ القيد</button>
-</form>
-</div>
-</div>
-
-<!-- Excel Tab -->
-<div id="excelTab" class="tab-content">
-<h3>Excel Upload / Edit</h3>
-<input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleFile(event)">
-<button onclick="exportExcelFile()">📊 تصدير Excel</button>
-<table id="excelTable" border="1"></table>
-</div>
-
-</div>
-
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, addDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
+// Firebase Config
 const firebaseConfig = {
   apiKey: "ضع هنا apiKey",
   authDomain: "ضع هنا authDomain",
-  projectId: "ضع هنا projectId",
+  projectId: "ضع هنا projectId"
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const colRef = collection(db,"clients");
 
-const name=document.getElementById("name"), phone=document.getElementById("phone"), date=document.getElementById("date"),
-status=document.getElementById("status"), notes=document.getElementById("notes"), agent=document.getElementById("agent"),
-region=document.getElementById("region"), agentFilter=document.getElementById("agentFilter"), regionFilter=document.getElementById("regionFilter"),
-table=document.getElementById("table"), totalEl=document.getElementById("total"), interestedEl=document.getElementById("interested"),
-workingEl=document.getElementById("working"), holdEl=document.getElementById("hold"), doneEl=document.getElementById("done");
+// Tabs
+function showTab(id, btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
 
-let editId=null;
-
-// Regions
-const egyptRegions=[ "القاهرة","الإسكندرية","الجيزة","القليوبية","الشرقية","الدقهلية","المنوفية","الغربية","كفر الشيخ","دمياط","بورسعيد","السويس","الإسماعيلية","الفيوم","بني سويف","المنيا","أسيوط","سوهاج","قنا","الأقصر","أسوان","مطروح","الوادي الجديد","شمال سيناء","جنوب سيناء","البحر الأحمر" ];
-function fillRegionSelects(){
-  region.innerHTML=""; regionFilter.innerHTML="";
-  let defaultOpt=document.createElement("option"); defaultOpt.value=""; defaultOpt.text="اختر المحافظة"; region.appendChild(defaultOpt);
-  let defaultOptFilter=document.createElement("option"); defaultOptFilter.value=""; defaultOptFilter.text="كل المحافظات"; regionFilter.appendChild(defaultOptFilter);
-  egyptRegions.forEach(r=>{
-    let o1=document.createElement("option"); o1.value=r; o1.text=r; region.appendChild(o1);
-    let o2=document.createElement("option"); o2.value=r; o2.text=r; regionFilter.appendChild(o2);
+// CRM
+const crmListEl = document.getElementById("crmList");
+async function addCRM(){
+  const name = document.getElementById("crmName").value;
+  const phone = document.getElementById("crmPhone").value;
+  if(!name) return alert("ادخل اسم العميل");
+  const docRef = await addDoc(collection(db, "clients"), {name, phone, createdAt: new Date()});
+  renderCRM();
+  document.getElementById("crmName").value = "";
+  document.getElementById("crmPhone").value = "";
+}
+async function renderCRM(){
+  crmListEl.innerHTML="";
+  const snapshot = await getDocs(collection(db,"clients"));
+  snapshot.forEach(docSnap=>{
+    const data = docSnap.data();
+    const li = document.createElement("li");
+    li.textContent = `${data.name} - ${data.phone}`;
+    crmListEl.appendChild(li);
   });
+}
+
+// Tasks
+const taskListEl = document.getElementById("taskList");
+async function addTask(){
+  const task = document.getElementById("taskInput").value;
+  if(!task) return;
+  await addDoc(collection(db,"tasks"), {task, createdAt: new Date()});
+  renderTasks();
+  document.getElementById("taskInput").value="";
+}
+async function renderTasks(){
+  taskListEl.innerHTML="";
+  const snapshot = await getDocs(collection(db,"tasks"));
+  snapshot.forEach(docSnap=>{
+    const li = document.createElement("li");
+    li.textContent = docSnap.data().task;
+    taskListEl.appendChild(li);
+  });
+}
+
+// ERP Accounting
+const erpTable = document.getElementById("erpTable").querySelector("tbody");
+function addERPRow(){
+  const tr = document.createElement("tr");
+  tr.innerHTML=`<td><select><option>الصندوق</option><option>البنك</option><option>المبيعات</option></select></td>
+  <td><input type="number" value="0"></td><td><input type="number" value="0"></td>`;
+  erpTable.appendChild(tr);
+}
+async function saveERP(){
+  let entries=[];
+  erpTable.querySelectorAll("tr").forEach(tr=>{
+    const account = tr.cells[0].querySelector("select").value;
+    const debit = tr.cells[1].querySelector("input").value;
+    const credit = tr.cells[2].querySelector("input").value;
+    entries.push({account,debit,credit});
+  });
+  await addDoc(collection(db,"erpEntries"), {entries, createdAt:new Date()});
+  alert("تم حفظ القيد بنجاح");
+}
+
+// Excel
+function handleFile(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload=function(evt){
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data,{type:"array"});
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(sheet,{header:1});
+    renderExcel(json);
+  }
+  reader.readAsArrayBuffer(file);
+}
+function renderExcel(data){
+  const table = document.getElementById("excelTable");
+  table.innerHTML="";
+  data.forEach(row=>{
+    const tr = document.createElement("tr");
+    row.forEach(cell=>{
+      const td = document.createElement("td");
+      td.innerText = cell;
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+  });
+}
+function exportExcelFile(){
+  const table = document.getElementById("excelTable");
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.table_to_sheet(table);
+  XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+  XLSX.writeFile(wb, "export.xlsx");
 }
 
 // Map
@@ -224,29 +150,76 @@ let map = L.map('map').setView([30.0444,31.2357],6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
 let marker = L.marker([30.0444,31.2357],{draggable:true}).addTo(map);
 let currentLocation=null;
-marker.on('dragend', function(e){ const pos = marker.getLatLng(); currentLocation={lat:pos.lat,lng:pos.lng}; });
-map.on('click', function(e){ marker.setLatLng(e.latlng); currentLocation={lat:e.latlng.lat,lng:e.latlng.lng}; });
-
-// Tabs
-function showTab(id, btn){ document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
-
-// ERP Functions
-function addAccountingRow(){
-  const tbody=document.getElementById("accountingTable").querySelector("tbody");
-  const newRow=document.createElement("tr");
-  newRow.innerHTML=`<td><select><option>الصندوق</option><option>البنك</option><option>المبيعات</option></select></td>
-  <td><input type="number" placeholder="0.00"></td><td><input type="number" placeholder="0.00"></td>`;
-  tbody.appendChild(newRow);
-}
-function submitAccountingForm(){ alert("تم حفظ القيد بنجاح!"); }
-
-// Excel
-function handleFile(e){ const file = e.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = function(evt){ const data = new Uint8Array(evt.target.result); const workbook = XLSX.read(data,{type:"array"}); const sheet = workbook.Sheets[workbook.SheetNames[0]]; const json = XLSX.utils.sheet_to_json(sheet,{header:1}); renderExcel(json); }; reader.readAsArrayBuffer(file);}
-function renderExcel(data){ const table = document.getElementById("excelTable"); table.innerHTML=""; data.forEach((row,rIdx)=>{ const tr=document.createElement("tr"); row.forEach((cell,cIdx)=>{ const td=document.createElement("td"); if(rIdx===0){ td.innerText=cell; }else{ const inp=document.createElement("input"); inp.value=cell; td.appendChild(inp); } tr.appendChild(td); }); table.appendChild(tr); }); }
-function exportExcelFile(){ const table = document.getElementById("excelTable"); const wb = XLSX.utils.book_new(); const ws = XLSX.utils.table_to_sheet(table); XLSX.utils.book_append_sheet(wb, ws, "Sheet1"); XLSX.writeFile(wb, "export.xlsx"); }
+marker.on('dragend', e=>{ const pos=marker.getLatLng(); currentLocation={lat:pos.lat,lng:pos.lng}; });
+map.on('click', e=>{ marker.setLatLng(e.latlng); currentLocation={lat:e.latlng.lat,lng:e.latlng.lng}; });
 
 // Initialize
-fillRegionSelects();
+renderCRM();
+renderTasks();
 </script>
+</head>
+<body>
+<div class="container">
+<h2>CRM & ERP System For Utopia Trading And Export</h2>
+
+<div class="tabs">
+<button class="tab-btn active" onclick="showTab('crmTab', this)">CRM</button>
+<button class="tab-btn" onclick="showTab('tasksTab', this)">Tasks</button>
+<button class="tab-btn" onclick="showTab('erpTab', this)">ERP</button>
+<button class="tab-btn" onclick="showTab('excelTab', this)">Excel</button>
+</div>
+
+<!-- CRM -->
+<div id="crmTab" class="tab-content active">
+<h3>CRM</h3>
+<div class="row">
+<input id="crmName" placeholder="اسم العميل">
+<input id="crmPhone" placeholder="رقم الهاتف">
+<button onclick="addCRM()">💾 حفظ</button>
+</div>
+<ul id="crmList"></ul>
+</div>
+
+<!-- Tasks -->
+<div id="tasksTab" class="tab-content">
+<h3>Tasks</h3>
+<div class="row">
+<input id="taskInput" placeholder="اكتب المهمة">
+<button onclick="addTask()">➕ إضافة المهمة</button>
+</div>
+<ul id="taskList"></ul>
+</div>
+
+<!-- ERP -->
+<div id="erpTab" class="tab-content">
+<h3>ERP Accounting</h3>
+<div class="erp-form">
+<form id="accountingForm">
+<table id="erpTable">
+<thead><tr><th>الحساب</th><th>مدين</th><th>دائن</th></tr></thead>
+<tbody>
+<tr>
+<td><select><option>الصندوق</option><option>البنك</option><option>المبيعات</option></select></td>
+<td><input type="number" value="0"></td>
+<td><input type="number" value="0"></td>
+</tr>
+</tbody>
+</table>
+<button type="button" class="erp-btn-add" onclick="addERPRow()">+ إضافة سطر</button>
+<button type="button" class="erp-btn-submit" onclick="saveERP()">💾 حفظ القيد</button>
+</form>
+</div>
+<div id="map"></div>
+</div>
+
+<!-- Excel -->
+<div id="excelTab" class="tab-content">
+<h3>Excel Upload / Export</h3>
+<input type="file" id="excelFile" onchange="handleFile(event)">
+<button onclick="exportExcelFile()">📊 تصدير Excel</button>
+<table id="excelTable" border="1"></table>
+</div>
+
+</div>
 </body>
 </html>
