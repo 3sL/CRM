@@ -67,8 +67,8 @@ button { cursor:pointer; }
 <select id="status">
 <option>Interested</option>
 <option>In Progress</option>
-<option>Completed</option>
 <option>Hold</option>
+<option>Completed</option>
 </select>
 <input id="notes" placeholder="ملاحظات">
 <input id="agent" placeholder="أدخل اسم العميل">
@@ -145,7 +145,7 @@ button { cursor:pointer; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Firebase Config (احتفظ بالقيم القديمة)
+// Firebase Config
 const firebaseConfig = {
   apiKey: "ضع هنا apiKey",
   authDomain: "ضع هنا authDomain",
@@ -155,7 +155,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const colRef = collection(db,"clients");
 
-// عناصر الصفحة
+// Page Elements
 const name=document.getElementById("name"), phone=document.getElementById("phone"), date=document.getElementById("date"),
 status=document.getElementById("status"), notes=document.getElementById("notes"), agent=document.getElementById("agent"),
 region=document.getElementById("region"), agentFilter=document.getElementById("agentFilter"), regionFilter=document.getElementById("regionFilter"),
@@ -323,55 +323,44 @@ function updateUIText(){
   document.getElementById("stopTrackBtn").innerText=lang==="ar"?"⛔ إيقاف":"⛔ Stop Tracking";
   document.getElementById("saveBtn").innerText=lang==="ar"?"💾 حفظ":"💾 Save";
   document.getElementById("exportBtn").innerText=lang==="ar"?"📊 Excel":"📊 Excel";
-  ["thName","thPhone","thDate","thStatus","thNotes","thAgent","thCreatedBy","thCreatedAt","thRegion","thLocation","thDistance","thEdit","thDelete","thWhatsApp"]
-  .forEach(id=>document.getElementById(id).innerText = lang==="ar"?{
-    thName:"الاسم", thPhone:"الهاتف", thDate:"التاريخ", thStatus:"الحالة", thNotes:"ملاحظات",
-    thAgent:"العميل", thCreatedBy:"الادمن", thCreatedAt:"تاريخ الإنشاء", thRegion:"المحافظة",
-    thLocation:"الموقع", thDistance:"المسافة", thEdit:"تعديل", thDelete:"حذف", thWhatsApp:"واتساب"
-  }[id] : {
-    thName:"Name", thPhone:"Phone", thDate:"Date", thStatus:"Status", thNotes:"Notes",
-    thAgent:"Agent", thCreatedBy:"Created By", thCreatedAt:"Created At", thRegion:"Region",
-    thLocation:"Location", thDistance:"Distance", thEdit:"Edit", thDelete:"Delete", thWhatsApp:"WhatsApp"
-  }[id]);
+  document.getElementById("excelTab").querySelector("h3").innerText=lang==="ar"?"رفع وتعديل ملف Excel":"Excel Upload / Edit";
 }
 
 // Excel Tab
+let excelData=[];
 function handleFile(e){
-  const file = e.target.files[0]; if(!file) return;
+  const file = e.target.files[0];
   const reader = new FileReader();
-  reader.onload = function(evt){
-    const data = new Uint8Array(evt.target.result);
-    const workbook = XLSX.read(data,{type:"array"});
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(sheet,{header:1});
-    renderExcel(json);
-  };
-  reader.readAsArrayBuffer(file);
+  reader.onload = function(ev){
+    const wb = XLSX.read(ev.target.result,{type:'binary'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    excelData = XLSX.utils.sheet_to_json(ws,{header:1});
+    renderExcelTable();
+  }
+  reader.readAsBinaryString(file);
 }
-function renderExcel(data){
-  const table = document.getElementById("excelTable"); table.innerHTML="";
-  data.forEach((row,rIdx)=>{
-    const tr=document.createElement("tr");
-    row.forEach((cell,cIdx)=>{
-      const td=document.createElement("td");
-      if(rIdx===0){ td.innerText=cell; }else{
-        const inp=document.createElement("input"); inp.value=cell; td.appendChild(inp);
-      }
-      tr.appendChild(td);
+function renderExcelTable(){
+  const tableEl = document.getElementById("excelTable"); tableEl.innerHTML="";
+  excelData.forEach((row,r)=>{
+    const tr = document.createElement("tr");
+    row.forEach((cell,c)=>{
+      const td = document.createElement("td");
+      td.innerHTML=`<input value="${cell||""}">`; tr.appendChild(td);
     });
-    table.appendChild(tr);
+    tableEl.appendChild(tr);
   });
 }
 function exportExcelFile(){
-  const table = document.getElementById("excelTable");
+  const tableEl = document.getElementById("excelTable");
+  const rows = Array.from(tableEl.querySelectorAll("tr")).map(tr=>Array.from(tr.querySelectorAll("input")).map(input=>input.value));
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.table_to_sheet(table);
+  const ws = XLSX.utils.aoa_to_sheet(rows);
   XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-  XLSX.writeFile(wb, "export.xlsx");
+  XLSX.writeFile(wb, "edited.xlsx");
 }
 
-fillRegionSelects();
-render();
+// Initialize
+fillRegionSelects(); render(); updateUIText();
 
 </script>
 </body>
