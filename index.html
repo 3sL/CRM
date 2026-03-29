@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -16,14 +15,15 @@ input, select, button { padding:10px; margin:5px; width:100%; }
 table { width:100%; margin-top:20px; border-collapse: collapse;}
 th, td { padding:10px; border:1px solid #ddd; text-align:center;}
 th { background:#222; color:#fff;}
+button { cursor:pointer; }
 .stats { display:flex; gap:10px; flex-wrap:wrap; }
 .card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px;}
-#map { height:300px; margin-top:10px;}
+#map { height:300px; margin-top:10px; border-radius:10px;}
 .holdRow { background:#fff3cd; }
 
 .logo { height:200px; display:block; margin:auto; }
-.developer { text-align:right; margin:10px 0; }
-.phone { text-align:right; margin-bottom:10px; }
+.developer { text-align:right; margin:10px 0; font-size:14px;}
+.phone { text-align:right; margin-bottom:10px; font-size:14px;}
 
 #notification {
 position:fixed;
@@ -35,9 +35,9 @@ border-radius:10px;
 display:none;
 z-index:999;
 font-weight:bold;
+cursor:pointer;
 }
 </style>
-
 </head>
 
 <body>
@@ -50,12 +50,12 @@ font-weight:bold;
 <div class="developer">تم التطوير بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong></div>
 <div class="phone">📞 01222153415</div>
 
-<h2 id="title">CRM System Management For Utopia</h2>
+<h2 id="title">CRM System Management For Utopia Trading And Export</h2>
 <button onclick="toggleLang()">🌐 عربي / English</button>
 
 <div class="row">
-<input id="name">
-<input id="phone">
+<input id="name" placeholder="اسم العميل">
+<input id="phone" placeholder="رقم الهاتف">
 <input type="date" id="date">
 
 <select id="status">
@@ -65,20 +65,20 @@ font-weight:bold;
 <option value="Completed">Completed</option>
 </select>
 
-<input id="notes">
-<input id="agent">
-<input type="number" id="reminderDays">
+<input id="notes" placeholder="ملاحظات">
+<input id="agent" placeholder="اسم المندوب">
+<input type="number" id="reminderDays" placeholder="Reminder بالأيام">
 </div>
 
 <div class="row">
-<button onclick="startTracking()">📍</button>
-<button onclick="stopTracking()">⛔</button>
-<button onclick="addOrUpdate()">💾</button>
+<button onclick="startTracking()">📍 بدء التتبع</button>
+<button onclick="stopTracking()">⛔ إيقاف</button>
+<button onclick="addOrUpdate()">💾 حفظ</button>
 </div>
 
 <div class="stats">
-<div class="card" id="total">0</div>
-<div class="card" id="hold">0</div>
+<div class="card" id="total">👥 إجمالي: 0</div>
+<div class="card" id="hold">⚠️ Hold: 0</div>
 </div>
 
 <div id="map"></div>
@@ -86,11 +86,11 @@ font-weight:bold;
 <table>
 <thead>
 <tr>
-<th id="thName"></th>
-<th id="thPhone"></th>
-<th id="thDate"></th>
-<th id="thStatus"></th>
-<th id="thNotes"></th>
+<th id="thName">الاسم</th>
+<th id="thPhone">الهاتف</th>
+<th id="thDate">التاريخ</th>
+<th id="thStatus">الحالة</th>
+<th id="thNotes">ملاحظات</th>
 <th>Reminder</th>
 <th>WhatsApp</th>
 <th>Location</th>
@@ -104,18 +104,18 @@ font-weight:bold;
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Firebase (كما هو)
+// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
   authDomain: "crm-app-7733a.firebaseapp.com",
   projectId: "crm-app-7733a",
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const colRef = collection(db,"clients");
@@ -139,7 +139,6 @@ window.toggleLang=()=>{
   updateUIText();
   render();
 }
-
 function updateUIText(){
   nameEl.placeholder = lang==="ar"?"اسم العميل":"Customer Name";
   phoneEl.placeholder = lang==="ar"?"رقم الهاتف":"Phone";
@@ -159,7 +158,6 @@ function updateUIText(){
   <option value="Hold">${lang==="ar"?"معلق":"Hold"}</option>
   <option value="Completed">${lang==="ar"?"مكتمل":"Completed"}</option>`;
 }
-
 updateUIText();
 
 // 🔔 Notification
@@ -167,7 +165,8 @@ function showNotification(msg){
   const n=document.getElementById("notification");
   n.innerText=msg;
   n.style.display="block";
-  setTimeout(()=>n.style.display="none",3000);
+  n.onclick=()=>n.style.display="none";
+  setTimeout(()=>n.style.display="none",5000);
 }
 
 // 🗺️ Map
@@ -175,7 +174,6 @@ let map=L.map('map').setView([30.0444,31.2357],6);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 let marker=L.marker([30.0444,31.2357],{draggable:true}).addTo(map);
 let currentLocation=null;
-
 marker.on('dragend', e=>{
   const p=marker.getLatLng();
   currentLocation={lat:p.lat,lng:p.lng};
@@ -226,27 +224,34 @@ window.editClient=async(id)=>{
     statusEl.value=c.status;
     notesEl.value=c.notes;
     agentEl.value=c.agent;
+    if(c.reminderDate){
+      const diff=Math.ceil((new Date(c.reminderDate)-new Date())/86400000);
+      reminderEl.value=diff>0?diff:0;
+    }
     editId=id;
   }
 }
 
-// 🗑️
+// 🗑️ DELETE
 window.deleteClient=async(id)=>{
   await deleteDoc(doc(db,"clients",id));
   render();
 }
 
 // 📱 WhatsApp
-window.openWhatsApp = function(phone){
-  let msg = "مرحبا، بخصوص الطلب الخاص بك";
+window.openWhatsApp=function(phone){
+  phone = phone.replace(/^0/, "20");
+  let msg = "مرحبا، بخصوص طلبك.";
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
 // ⏰ Reminder
 function checkReminder(c){
   if(!c.reminderDate) return "";
-  if(new Date() >= new Date(c.reminderDate)){
-    showNotification("⏰ Reminder: "+c.name);
+  const now = new Date();
+  const rDate = new Date(c.reminderDate);
+  if(now >= rDate){
+    showNotification(`⏰ Reminder: ${c.name}`);
     return "⚠️";
   }
   return "";
@@ -256,17 +261,10 @@ function checkReminder(c){
 async function render(){
   table.innerHTML="";
   let holdCount=0;
-
   const snap=await getDocs(colRef);
-
   snap.forEach(d=>{
     const c=d.data();
-
-    if(c.status==="Hold"){
-      holdCount++;
-      showNotification("⚠️ Hold: "+c.name);
-    }
-
+    if(c.status==="Hold"){ holdCount++; showNotification(`⚠️ Hold: ${c.name}`); }
     let rowClass=c.status==="Hold"?"holdRow":"";
     let reminder=checkReminder(c);
 
@@ -284,12 +282,11 @@ async function render(){
       <td><button onclick="deleteClient('${d.id}')">❌</button></td>
     </tr>`;
   });
-
-  document.getElementById("total").innerText="Total: "+snap.size;
-  document.getElementById("hold").innerText="Hold: "+holdCount;
+  document.getElementById("total").innerText=`👥 إجمالي: ${snap.size}`;
+  document.getElementById("hold").innerText=`⚠️ Hold: ${holdCount}`;
 }
 
-// 🧹
+// 🧹 CLEAR FORM
 function clearForm(){
   nameEl.value="";
   phoneEl.value="";
@@ -298,6 +295,11 @@ function clearForm(){
   agentEl.value="";
   reminderEl.value="";
 }
+
+// TRACKING
+let watchId;
+window.startTracking=()=>{ watchId = navigator.geolocation.watchPosition(pos=>{ const lat=pos.coords.latitude, lng=pos.coords.longitude; currentLocation={lat,lng}; marker.setLatLng([lat,lng]); map.setView([lat,lng],13); });}
+window.stopTracking=()=>{ navigator.geolocation.clearWatch(watchId); }
 
 render();
 </script>
