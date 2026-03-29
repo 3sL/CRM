@@ -2,8 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM System Management For Utopia Trading And Export</title>
+<title>CRM System Management</title>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
 <style>
 body { font-family: Arial; background:#f0f2f5; padding:20px;}
 .container { max-width:1200px; margin:auto; background:#fff; padding:20px; border-radius:10px;}
@@ -13,42 +15,33 @@ input, select, button { padding:10px; margin:5px; width:100%; }
 table { width:100%; margin-top:20px; border-collapse: collapse;}
 th, td { padding:10px; border:1px solid #ddd; text-align:center;}
 th { background:#222; color:#fff;}
-button { cursor:pointer; }
-.lang-btn { width:auto; margin-bottom:15px;}
-.stats { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
-.card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px;}
-.header { text-align:center; margin-bottom:10px;}
-.logo {
-  height:200px;
-  width:auto;
-  display: block;
-  margin: 0 auto 20px auto;
+.stats { display:flex; gap:10px; flex-wrap:wrap; }
+.card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px;}
+#map { height:300px; margin-top:10px;}
+.holdRow { background:#fff3cd; }
+
+#notification {
+position:fixed;
+top:20px;
+right:20px;
+background:#ffcc00;
+padding:15px;
+border-radius:10px;
+display:none;
+z-index:999;
 }
-.developer { text-align:right; margin-bottom:5px; font-size:14px; }
-.phone { text-align:right; margin-bottom:15px; font-size:14px; }
-#map { width:100%; height:350px; margin-top:15px; border-radius:10px;}
 </style>
 
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
+
 <body>
+
+<div id="notification"></div>
 
 <div class="container">
 
-<div class="header">
-  <img src="logo.png" alt="Company Logo" class="logo">
-</div>
-<div class="developer" id="developer">تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong></div>
-<div class="phone" id="phoneText">📞 01222153415</div>
-
-<button class="lang-btn" onclick="toggleLang()">🌐 عربي / English</button>
-
-<h2 id="title">CRM System Management For Utopia Trading And Export</h2>
-
-<div class="row">
-<input id="agentFilter" placeholder="فلترة حسب العميل (اختياري)" oninput="render()">
-<select id="regionFilter"></select>
-</div>
+<h2>CRM System</h2>
 
 <div class="row">
 <input id="name" placeholder="اسم العميل">
@@ -57,25 +50,23 @@ button { cursor:pointer; }
 <select id="status">
 <option>Interested</option>
 <option>In Progress</option>
+<option>Hold</option>
 <option>Completed</option>
 </select>
 <input id="notes" placeholder="ملاحظات">
-<input id="agent" placeholder="أدخل اسم العميل">
-<select id="region"></select>
+<input id="agent" placeholder="اسم المندوب">
+<input type="number" id="reminderDays" placeholder="Reminder بالأيام">
 </div>
 
 <div class="row">
-<button onclick="startTracking()" id="trackBtn">📍 بدء التتبع</button>
-<button onclick="stopTracking()" id="stopTrackBtn">⛔ إيقاف</button>
-<button onclick="addOrUpdate()" id="saveBtn">💾 حفظ</button>
-<button onclick="exportExcel()" id="exportBtn">📊 Excel</button>
+<button onclick="startTracking()">📍 تتبع</button>
+<button onclick="stopTracking()">⛔ إيقاف</button>
+<button onclick="addOrUpdate()">💾 حفظ</button>
 </div>
 
 <div class="stats">
-<div class="card" id="total">👥 إجمالي: 0</div>
-<div class="card" id="interested">🎯 مهتم: 0</div>
-<div class="card" id="working">🔧 قيد التنفيذ: 0</div>
-<div class="card" id="done">✅ مكتمل: 0</div>
+<div class="card" id="total">Total: 0</div>
+<div class="card" id="hold">Hold: 0</div>
 </div>
 
 <div id="map"></div>
@@ -83,19 +74,16 @@ button { cursor:pointer; }
 <table>
 <thead>
 <tr>
-<th id="thName">الاسم</th>
-<th id="thPhone">الهاتف</th>
-<th id="thDate">التاريخ</th>
-<th id="thStatus">الحالة</th>
-<th id="thNotes">ملاحظات</th>
-<th id="thAgent">العميل</th>
-<th id="thCreatedBy">الادمن</th>
-<th id="thCreatedAt">تاريخ الإنشاء</th>
-<th id="thRegion">المحافظة</th>
-<th id="thLocation">الموقع</th>
-<th id="thDistance">المسافة</th>
-<th id="thEdit">تعديل</th>
-<th id="thDelete">حذف</th>
+<th>الاسم</th>
+<th>الهاتف</th>
+<th>التاريخ</th>
+<th>الحالة</th>
+<th>ملاحظات</th>
+<th>Reminder</th>
+<th>واتساب</th>
+<th>الموقع</th>
+<th>تعديل</th>
+<th>حذف</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -104,211 +92,174 @@ button { cursor:pointer; }
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 // Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
-  authDomain: "crm-app-7733a.firebaseapp.com",
-  projectId: "crm-app-7733a",
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_ID",
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const colRef = collection(db,"clients");
 
-// عناصر الصفحة
-const name=document.getElementById("name"), phone=document.getElementById("phone"), date=document.getElementById("date"),
-status=document.getElementById("status"), notes=document.getElementById("notes"), agent=document.getElementById("agent"),
-region=document.getElementById("region"), agentFilter=document.getElementById("agentFilter"), regionFilter=document.getElementById("regionFilter"),
-table=document.getElementById("table"), totalEl=document.getElementById("total"), interestedEl=document.getElementById("interested"),
-workingEl=document.getElementById("working"), doneEl=document.getElementById("done");
+// عناصر
+const nameEl=document.getElementById("name");
+const phoneEl=document.getElementById("phone");
+const dateEl=document.getElementById("date");
+const statusEl=document.getElementById("status");
+const notesEl=document.getElementById("notes");
+const agentEl=document.getElementById("agent");
+const reminderEl=document.getElementById("reminderDays");
+const table=document.getElementById("table");
 
-// اللغة
-let lang="ar";
-
-// المحافظات
-const egyptRegions=[
-"القاهرة","الإسكندرية","الجيزة","القليوبية","الشرقية","الدقهلية",
-"المنوفية","الغربية","كفر الشيخ","دمياط","بورسعيد","السويس",
-"الإسماعيلية","الفيوم","بني سويف","المنيا","أسيوط","سوهاج",
-"قنا","الأقصر","أسوان","مطروح","الوادي الجديد","شمال سيناء",
-"جنوب سيناء","البحر الأحمر"
-];
-
-// ملء القوائم
-function fillRegionSelects(){
-  region.innerHTML=""; regionFilter.innerHTML="";
-  let defaultOpt=document.createElement("option"); defaultOpt.value=""; defaultOpt.text=lang==="ar"?"اختر المحافظة":"Select Region"; region.appendChild(defaultOpt);
-  let defaultOptFilter=document.createElement("option"); defaultOptFilter.value=""; defaultOptFilter.text=lang==="ar"?"كل المحافظات":"All Regions"; regionFilter.appendChild(defaultOptFilter);
-  egyptRegions.forEach(r=>{
-    let o1=document.createElement("option"); o1.value=r; o1.text=r; region.appendChild(o1);
-    let o2=document.createElement("option"); o2.value=r; o2.text=r; regionFilter.appendChild(o2);
-  });
+// 🔔 Notification
+function showNotification(msg){
+  const n=document.getElementById("notification");
+  n.innerText=msg;
+  n.style.display="block";
+  setTimeout(()=>n.style.display="none",3000);
 }
 
-// Leaflet Map
-let map = L.map('map').setView([30.0444,31.2357],6);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
-let marker = L.marker([30.0444,31.2357],{draggable:true}).addTo(map);
+// 🗺️ MAP
+let map=L.map('map').setView([30.0444,31.2357],6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+let marker=L.marker([30.0444,31.2357],{draggable:true}).addTo(map);
 let currentLocation=null;
 
-marker.on('dragend', function(e){
-  const pos = marker.getLatLng();
-  currentLocation={lat:pos.lat,lng:pos.lng};
+marker.on('dragend', e=>{
+  const p=marker.getLatLng();
+  currentLocation={lat:p.lat,lng:p.lng};
 });
 
-map.on('click', function(e){
+map.on('click', e=>{
   marker.setLatLng(e.latlng);
   currentLocation={lat:e.latlng.lat,lng:e.latlng.lng};
 });
 
-// TRACKING
+// 📍 tracking
 let watchId;
-function startTracking(){ watchId = navigator.geolocation.watchPosition(pos=>{ const lat = pos.coords.latitude; const lng = pos.coords.longitude; currentLocation={lat,lng}; marker.setLatLng([lat,lng]); map.setView([lat,lng],13); });}
-function stopTracking(){ navigator.geolocation.clearWatch(watchId);}
-
-// DISTANCE
-function calcDistance(lat1,lng1,lat2,lng2){
-  const R=6371;
-  const dLat=(lat2-lat1)*Math.PI/180;
-  const dLng=(lng2-lng1)*Math.PI/180;
-  const a=Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
-  return (R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(2);
+window.startTracking=()=> {
+  watchId=navigator.geolocation.watchPosition(pos=>{
+    const lat=pos.coords.latitude;
+    const lng=pos.coords.longitude;
+    currentLocation={lat,lng};
+    marker.setLatLng([lat,lng]);
+    map.setView([lat,lng],13);
+  });
 }
+window.stopTracking=()=> navigator.geolocation.clearWatch(watchId);
 
-// ADD / UPDATE CLIENT
-let editId=null;
-async function addOrUpdate(){
-  if(!name.value || !phone.value){ alert(lang==="ar"?"أدخل الاسم ورقم الهاتف":"Enter Name & Phone"); return;}
-  const now=new Date().toLocaleString();
-  const clientData={ name:name.value, phone:phone.value, date:date.value, status:status.value, notes:notes.value, location:currentLocation, agent:agent.value||"-", region:region.value||"-", createdBy:agent.value||"-", createdAt:now };
-  try{ if(editId){ await updateDoc(doc(db,"clients",editId),clientData); editId=null; } else{ await addDoc(colRef,clientData);} clearForm(); render(); }catch(e){ console.error(e); alert("❌ Error");}
-}
-
-// EDIT
-async function editClient(id){
-  const d = await getDoc(doc(db,"clients",id));
-  if(d.exists()){
-    const c=d.data();
-    name.value=c.name; phone.value=c.phone; date.value=c.date;
-    status.value=c.status; notes.value=c.notes;
-    agent.value=c.agent; region.value=c.region;
-    if(c.location){ currentLocation=c.location; marker.setLatLng([c.location.lat,c.location.lng]); map.setView([c.location.lat,c.location.lng],13);}
-    editId=id;
+// ➕ ADD
+window.addOrUpdate=async ()=>{
+  if(!nameEl.value || !phoneEl.value){
+    alert("أدخل البيانات");
+    return;
   }
-}
 
-// CLEAR
-function clearForm(){ name.value=""; phone.value=""; date.value=""; notes.value=""; agent.value=""; region.value=""; editId=null; currentLocation=null; }
+  const now=new Date();
+  const reminderDate = reminderEl.value
+    ? new Date(now.getTime()+reminderEl.value*86400000)
+    : null;
 
-// RENDER
-async function render(){
-  table.innerHTML="";
-  const filterAgent=agentFilter.value.toLowerCase();
-  const filterRegion=regionFilter.value;
-  let total=0, interested=0, working=0, done=0;
-  const snap=await getDocs(colRef);
-  snap.forEach(d=>{
-    const c=d.data();
-    if(filterAgent && !c.agent.toLowerCase().includes(filterAgent)) return;
-    if(filterRegion && c.region!==filterRegion) return;
-    total++;
-    if(c.status==="Interested") interested++;
-    else if(c.status==="In Progress") working++;
-    else if(c.status==="Completed") done++;
-    let dist=c.location && currentLocation ? calcDistance(currentLocation.lat,currentLocation.lng,c.location.lat,c.location.lng)+" km" : "-";
-    table.innerHTML+=`
-    <tr>
-      <td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td><td>${c.notes}</td>
-      <td>${c.agent}</td><td>${c.createdBy}</td><td>${c.createdAt}</td>
-      <td>${c.region}</td>
-      <td>${c.location ? `<a href="https://www.openstreetmap.org/?mlat=${c.location.lat}&mlon=${c.location.lng}" target="_blank">🌍 Open</a>`:"-"}</td>
-      <td>${dist}</td>
-      <td><button onclick="editClient('${d.id}')">✏️</button></td>
-      <td><button onclick="deleteClient('${d.id}')">❌</button></td>
-    </tr>`;
+  await addDoc(colRef,{
+    name:nameEl.value,
+    phone:phoneEl.value,
+    date:dateEl.value,
+    status:statusEl.value,
+    notes:notesEl.value,
+    agent:agentEl.value,
+    location:currentLocation,
+    reminderDate: reminderDate ? reminderDate.toISOString() : null
   });
-  totalEl.innerText=`👥 ${lang==="ar"?"إجمالي":"Total"}: ${total}`;
-  interestedEl.innerText=`🎯 ${lang==="ar"?"مهتم":"Interested"}: ${interested}`;
-  workingEl.innerText=`🔧 ${lang==="ar"?"قيد التنفيذ":"In Progress"}: ${working}`;
-  doneEl.innerText=`✅ ${lang==="ar"?"مكتمل":"Completed"}: ${done}`;
-}
 
-// DELETE
-async function deleteClient(id){ await deleteDoc(doc(db,"clients",id)); render(); }
-
-// EXPORT Excel
-async function exportExcel(){
-  const snap = await getDocs(colRef);
-  const data = [];
-  const headers = lang === "ar"
-    ? ["الاسم","الهاتف","التاريخ","الحالة","ملاحظات","العميل","المحافظة","الادمن","تاريخ الإنشاء","Lat","Lng"]
-    : ["Name","Phone","Date","Status","Notes","Agent","Region","CreatedBy","CreatedAt","Lat","Lng"];
-  data.push(headers);
-  snap.forEach(d => {
-    const c = d.data();
-    data.push([
-      c.name||"", c.phone||"", c.date||"", c.status||"", c.notes||"",
-      c.agent||"", c.region||"", c.createdBy||"", c.createdAt||"",
-      c.location?.lat||"", c.location?.lng||""
-    ]);
-  });
-  const worksheet = XLSX.utils.aoa_to_sheet(data);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Clients");
-  XLSX.writeFile(workbook, "clients.xlsx");
-}
-
-// TOGGLE LANGUAGE
-function toggleLang(){
-  lang = lang==="ar"?"en":"ar";
-  updateUIText();
-  fillRegionSelects();
+  clearForm();
   render();
 }
 
-function updateUIText(){
-  document.getElementById("title").innerText = lang==="ar"?"CRM System Management For Utopia Trading And Export":"CRM System Management For Utopia Trading And Export";
-  document.getElementById("developer").innerHTML = lang==="ar"?"تم إنشاؤه وتصميمه وتطويره بواسطة Eng : <strong>Mahmoud Mohamed Marie</strong>":"Created & Developed by Eng : <strong>Mahmoud Mohamed Marie</strong>";
-  document.getElementById("phoneText").innerText="📞 01222153415";
-  name.placeholder = lang==="ar"?"اسم العميل":"Customer Name";
-  phone.placeholder = lang==="ar"?"رقم الهاتف":"Phone Number";
-  notes.placeholder = lang==="ar"?"ملاحظات":"Notes";
-  agent.placeholder = lang==="ar"?"أدخل اسم العميل":"Agent Name";
-  agentFilter.placeholder = lang==="ar"?"فلترة حسب العميل (اختياري)":"Filter by Agent (optional)";
-  document.getElementById("trackBtn").innerText=lang==="ar"?"📍 بدء التتبع":"📍 Start Tracking";
-  document.getElementById("stopTrackBtn").innerText=lang==="ar"?"⛔ إيقاف":"⛔ Stop Tracking";
-  document.getElementById("saveBtn").innerText=lang==="ar"?"💾 حفظ":"💾 Save";
-  document.getElementById("exportBtn").innerText=lang==="ar"?"📊 Excel":"📊 Excel";
-  document.getElementById("thName").innerText = lang==="ar"?"الاسم":"Name";
-  document.getElementById("thPhone").innerText = lang==="ar"?"الهاتف":"Phone";
-  document.getElementById("thDate").innerText = lang==="ar"?"التاريخ":"Date";
-  document.getElementById("thStatus").innerText = lang==="ar"?"الحالة":"Status";
-  document.getElementById("thNotes").innerText = lang==="ar"?"ملاحظات":"Notes";
-  document.getElementById("thAgent").innerText = lang==="ar"?"مكان العميل":"Agent";
-  document.getElementById("thCreatedBy").innerText = lang==="ar"?"الأدمن":"Created By";
-  document.getElementById("thCreatedAt").innerText = lang==="ar"?"تاريخ الإنشاء":"Created At";
-  document.getElementById("thRegion").innerText = lang==="ar"?"المحافظة":"Region";
-  document.getElementById("thLocation").innerText = lang==="ar"?"الموقع":"Location";
-  document.getElementById("thDistance").innerText = lang==="ar"?"المسافة":"Distance";
-  document.getElementById("thEdit").innerText = lang==="ar"?"تعديل":"Edit";
-  document.getElementById("thDelete").innerText = lang==="ar"?"حذف":"Delete";
+// 🧹
+function clearForm(){
+  nameEl.value="";
+  phoneEl.value="";
+  dateEl.value="";
+  notesEl.value="";
+  agentEl.value="";
+  reminderEl.value="";
 }
 
-// LANGUAGE AUTO-SELECT BASED ON BROWSER
-const userLang = navigator.language || navigator.userLanguage;
-if(userLang.startsWith("ar")) lang="ar"; else lang="en";
-updateUIText();
+// 🗑️
+window.deleteClient=async(id)=>{
+  await deleteDoc(doc(db,"clients",id));
+  render();
+}
 
-// EXPORT FUNCTIONS TO WINDOW
-window.startTracking=startTracking; window.stopTracking=stopTracking; window.addOrUpdate=addOrUpdate;
-window.deleteClient=deleteClient; window.editClient=editClient; window.exportExcel=exportExcel;
+// 📱 WhatsApp
+function openWhatsApp(phone){
+  let msg="مرحبا بخصوص الطلب";
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
+}
+
+// ⏰ Reminder
+function checkReminder(c){
+  if(!c.reminderDate) return "";
+
+  const now=new Date();
+  const r=new Date(c.reminderDate);
+
+  if(now>=r){
+    showNotification("⏰ Reminder: "+c.name);
+    return "⚠️ Reminder";
+  }
+  return "";
+}
+
+// 🎨 RENDER
+async function render(){
+  table.innerHTML="";
+  let holdCount=0;
+
+  const snap=await getDocs(colRef);
+
+  snap.forEach(d=>{
+    const c=d.data();
+
+    let rowClass=c.status==="Hold"?"holdRow":"";
+
+    if(c.status==="Hold"){
+      holdCount++;
+      showNotification("⚠️ Hold: "+c.name);
+    }
+
+    let reminderMsg=checkReminder(c);
+
+    table.innerHTML+=`
+    <tr class="${rowClass}">
+      <td>${c.name}</td>
+      <td>${c.phone}</td>
+      <td>${c.date}</td>
+      <td>${c.status}</td>
+      <td>${c.notes}</td>
+      <td>${reminderMsg}</td>
+      <td><button onclick="openWhatsApp('${c.phone}')">📱</button></td>
+      <td>${c.location ? `<a href="https://maps.google.com/?q=${c.location.lat},${c.location.lng}" target="_blank">🌍</a>`:"-"}</td>
+      <td>-</td>
+      <td><button onclick="deleteClient('${d.id}')">❌</button></td>
+    </tr>`;
+  });
+
+  document.getElementById("total").innerText="Total: "+snap.size;
+  document.getElementById("hold").innerText="Hold: "+holdCount;
+}
 
 // INIT
-fillRegionSelects(); render();
+render();
 
 </script>
+
 </body>
 </html>
