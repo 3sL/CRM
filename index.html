@@ -68,12 +68,15 @@ cursor:pointer;
 <input id="notes" placeholder="ملاحظات">
 <input id="agent" placeholder="اسم المندوب">
 <input type="number" id="reminderDays" placeholder="Reminder بالأيام">
+<input id="tasks" placeholder="Tasks">
 </div>
 
 <div class="row">
 <button onclick="startTracking()">📍 بدء التتبع</button>
 <button onclick="stopTracking()">⛔ إيقاف</button>
 <button onclick="addOrUpdate()">💾 حفظ</button>
+<button onclick="exportExcel()">📊 Excel Export</button>
+<input type="file" id="importExcel" accept=".xlsx,.xls"/>
 </div>
 
 <div class="stats">
@@ -91,6 +94,7 @@ cursor:pointer;
 <th id="thDate">التاريخ</th>
 <th id="thStatus">الحالة</th>
 <th id="thNotes">ملاحظات</th>
+<th>Tasks</th>
 <th>Reminder</th>
 <th>WhatsApp</th>
 <th>Location</th>
@@ -128,7 +132,9 @@ const statusEl=document.getElementById("status");
 const notesEl=document.getElementById("notes");
 const agentEl=document.getElementById("agent");
 const reminderEl=document.getElementById("reminderDays");
+const tasksEl=document.getElementById("tasks");
 const table=document.getElementById("table");
+const importInput=document.getElementById("importExcel");
 
 let lang="ar";
 let editId=null;
@@ -145,6 +151,7 @@ function updateUIText(){
   notesEl.placeholder = lang==="ar"?"ملاحظات":"Notes";
   agentEl.placeholder = lang==="ar"?"اسم المندوب":"Agent";
   reminderEl.placeholder = lang==="ar"?"Reminder بالأيام":"Reminder Days";
+  tasksEl.placeholder = lang==="ar"?"Tasks":"Tasks";
 
   document.getElementById("thName").innerText = lang==="ar"?"الاسم":"Name";
   document.getElementById("thPhone").innerText = lang==="ar"?"الهاتف":"Phone";
@@ -199,6 +206,7 @@ window.addOrUpdate=async ()=>{
     notes:notesEl.value,
     agent:agentEl.value,
     location:currentLocation,
+    tasks: tasksEl.value,
     reminderDate: reminderDate ? reminderDate.toISOString() : null
   };
 
@@ -224,6 +232,7 @@ window.editClient=async(id)=>{
     statusEl.value=c.status;
     notesEl.value=c.notes;
     agentEl.value=c.agent;
+    tasksEl.value=c.tasks||"";
     if(c.reminderDate){
       const diff=Math.ceil((new Date(c.reminderDate)-new Date())/86400000);
       reminderEl.value=diff>0?diff:0;
@@ -275,6 +284,7 @@ async function render(){
       <td>${c.date}</td>
       <td>${c.status}</td>
       <td>${c.notes}</td>
+      <td>${c.tasks||""}</td>
       <td>${reminder}</td>
       <td><button onclick="openWhatsApp('${c.phone}')">📱</button></td>
       <td>${c.location?`🌍`:"-"}</td>
@@ -293,6 +303,7 @@ function clearForm(){
   dateEl.value="";
   notesEl.value="";
   agentEl.value="";
+  tasksEl.value="";
   reminderEl.value="";
 }
 
@@ -300,6 +311,49 @@ function clearForm(){
 let watchId;
 window.startTracking=()=>{ watchId = navigator.geolocation.watchPosition(pos=>{ const lat=pos.coords.latitude, lng=pos.coords.longitude; currentLocation={lat,lng}; marker.setLatLng([lat,lng]); map.setView([lat,lng],13); });}
 window.stopTracking=()=>{ navigator.geolocation.clearWatch(watchId); }
+
+// 📊 Excel Export
+window.exportExcel = async ()=>{
+  const snap = await getDocs(colRef);
+  const data = [];
+  const headers = ["Name","Phone","Date","Status","Notes","Tasks","Agent","Reminder","Lat","Lng"];
+  data.push(headers);
+  snap.forEach(d=>{
+    const c = d.data();
+    data.push([
+      c.name||"", c.phone||"", c.date||"", c.status||"", c.notes||"",
+      c.tasks||"", c.agent||"", c.reminderDate||"",
+      c.location?.lat||"", c.location?.lng||""
+    ]);
+  });
+  const worksheet = XLSX.utils.aoa_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Clients");
+  XLSX.writeFile(workbook, "clients.xlsx");
+}
+
+// 📥 Excel Import
+importInput.addEventListener("change", async(e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const data = await file.arrayBuffer();
+  const workbook = XLSX.read(data);
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet);
+  for(let r of rows){
+    await addDoc(colRef,{
+      name: r.Name || "",
+      phone: r.Phone || "",
+      date: r.Date || "",
+      status: r.Status || "Interested",
+      notes: r.Notes || "",
+      tasks: r.Tasks || "",
+      agent: r.Agent || "",
+      reminderDate: r.Reminder || null
+    });
+  }
+  render();
+});
 
 render();
 </script>
