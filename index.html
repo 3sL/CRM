@@ -237,8 +237,9 @@ window.deleteClient=async(id)=>{
 }
 
 // 📱 WhatsApp
-function openWhatsApp(phone){
-  window.open(`https://wa.me/${phone}`);
+window.openWhatsApp = function(phone){
+  let msg = "مرحبا، بخصوص الطلب الخاص بك";
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
 }
 
 // ⏰ Reminder
