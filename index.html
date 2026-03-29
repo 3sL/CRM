@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM System Management</title>
+<title>CRM System</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
 body { font-family: Arial; background:#f0f2f5; padding:20px;}
@@ -29,10 +30,10 @@ padding:15px;
 border-radius:10px;
 display:none;
 z-index:999;
+font-weight:bold;
 }
 </style>
 
-<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
 
 <body>
@@ -47,12 +48,14 @@ z-index:999;
 <input id="name" placeholder="اسم العميل">
 <input id="phone" placeholder="رقم الهاتف">
 <input type="date" id="date">
+
 <select id="status">
 <option>Interested</option>
 <option>In Progress</option>
 <option>Hold</option>
 <option>Completed</option>
 </select>
+
 <input id="notes" placeholder="ملاحظات">
 <input id="agent" placeholder="اسم المندوب">
 <input type="number" id="reminderDays" placeholder="Reminder بالأيام">
@@ -82,7 +85,6 @@ z-index:999;
 <th>Reminder</th>
 <th>واتساب</th>
 <th>الموقع</th>
-<th>تعديل</th>
 <th>حذف</th>
 </tr>
 </thead>
@@ -95,13 +97,13 @@ z-index:999;
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Firebase
+// 🔥 Firebase (زي ما هو بدون تغيير)
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  projectId: "YOUR_ID",
+  apiKey: "AIzaSyBug4T4JIrLRCv6dNm7vdSFMD-KFC6mI0g",
+  authDomain: "crm-app-7733a.firebaseapp.com",
+  projectId: "crm-app-7733a",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -158,7 +160,7 @@ window.stopTracking=()=> navigator.geolocation.clearWatch(watchId);
 // ➕ ADD
 window.addOrUpdate=async ()=>{
   if(!nameEl.value || !phoneEl.value){
-    alert("أدخل البيانات");
+    alert("أدخل الاسم ورقم الهاتف");
     return;
   }
 
@@ -200,7 +202,7 @@ window.deleteClient=async(id)=>{
 
 // 📱 WhatsApp
 function openWhatsApp(phone){
-  let msg="مرحبا بخصوص الطلب";
+  let msg="مرحبا، بخصوص الطلب الخاص بك";
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`);
 }
 
@@ -212,7 +214,7 @@ function checkReminder(c){
   const r=new Date(c.reminderDate);
 
   if(now>=r){
-    showNotification("⏰ Reminder: "+c.name);
+    showNotification("⏰ متابعة مطلوبة: "+c.name);
     return "⚠️ Reminder";
   }
   return "";
@@ -232,7 +234,7 @@ async function render(){
 
     if(c.status==="Hold"){
       holdCount++;
-      showNotification("⚠️ Hold: "+c.name);
+      showNotification("⚠️ شغل متوقف: "+c.name);
     }
 
     let reminderMsg=checkReminder(c);
@@ -247,7 +249,6 @@ async function render(){
       <td>${reminderMsg}</td>
       <td><button onclick="openWhatsApp('${c.phone}')">📱</button></td>
       <td>${c.location ? `<a href="https://maps.google.com/?q=${c.location.lat},${c.location.lng}" target="_blank">🌍</a>`:"-"}</td>
-      <td>-</td>
       <td><button onclick="deleteClient('${d.id}')">❌</button></td>
     </tr>`;
   });
