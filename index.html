@@ -3,279 +3,270 @@
 <head>
 <meta charset="UTF-8">
 <title>CRM & ERP System</title>
-<style>
-body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:20px; }
-.container { max-width:1400px; margin:auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.1);}
-.header { display:flex; align-items:center; justify-content: space-between; margin-bottom:25px; }
-.header img { height:80px; border-radius:12px; }
-.header div { text-align:right; flex-grow:1; margin-right:20px; }
-.header h1 { margin:0; font-size:28px; color:#007bff; }
-.header p { margin:5px 0 0; font-size:16px; color:#555; }
 
+<!-- CSS -->
+<style>
+body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0;}
+.container { max-width:1400px; margin:auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.1);}
+.header { text-align:center; margin-bottom:20px; }
+.header img { height:120px; width:auto; margin-bottom:10px; }
+.developer, .phone { text-align:center; font-size:14px; margin:2px 0; color:#555; }
+.tabs { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+.tab-btn { padding:10px 20px; background:#ddd; border:none; cursor:pointer; border-radius:5px;}
+.tab-btn.active { background:#007bff; color:#fff; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+input, select, button { padding:10px; margin:5px 0; width:100%; box-sizing:border-box; }
 .row { display:flex; gap:10px; flex-wrap:wrap; }
 .row > * { flex:1; min-width:150px; }
-input, select, button { padding:10px; margin:5px 0; width:100%; box-sizing:border-box; border-radius:5px; }
-button { cursor:pointer; border:none; transition:0.3s; }
-button:hover { opacity:0.85; }
-
-table { width:100%; border-collapse:collapse; margin-top:20px; }
-th, td { padding:10px; border:1px solid #ddd; text-align:center; }
+table { width:100%; border-collapse:collapse; margin-top:15px;}
+th, td { border:1px solid #ddd; padding:10px; text-align:center; }
 th { background:#222; color:#fff; }
 .stats { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-.card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px; }
+.card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px;}
 #notification { position: fixed; top:20px; right:20px; background:#ffcc00; padding:15px; border-radius:10px; display:none; z-index:999; }
 .holdRow { background:#fff3cd; }
 
-/* Tabs */
-.tabs { display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap; }
-.tab-btn { padding:10px 20px; background:#ddd; cursor:pointer; border-radius:5px; transition:0.3s; }
-.tab-btn.active { background:#007bff; color:#fff; }
-.tab-btn:hover { background:#0056b3; color:#fff; }
-.tab-content { display:none; }
-.tab-content.active { display:block; }
-
-/* ERP */
+/* ERP Form */
 .erp-form { background:#f9f9f9; padding:15px; border-radius:8px; margin-top:10px; }
-.erp-form table { margin-top:10px; width:100%; border-collapse:collapse; }
-.erp-form th, .erp-form td { border:1px solid #ddd; padding:8px; text-align:center; }
-.erp-form input, .erp-form select { width:100%; padding:5px; border-radius:5px; }
-.erp-btn-add { background:#28a745; color:#fff; padding:8px 12px; cursor:pointer; margin-top:10px; border-radius:5px; }
-.erp-btn-add:hover { background:#218838; }
-.erp-btn-submit { background:#007bff; color:#fff; padding:10px 20px; width:100%; margin-top:10px; cursor:pointer; border-radius:5px; }
-.erp-btn-submit:hover { background:#0056b3; }
+.erp-form table { margin-top:10px; }
+.erp-form input, .erp-form select { width:100%; padding:5px; margin:2px 0; }
+.erp-btn-add { background:#28a745; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; }
+.erp-btn-submit { background:#007bff; color:#fff; border:none; padding:10px 20px; cursor:pointer; border-radius:5px; margin-top:10px; width:100%; }
 
-/* Footer */
-.footer { text-align:center; margin-top:30px; padding:15px; background:#eee; border-radius:8px; font-size:14px; color:#555; }
-.tab-logo { display:block; margin:10px auto; max-height:80px; border-radius:10px; }
+/* Excel */
+#excelTable td { min-width:80px; }
+#excelTable input { width:100%; box-sizing:border-box; }
 </style>
+
+<!-- SheetJS for Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "ضع هنا apiKey",
+    authDomain: "ضع هنا authDomain",
+    projectId: "ضع هنا projectId",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const clientsCol = collection(db,"clients");
+</script>
+
 </head>
 <body>
 
 <div class="container">
 
-  <!-- Header -->
-  <div class="header">
-    <img src="https://via.placeholder.com/80x80.png?text=Logo" alt="Logo">
-    <div>
-      <h1>Utopia Trading & Export</h1>
-      <p>📞 01222153415</p>
-    </div>
-  </div>
+<!-- Header -->
+<div class="header">
+    <img src="logo.png" alt="Company Logo">
+</div>
+<div class="developer">Developed by Eng : <strong>Mahmoud Mohamed Marie</strong></div>
+<div class="phone">📞 +201222153415</div>
 
-  <!-- Tabs -->
-  <div class="tabs">
+<!-- Tabs -->
+<div class="tabs">
     <button class="tab-btn active" onclick="showTab('crmTab', this)">CRM</button>
+    <button class="tab-btn" onclick="showTab('tasksTab', this)">Tasks</button>
     <button class="tab-btn" onclick="showTab('erpTab', this)">ERP</button>
-  </div>
+    <button class="tab-btn" onclick="showTab('excelTab', this)">Excel</button>
+</div>
 
-  <!-- Notification -->
-  <div id="notification"></div>
-
-  <!-- CRM Tab -->
-  <div id="crmTab" class="tab-content active">
-    <img src="https://via.placeholder.com/200x80.png?text=CRM+Logo" class="tab-logo" alt="CRM Logo">
+<!-- CRM Tab -->
+<div id="crmTab" class="tab-content active">
+    <h2>CRM System</h2>
     <div class="row">
-      <input id="name" placeholder="اسم العميل">
-      <input id="phone" placeholder="رقم الهاتف">
-      <input type="date" id="date">
-      <select id="status">
-        <option>Interested</option>
-        <option>In Progress</option>
-        <option>Hold</option>
-        <option>Completed</option>
-      </select>
-      <input id="notes" placeholder="ملاحظات">
-      <input id="agent" placeholder="اسم المندوب">
-      <input type="number" id="reminderDays" placeholder="Reminder بالأيام">
+        <input id="name" placeholder="اسم العميل">
+        <input id="phone" placeholder="رقم الهاتف">
+        <input type="date" id="date">
+        <select id="status">
+            <option>Interested</option>
+            <option>In Progress</option>
+            <option>Hold</option>
+            <option>Completed</option>
+        </select>
+        <input id="notes" placeholder="ملاحظات">
+        <input id="agent" placeholder="اسم المندوب">
+        <input type="number" id="reminderDays" placeholder="Reminder بالأيام">
     </div>
     <div class="row">
-      <button onclick="addOrUpdate()">💾 حفظ</button>
+        <button onclick="addOrUpdate()">💾 حفظ</button>
     </div>
-
     <div class="stats">
-      <div class="card" id="total">Total: 0</div>
-      <div class="card" id="hold">Hold: 0</div>
+        <div class="card" id="total">0</div>
+        <div class="card" id="hold">Hold: 0</div>
     </div>
-
     <table>
-      <thead>
+        <thead>
         <tr>
-          <th>الاسم</th>
-          <th>الهاتف</th>
-          <th>التاريخ</th>
-          <th>الحالة</th>
-          <th>ملاحظات</th>
-          <th>Reminder</th>
-          <th>واتساب</th>
-          <th>حذف</th>
+            <th>الاسم</th><th>الهاتف</th><th>التاريخ</th><th>الحالة</th>
+            <th>ملاحظات</th><th>Reminder</th><th>واتساب</th><th>تعديل</th><th>حذف</th>
         </tr>
-      </thead>
-      <tbody id="table"></tbody>
+        </thead>
+        <tbody id="table"></tbody>
     </table>
-  </div>
+</div>
 
-  <!-- ERP Tab -->
-  <div id="erpTab" class="tab-content">
-    <img src="https://via.placeholder.com/200x80.png?text=ERP+Logo" class="tab-logo" alt="ERP Logo">
+<!-- Tasks Tab -->
+<div id="tasksTab" class="tab-content">
+    <h2>Tasks</h2>
+    <div class="row">
+        <input id="taskInput" placeholder="اكتب المهمة">
+        <button onclick="addTask()">➕ إضافة المهمة</button>
+    </div>
+    <ul id="taskList"></ul>
+</div>
+
+<!-- ERP Tab -->
+<div id="erpTab" class="tab-content">
     <h2>إضافة قيد محاسبي (يومي)</h2>
     <div class="erp-form">
-      <form id="accountingForm">
-        <div class="row">
-          <div>
-            <label>التاريخ:</label>
-            <input type="date" name="accDate" required>
-          </div>
-          <div>
-            <label>البيان (الوصف):</label>
-            <input type="text" name="accDesc" placeholder="شرح القيد">
-          </div>
-        </div>
-
-        <table id="accountingTable">
-          <thead>
-            <tr>
-              <th>الحساب</th>
-              <th>مدين</th>
-              <th>دائن</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>
-                <select>
-                  <option>الصندوق</option>
-                  <option>البنك</option>
-                  <option>المبيعات</option>
-                </select>
-              </td>
-              <td><input type="number" placeholder="0.00"></td>
-              <td><input type="number" placeholder="0.00"></td>
-            </tr>
-            <tr>
-              <td>
-                <select>
-                  <option>الصندوق</option>
-                  <option>البنك</option>
-                  <option>المبيعات</option>
-                </select>
-              </td>
-              <td><input type="number" placeholder="0.00"></td>
-              <td><input type="number" placeholder="0.00"></td>
-            </tr>
-          </tbody>
-        </table>
-        <button type="button" class="erp-btn-add" onclick="addAccountingRow()">+ إضافة سطر</button>
-        <button type="button" class="erp-btn-submit" onclick="submitAccountingForm()">حفظ القيد</button>
-      </form>
+        <form id="accountingForm">
+            <div class="row">
+                <div class="form-group">
+                    <label>التاريخ:</label>
+                    <input type="date" name="accDate" required>
+                </div>
+                <div class="form-group">
+                    <label>البيان (الوصف):</label>
+                    <input type="text" name="accDesc" placeholder="شرح القيد">
+                </div>
+            </div>
+            <table id="accountingTable">
+                <thead>
+                <tr>
+                    <th>الحساب</th><th>مدين</th><th>دائن</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><select><option>الصندوق</option><option>البنك</option><option>المبيعات</option></select></td>
+                    <td><input type="number" placeholder="0.00"></td>
+                    <td><input type="number" placeholder="0.00"></td>
+                </tr>
+                </tbody>
+            </table>
+            <button type="button" class="erp-btn-add" onclick="addAccountingRow()">+ إضافة سطر</button>
+            <button type="button" class="erp-btn-submit" onclick="submitAccountingForm()">حفظ القيد</button>
+        </form>
     </div>
-  </div>
+</div>
 
-  <!-- Footer -->
-  <div class="footer">
-    المصمم والمطور: Mahmoud Mohamed Marie
-  </div>
+<!-- Excel Tab -->
+<div id="excelTab" class="tab-content">
+    <h2>Excel Upload / Edit</h2>
+    <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleFile(event)">
+    <button onclick="exportExcelFile()">📊 تصدير Excel</button>
+    <table id="excelTable" border="1"></table>
+</div>
 
 </div>
 
+<!-- JS -->
 <script>
-/* ==== Tabs ==== */
+// Tabs
 function showTab(id, btn){
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
 }
 
-/* ==== CRM ==== */
-let clients = JSON.parse(localStorage.getItem("clients") || "[]");
-const nameEl = document.getElementById("name");
-const phoneEl = document.getElementById("phone");
-const dateEl = document.getElementById("date");
-const statusEl = document.getElementById("status");
-const notesEl = document.getElementById("notes");
-const reminderEl = document.getElementById("reminderDays");
-const table = document.getElementById("table");
-
+// Notification
 function showNotification(msg){
-  const n = document.getElementById("notification");
-  n.innerText = msg;
-  n.style.display="block";
-  setTimeout(()=> n.style.display="none",3000);
+    const n = document.getElementById("notification");
+    n.innerText = msg;
+    n.style.display="block";
+    setTimeout(()=> n.style.display="none",3000);
+}
+
+// CRM Logic
+let clients = JSON.parse(localStorage.getItem("clients")||"[]");
+const nameEl=document.getElementById("name"), phoneEl=document.getElementById("phone"),
+dateEl=document.getElementById("date"), statusEl=document.getElementById("status"),
+notesEl=document.getElementById("notes"), reminderEl=document.getElementById("reminderDays"),
+table=document.getElementById("table");
+
+function clearForm(){
+    nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value=""; reminderEl.value="";
 }
 
 function addOrUpdate(){
-  if(!nameEl.value || !phoneEl.value){ alert("أدخل البيانات"); return; }
-  const now = new Date();
-  const reminderDate = reminderEl.value ? new Date(now.getTime()+reminderEl.value*24*60*60*1000) : null;
-  clients.push({
-    name:nameEl.value,
-    phone:phoneEl.value,
-    date:dateEl.value,
-    status:statusEl.value,
-    notes:notesEl.value,
-    reminderDate: reminderDate ? reminderDate.toISOString() : null
-  });
-  localStorage.setItem("clients", JSON.stringify(clients));
-  clearForm();
-  render();
+    if(!nameEl.value || !phoneEl.value){ alert("أدخل البيانات"); return; }
+    const now = new Date();
+    const reminderDate = reminderEl.value ? new Date(now.getTime() + reminderEl.value*24*60*60*1000) : null;
+    clients.push({name:nameEl.value, phone:phoneEl.value, date:dateEl.value, status:statusEl.value, notes:notesEl.value, reminderDate: reminderDate?reminderDate.toISOString():null});
+    localStorage.setItem("clients", JSON.stringify(clients));
+    clearForm();
+    render();
 }
 
-function clearForm(){ nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value=""; reminderEl.value=""; }
-
-function deleteClient(i){
-  clients.splice(i,1);
-  localStorage.setItem("clients", JSON.stringify(clients));
-  render();
-}
-
-function openWhatsApp(phone){
-  let msg = "مرحبا، بخصوص الطلب الخاص بك";
-  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-}
+function deleteClient(i){ clients.splice(i,1); localStorage.setItem("clients", JSON.stringify(clients)); render(); }
+function openWhatsApp(phone){ window.open(`https://wa.me/${phone}?text=${encodeURIComponent("مرحبا، بخصوص الطلب الخاص بك")}`,'_blank'); }
 
 function checkReminder(client){
-  if(!client.reminderDate) return "";
-  const now = new Date();
-  const rDate = new Date(client.reminderDate);
-  if(now >= rDate){ showNotification("⏰ عندك عميل محتاج متابعة: " + client.name); return "⚠️ Reminder!"; }
-  return "";
+    if(!client.reminderDate) return "";
+    const now=new Date(), rDate=new Date(client.reminderDate);
+    if(now>=rDate){ showNotification("⏰ عندك عميل محتاج متابعة: "+client.name); return "⚠️ Reminder!"; }
+    return "";
 }
 
 function render(){
-  table.innerHTML="";
-  let holdCount=0;
-  clients.forEach((c,i)=>{
-    let rowClass = c.status==="Hold" ? "holdRow" : "";
-    if(c.status==="Hold"){ holdCount++; showNotification("⚠️ في شغل Hold: " + c.name); }
-    let reminderMsg = checkReminder(c);
-    table.innerHTML += `
-      <tr class="${rowClass}">
-        <td>${c.name}</td>
-        <td>${c.phone}</td>
-        <td>${c.date}</td>
-        <td>${c.status}</td>
-        <td>${c.notes}</td>
-        <td>${reminderMsg}</td>
+    table.innerHTML=""; let holdCount=0;
+    clients.forEach((c,i)=>{
+        let rowClass=c.status==="Hold"?"holdRow":"";
+        if(c.status==="Hold"){ holdCount++; showNotification("⚠️ في شغل Hold: "+c.name);}
+        let reminderMsg=checkReminder(c);
+        table.innerHTML+=`<tr class="${rowClass}">
+        <td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td>
+        <td>${c.notes}</td><td>${reminderMsg}</td>
         <td><button onclick="openWhatsApp('${c.phone}')">📱</button></td>
         <td><button onclick="deleteClient(${i})">❌</button></td>
-      </tr>
-    `;
-  });
-  document.getElementById("total").innerText="Total: "+clients.length;
-  document.getElementById("hold").innerText="Hold: "+holdCount;
+        </tr>`;
+    });
+    document.getElementById("total").innerText="Total: "+clients.length;
+    document.getElementById("hold").innerText="Hold: "+holdCount;
 }
 render();
 
-/* ==== ERP ==== */
-function addAccountingRow(){
-  const tbody=document.getElementById("accountingTable").querySelector("tbody");
-  const newRow=document.createElement("tr");
-  newRow.innerHTML=`<td><select><option>الصندوق</option><option>البنك</option><option>المبيعات</option></select></td>
-    <td><input type="number" placeholder="0.00"></td>
-    <td><input type="number" placeholder="0.00"></td>`;
-  tbody.appendChild(newRow);
+// Tasks
+const taskInput=document.getElementById("taskInput"), taskList=document.getElementById("taskList");
+let tasks=JSON.parse(localStorage.getItem("tasks")||"[]");
+function addTask(){
+    if(!taskInput.value) return;
+    tasks.push(taskInput.value);
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+    renderTasks(); taskInput.value="";
 }
+function renderTasks(){ taskList.innerHTML=""; tasks.forEach((t,i)=>{ let li=document.createElement("li"); li.innerHTML=`${t} <button onclick="deleteTask(${i})">❌</button>`; taskList.appendChild(li); });}
+function deleteTask(i){ tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks();}
+renderTasks();
+
+// ERP
+function addAccountingRow(){ const tbody=document.getElementById("accountingTable").querySelector("tbody"); const newRow=document.createElement("tr"); newRow.innerHTML=`<td><select><option>الصندوق</option><option>البنك</option><option>المبيعات</option></select></td><td><input type="number" placeholder="0.00"></td><td><input type="number" placeholder="0.00"></td>`; tbody.appendChild(newRow);}
 function submitAccountingForm(){ alert("تم حفظ القيد بنجاح!"); }
+
+// Excel
+function handleFile(e){
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=function(evt){
+        const data=new Uint8Array(evt.target.result);
+        const workbook=XLSX.read(data,{type:"array"});
+        const sheet=workbook.Sheets[workbook.SheetNames[0]];
+        const json=XLSX.utils.sheet_to_json(sheet,{header:1});
+        renderExcel(json);
+    };
+    reader.readAsArrayBuffer(file);
+}
+function renderExcel(data){ const table=document.getElementById("excelTable"); table.innerHTML=""; data.forEach((row,rIdx)=>{ const tr=document.createElement("tr"); row.forEach((cell,cIdx)=>{ const td=document.createElement("td"); if(rIdx===0){ td.innerText=cell; }else{ const inp=document.createElement("input"); inp.value=cell; td.appendChild(inp); } tr.appendChild(td); }); table.appendChild(tr); }); }
+function exportExcelFile(){ const table=document.getElementById("excelTable"); const wb=XLSX.utils.book_new(); const ws=XLSX.utils.table_to_sheet(table); XLSX.utils.book_append_sheet(wb,ws,"Sheet1"); XLSX.writeFile(wb,"export.xlsx"); }
+
 </script>
 
 </body>
