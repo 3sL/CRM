@@ -47,10 +47,10 @@ button { cursor:pointer; }
 <h2 id="title">CRM & ERP System For Utopia Trading And Export</h2>
 
 <div class="tabs">
-  <button class="tab-btn active" onclick="showTab('crmTab')">CRM</button>
-  <button class="tab-btn" onclick="showTab('tasksTab')">Tasks</button>
-  <button class="tab-btn" onclick="showTab('erpTab')">ERP</button>
-  <button class="tab-btn" onclick="showTab('excelTab')">Excel</button>
+  <button class="tab-btn active" onclick="showTab(event,'crmTab')">CRM</button>
+  <button class="tab-btn" onclick="showTab(event,'tasksTab')">Tasks</button>
+  <button class="tab-btn" onclick="showTab(event,'erpTab')">ERP</button>
+  <button class="tab-btn" onclick="showTab(event,'excelTab')">Excel</button>
 </div>
 
 <!-- CRM Tab -->
@@ -67,8 +67,8 @@ button { cursor:pointer; }
 <select id="status">
 <option>Interested</option>
 <option>In Progress</option>
-<option>Hold</option>
 <option>Completed</option>
+<option>Hold</option>
 </select>
 <input id="notes" placeholder="ملاحظات">
 <input id="agent" placeholder="أدخل اسم العميل">
@@ -132,13 +132,55 @@ button { cursor:pointer; }
 </div>
 
 <!-- Excel Tab -->
+<!-- Excel Tab -->
 <div id="excelTab" class="tab-content">
-<h3>Excel Upload / Edit</h3>
-<input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleFile(event)">
-<button onclick="exportExcelFile()">📊 تصدير Excel</button>
-<table id="excelTable" border="1"></table>
+  <h3>Excel Upload / Edit</h3>
+  <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleFile(event)">
+  <button onclick="exportExcelFile()">📊 تصدير Excel</button>
+  <table id="excelTable" border="1"></table>
 </div>
 
+<script>
+let currentExcelData = []; // لتخزين البيانات المرفوعة
+
+function handleFile(e){
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, {type:"array"});
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    currentExcelData = XLSX.utils.sheet_to_json(worksheet, {header:1});
+    renderExcelTable();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderExcelTable(){
+  const table = document.getElementById("excelTable");
+  table.innerHTML = "";
+  currentExcelData.forEach((row,rowIndex)=>{
+    const tr = document.createElement("tr");
+    row.forEach((cell,colIndex)=>{
+      const td = document.createElement("td");
+      const input = document.createElement("input");
+      input.value = cell || "";
+      input.oninput = function(){ currentExcelData[rowIndex][colIndex] = this.value; };
+      td.appendChild(input);
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+  });
+}
+
+function exportExcelFile(){
+  const ws = XLSX.utils.aoa_to_sheet(currentExcelData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+  XLSX.writeFile(wb, "edited.xlsx");
+}
+</script>
 </div>
 
 <script type="module">
@@ -155,7 +197,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const colRef = collection(db,"clients");
 
-// Page Elements
+// عناصر الصفحة
 const name=document.getElementById("name"), phone=document.getElementById("phone"), date=document.getElementById("date"),
 status=document.getElementById("status"), notes=document.getElementById("notes"), agent=document.getElementById("agent"),
 region=document.getElementById("region"), agentFilter=document.getElementById("agentFilter"), regionFilter=document.getElementById("regionFilter"),
@@ -293,11 +335,11 @@ async function exportExcel(){
 }
 
 // Tabs
-function showTab(id){
+function showTab(e,id){
   document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  e.currentTarget.classList.add('active');
 }
 
 // Tasks
@@ -323,45 +365,9 @@ function updateUIText(){
   document.getElementById("stopTrackBtn").innerText=lang==="ar"?"⛔ إيقاف":"⛔ Stop Tracking";
   document.getElementById("saveBtn").innerText=lang==="ar"?"💾 حفظ":"💾 Save";
   document.getElementById("exportBtn").innerText=lang==="ar"?"📊 Excel":"📊 Excel";
-  document.getElementById("excelTab").querySelector("h3").innerText=lang==="ar"?"رفع وتعديل ملف Excel":"Excel Upload / Edit";
 }
-
-// Excel Tab
-let excelData=[];
-function handleFile(e){
-  const file = e.target.files[0];
-  const reader = new FileReader();
-  reader.onload = function(ev){
-    const wb = XLSX.read(ev.target.result,{type:'binary'});
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    excelData = XLSX.utils.sheet_to_json(ws,{header:1});
-    renderExcelTable();
-  }
-  reader.readAsBinaryString(file);
-}
-function renderExcelTable(){
-  const tableEl = document.getElementById("excelTable"); tableEl.innerHTML="";
-  excelData.forEach((row,r)=>{
-    const tr = document.createElement("tr");
-    row.forEach((cell,c)=>{
-      const td = document.createElement("td");
-      td.innerHTML=`<input value="${cell||""}">`; tr.appendChild(td);
-    });
-    tableEl.appendChild(tr);
-  });
-}
-function exportExcelFile(){
-  const tableEl = document.getElementById("excelTable");
-  const rows = Array.from(tableEl.querySelectorAll("tr")).map(tr=>Array.from(tr.querySelectorAll("input")).map(input=>input.value));
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-  XLSX.writeFile(wb, "edited.xlsx");
-}
-
-// Initialize
-fillRegionSelects(); render(); updateUIText();
-
+fillRegionSelects();
+render();
 </script>
 </body>
 </html>
