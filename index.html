@@ -2,79 +2,93 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM & ERP System - Professional UI with Daily Alerts & Filter</title>
+<title>CRM & ERP Dashboard Professional</title>
 <style>
-body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#e2e8f0; margin:0; padding:0;}
-.container { max-width:1400px; margin:auto; background:#fff; padding:25px; border-radius:15px; box-shadow:0 0 25px rgba(0,0,0,0.2);}
-.header { text-align:center; margin-bottom:10px; }
-.header img { height:120px; width:auto; margin-bottom:10px; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f0f2f5; margin:0; padding:0;}
+.container { max-width:1500px; margin:auto; background:#fff; padding:25px; border-radius:15px; box-shadow:0 0 25px rgba(0,0,0,0.2);}
+.header { text-align:center; margin-bottom:20px; }
+.header img { height:120px; width:auto; border-radius:10px;}
 .developer, .phone { text-align:center; font-size:14px; margin:2px 0; color:#555; font-weight:600;}
 .tabs { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px; justify-content:center; }
-.tab-btn { padding:12px 25px; background:#6c757d; border:none; cursor:pointer; border-radius:8px; font-weight:bold; color:#fff; transition:0.3s; }
-.tab-btn.active { background:#007bff; color:#fff; }
+.tab-btn { padding:12px 25px; border:none; cursor:pointer; border-radius:8px; font-weight:bold; color:#fff; background:#6c757d; transition:0.3s; }
+.tab-btn.active { background:#007bff; }
 .tab-btn:hover { background:#0056b3; }
 .tab-content { display:none; animation:fadeIn 0.5s;}
 .tab-content.active { display:block; }
 @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
-input, select, button { padding:10px; margin:5px 0; width:100%; box-sizing:border-box; border-radius:5px; border:1px solid #ccc;}
+
+/* Inputs and Buttons */
+input, select, button { padding:10px; margin:5px 0; width:100%; box-sizing:border-box; border-radius:5px; border:1px solid #ccc; font-size:14px;}
+button:hover { opacity:0.9; }
 .row { display:flex; gap:10px; flex-wrap:wrap; }
 .row > * { flex:1; min-width:150px; }
-table { width:100%; border-collapse:collapse; margin-top:15px;}
-th, td { border:1px solid #ddd; padding:10px; text-align:center;}
+button.small-btn { padding:5px 8px; margin:2px; border-radius:5px; cursor:pointer; }
+button.small-btn:hover { opacity:0.8; }
+
+/* Tables */
+table { width:100%; border-collapse:collapse; margin-top:15px; font-size:14px; }
+th, td { border:1px solid #ddd; padding:10px; text-align:center; }
 th { background:#007bff; color:#fff; }
-.stats { display:flex; gap:10px; flex-wrap:wrap; margin-top:15px; }
-.card { flex:1; background:#f1f3f5; padding:12px; text-align:center; border-radius:8px; min-width:150px; font-weight:bold;}
-#notification { position: fixed; top:20px; right:20px; background:#ffc107; padding:15px; border-radius:12px; display:none; z-index:999; font-weight:bold; color:#000; box-shadow:0 0 15px rgba(0,0,0,0.3);}
 .holdRow { background:#fff3cd; }
+
+/* Cards */
+.stats { display:flex; gap:10px; flex-wrap:wrap; margin-top:15px; }
+.card { flex:1; background:#f1f3f5; padding:15px; text-align:center; border-radius:8px; min-width:150px; font-weight:bold; box-shadow:0 0 8px rgba(0,0,0,0.1); }
+
+/* ERP/Excel */
 .erp-form { background:#f8f9fa; padding:20px; border-radius:10px; margin-top:10px; box-shadow:0 0 10px rgba(0,0,0,0.1);}
-.erp-table { width:100%; border-collapse:collapse; margin-top:10px;}
-.erp-table th, .erp-table td { border:1px solid #ccc; padding:8px; text-align:center;}
+.erp-table { width:100%; border-collapse:collapse; margin-top:10px; font-size:14px;}
+.erp-table th, .erp-table td { border:1px solid #ccc; padding:8px; text-align:center; }
 .erp-table th { background:#495057; color:#fff; }
-.tab-header { font-weight:bold; font-size:20px; margin-bottom:15px; text-align:center; color:#343a40; }
+
+/* Alerts */
+#notification { position: fixed; top:20px; right:20px; background:#ffc107; padding:15px; border-radius:12px; display:none; z-index:999; font-weight:bold; color:#000; box-shadow:0 0 15px rgba(0,0,0,0.3);}
+.alert-item { padding:5px; margin:3px 0; border-radius:5px; font-weight:bold; }
+
+/* Task Colors */
 .green { background-color:#d4edda !important; }
 .yellow { background-color:#fff3cd !important; }
 .red { background-color:#f8d7da !important; }
-.audio-alert { display:none;}
-button.small-btn { padding:5px 8px; margin:2px; border-radius:5px; cursor:pointer; }
-button.small-btn:hover { opacity:0.8;}
-#dailyAlerts { padding:10px; margin-bottom:15px; border-radius:8px; background:#e9ecef; font-weight:bold;}
-.alert-item { padding:5px; margin:3px 0; border-radius:5px;}
-.filter-row { display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+
+.tab-header { font-weight:bold; font-size:20px; margin-bottom:15px; text-align:center; color:#343a40; }
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
 <div id="notification"></div>
-<audio id="audioAlert" class="audio-alert" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
+<audio id="audioAlert" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
 
 <div class="container">
-
-<!-- Header -->
 <div class="header">
 <img src="logo.png" alt="Company Logo">
 </div>
 <div class="developer">Developed by Eng : <strong>Mahmoud Mohamed Marie</strong></div>
 <div class="phone">📞 +201222153415</div>
 
-<!-- Daily Alerts + Filters -->
-<div class="filter-row">
-<input type="text" id="filterClient" placeholder="فلتر حسب العميل / Filter by Client">
-<input type="text" id="filterType" placeholder="فلتر حسب نوع المهمة / Filter by Task Type">
-<button onclick="renderDailyAlerts()">تطبيق الفلتر / Apply Filter</button>
-</div>
-<div id="dailyAlerts"></div>
-
 <!-- Tabs -->
 <div class="tabs">
-<button class="tab-btn active" onclick="showTab('crmTab', this)">CRM</button>
+<button class="tab-btn active" onclick="showTab('dashboardTab', this)">Dashboard</button>
+<button class="tab-btn" onclick="showTab('crmTab', this)">CRM</button>
 <button class="tab-btn" onclick="showTab('tasksTab', this)">Tasks</button>
 <button class="tab-btn" onclick="showTab('erpTab', this)">ERP</button>
 <button class="tab-btn" onclick="showTab('excelTab', this)">Excel</button>
 </div>
 
-<!-- CRM Tab -->
-<div id="crmTab" class="tab-content active">
+<!-- Dashboard -->
+<div id="dashboardTab" class="tab-content active">
+<h2 class="tab-header">Dashboard / لوحة التحكم</h2>
+<div class="stats">
+<div class="card" id="dashTotalClients">Total Clients: 0</div>
+<div class="card" id="dashHoldClients">Hold Clients: 0</div>
+<div class="card" id="dashTasks">Total Tasks: 0</div>
+<div class="card" id="dashERP">ERP Accounts Total: 0</div>
+</div>
+<div id="dashAlerts"></div>
+</div>
+
+<!-- CRM -->
+<div id="crmTab" class="tab-content">
 <h2 class="tab-header">CRM System</h2>
 <div class="row">
 <input id="name" placeholder="اسم العميل / Client Name">
@@ -106,20 +120,20 @@ button.small-btn:hover { opacity:0.8;}
 </table>
 </div>
 
-<!-- Tasks Tab -->
+<!-- Tasks -->
 <div id="tasksTab" class="tab-content">
 <h2 class="tab-header">Tasks</h2>
 <div class="row">
 <input id="taskClient" placeholder="اسم العميل / Client Name">
 <input id="taskType" placeholder="نوع المهمة / Task Type">
 <input id="taskText" placeholder="نص المهمة / Task Text">
-<input type="datetime-local" id="taskDateTime" placeholder="موعد المهمة / Date & Time">
+<input type="datetime-local" id="taskDateTime">
 <button onclick="addTask()">➕ إضافة / Add</button>
 </div>
 <ul id="taskList"></ul>
 </div>
 
-<!-- ERP Tab -->
+<!-- ERP -->
 <div id="erpTab" class="tab-content">
 <h2 class="tab-header">ERP System</h2>
 <div class="erp-form">
@@ -129,7 +143,7 @@ button.small-btn:hover { opacity:0.8;}
 </div>
 </div>
 
-<!-- Excel Tab -->
+<!-- Excel -->
 <div id="excelTab" class="tab-content">
 <h2 class="tab-header">Excel Editor</h2>
 <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleExcelFile(event)">
@@ -140,7 +154,7 @@ button.small-btn:hover { opacity:0.8;}
 </div>
 
 <script>
-// ---------------- Tabs ----------------
+// ---------- Tabs ----------
 function showTab(id, btn){
 document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
 document.getElementById(id).classList.add('active');
@@ -148,194 +162,99 @@ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
 btn.classList.add('active');
 }
 
-// ---------------- Notification ----------------
-function showNotification(msg){
-const n=document.getElementById("notification");
-n.innerText=msg;
-n.style.display="block";
+// ---------- Notification ----------
+function showNotification(msg){ const n=document.getElementById("notification");
+n.innerText=msg; n.style.display="block";
 document.getElementById("audioAlert").play();
-setTimeout(()=>n.style.display="none",3000);
-}
+setTimeout(()=>n.style.display="none",3000); }
 
-// ---------------- CRM ----------------
-let clients = JSON.parse(localStorage.getItem("clients")||"[]");
-let editIndex = -1;
-function addOrUpdate(){
-const nameEl=document.getElementById("name");
-const phoneEl=document.getElementById("phone");
-const dateEl=document.getElementById("date");
-const statusEl=document.getElementById("status");
-const notesEl=document.getElementById("notes");
-const reminderEl=document.getElementById("reminderDays");
-if(!nameEl.value.trim() || !phoneEl.value.trim()){ alert("⚠️ أدخل البيانات / Enter Data"); return; }
-const clientData = {name:nameEl.value.trim(), phone:phoneEl.value.trim(), date:dateEl.value, status:statusEl.value, notes:notesEl.value};
-if(editIndex===-1){ clients.push(clientData); } else { clients[editIndex]=clientData; editIndex=-1; }
+// ---------- CRM ----------
+let clients = JSON.parse(localStorage.getItem("clients")||"[]"); let editIndex=-1;
+function addOrUpdate(){ const nameEl=document.getElementById("name"); const phoneEl=document.getElementById("phone");
+const dateEl=document.getElementById("date"); const statusEl=document.getElementById("status"); const notesEl=document.getElementById("notes");
+const reminderEl=document.getElementById("reminderDays"); if(!nameEl.value.trim()||!phoneEl.value.trim()){ alert("⚠️ أدخل البيانات / Enter Data"); return; }
+const clientData={name:nameEl.value.trim(), phone:phoneEl.value.trim(), date:dateEl.value, status:statusEl.value, notes:notesEl.value};
+if(editIndex===-1){ clients.push(clientData);} else{ clients[editIndex]=clientData; editIndex=-1; }
 localStorage.setItem("clients", JSON.stringify(clients));
 nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value=""; reminderEl.value="";
-renderCRM();
-}
-function editClient(i){
-const c=clients[i];
-document.getElementById("name").value=c.name;
-document.getElementById("phone").value=c.phone;
-document.getElementById("date").value=c.date;
-document.getElementById("status").value=c.status;
-document.getElementById("notes").value=c.notes;
-editIndex=i;
-showNotification("✏️ تعديل العميل / Edit Client");
-}
-function deleteClient(i){ clients.splice(i,1); localStorage.setItem("clients", JSON.stringify(clients)); renderCRM(); }
+renderCRM(); updateDashboard(); }
+function editClient(i){ const c=clients[i]; document.getElementById("name").value=c.name; document.getElementById("phone").value=c.phone;
+document.getElementById("date").value=c.date; document.getElementById("status").value=c.status; document.getElementById("notes").value=c.notes;
+editIndex=i; showNotification("✏️ تعديل العميل / Edit Client"); }
+function deleteClient(i){ clients.splice(i,1); localStorage.setItem("clients",JSON.stringify(clients)); renderCRM(); updateDashboard(); }
 function openWhatsApp(phone){ window.open(`https://wa.me/${phone}`,'_blank'); }
-function renderCRM(){
-const table=document.getElementById("table"); table.innerHTML=""; let holdCount=0;
-clients.forEach((c,i)=>{
-let rowClass=c.status==="Hold"?"holdRow":"";
-if(c.status==="Hold") holdCount++;
-table.innerHTML+=`<tr class="${rowClass}">
+function renderCRM(){ const table=document.getElementById("table"); table.innerHTML=""; let holdCount=0;
+clients.forEach((c,i)=>{ let rowClass=c.status==="Hold"?"holdRow":"";
+if(c.status==="Hold") holdCount++; table.innerHTML+=`<tr class="${rowClass}">
 <td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td>
 <td>${c.notes}</td><td>-</td>
 <td><button class="small-btn" onclick="openWhatsApp('${c.phone}')">📱</button></td>
 <td><button class="small-btn" onclick="editClient(${i})">✏️</button></td>
 <td><button class="small-btn" onclick="deleteClient(${i})">❌</button></td>
-</tr>`;
-});
+</tr>`;});
 document.getElementById("total").innerText="Total: "+clients.length;
-document.getElementById("hold").innerText="Hold: "+holdCount;
-}
-renderCRM();
+document.getElementById("hold").innerText="Hold: "+holdCount; }
 
-// ---------------- Tasks ----------------
-let tasks = JSON.parse(localStorage.getItem("tasks")||"[]");
-let editTaskIndex=-1;
-function addTask(){
-const client=document.getElementById("taskClient").value.trim();
-const type=document.getElementById("taskType").value.trim();
-const text=document.getElementById("taskText").value.trim();
-const dateTime=document.getElementById("taskDateTime").value;
-if(!client || !text) { alert("⚠️ أدخل البيانات / Enter Data"); return; }
-const taskObj={client,type,text,dateTime};
-if(editTaskIndex===-1) tasks.push(taskObj); else { tasks[editTaskIndex]=taskObj; editTaskIndex=-1; }
-localStorage.setItem("tasks", JSON.stringify(tasks));
-document.getElementById("taskClient").value="";
-document.getElementById("taskType").value="";
-document.getElementById("taskText").value="";
-document.getElementById("taskDateTime").value="";
-renderTasks();
-}
-
-function editTask(i){
-document.getElementById("taskClient").value=tasks[i].client;
-document.getElementById("taskType").value=tasks[i].type;
-document.getElementById("taskText").value=tasks[i].text;
-document.getElementById("taskDateTime").value=tasks[i].dateTime;
-editTaskIndex=i;
-showNotification("✏️ تعديل المهمة / Edit Task");
-}
-
-function deleteTask(i){ tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks(); }
-
-function renderTasks(){
-const list=document.getElementById("taskList"); list.innerHTML="";
-tasks.forEach((t,i)=>{
-let color="";
-if(t.type.toLowerCase().includes("تقديم عرض")) color="yellow";
-else if(t.type.toLowerCase().includes("متابعة")) color="red";
-else if(t.type.toLowerCase().includes("امر توريد")) color="green";
-const li=document.createElement("li");
-li.style.background=color; li.style.padding="5px"; li.style.margin="3px 0";
+// ---------- Tasks ----------
+let tasks = JSON.parse(localStorage.getItem("tasks")||"[]"); let editTaskIndex=-1;
+function addTask(){ const client=document.getElementById("taskClient").value.trim();
+const type=document.getElementById("taskType").value.trim(); const text=document.getElementById("taskText").value.trim();
+const dateTime=document.getElementById("taskDateTime").value; if(!client||!text){ alert("⚠️ أدخل البيانات / Enter Data"); return; }
+const taskObj={client,type,text,dateTime}; if(editTaskIndex===-1) tasks.push(taskObj); else{ tasks[editTaskIndex]=taskObj; editTaskIndex=-1; }
+localStorage.setItem("tasks",JSON.stringify(tasks));
+document.getElementById("taskClient").value=""; document.getElementById("taskType").value="";
+document.getElementById("taskText").value=""; document.getElementById("taskDateTime").value="";
+renderTasks(); updateDashboard(); }
+function editTask(i){ const t=tasks[i]; document.getElementById("taskClient").value=t.client;
+document.getElementById("taskType").value=t.type; document.getElementById("taskText").value=t.text;
+document.getElementById("taskDateTime").value=t.dateTime; editTaskIndex=i; showNotification("✏️ تعديل المهمة / Edit Task"); }
+function deleteTask(i){ tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks(); updateDashboard(); }
+function renderTasks(){ const list=document.getElementById("taskList"); list.innerHTML="";
+tasks.forEach((t,i)=>{ let color=""; if(t.type.toLowerCase().includes("تقديم")) color="yellow";
+else if(t.type.toLowerCase().includes("متابعة")) color="red"; else if(t.type.toLowerCase().includes("توريد")) color="green";
+const li=document.createElement("li"); li.className="alert-item"; li.style.background=color;
 li.innerHTML=`${t.client} | ${t.type} | ${t.text} | ${t.dateTime}
 <button class="small-btn" onclick="editTask(${i})">✏️</button>
-<button class="small-btn" onclick="deleteTask(${i})">❌</button>`;
-list.appendChild(li);
-});
-renderDailyAlerts();
-}
+<button class="small-btn" onclick="deleteTask(${i})">❌</button>`; list.appendChild(li);}); renderDailyAlerts(); updateDashboard(); }
 
-// --------------- Daily Alerts + Filter ----------------
-function renderDailyAlerts(){
-const container=document.getElementById("dailyAlerts"); container.innerHTML="";
-const now=new Date();
-const clientFilter=document.getElementById("filterClient").value.trim().toLowerCase();
-const typeFilter=document.getElementById("filterType").value.trim().toLowerCase();
-tasks.forEach(t=>{
-if(t.dateTime){
-const taskTime=new Date(t.dateTime);
-if(taskTime.toDateString()===now.toDateString() || taskTime<now){
-if((!clientFilter || t.client.toLowerCase().includes(clientFilter)) &&
-(!typeFilter || t.type.toLowerCase().includes(typeFilter))){
-let color=""; 
-if(t.type.toLowerCase().includes("تقديم عرض")) color="#fff3cd";
+function renderDailyAlerts(){ const container=document.getElementById("dashAlerts"); container.innerHTML="";
+const now=new Date(); tasks.forEach(t=>{ if(t.dateTime){ const taskTime=new Date(t.dateTime);
+if(taskTime.toDateString()===now.toDateString()||taskTime<now){
+let color=""; if(t.type.toLowerCase().includes("تقديم")) color="#fff3cd";
 else if(t.type.toLowerCase().includes("متابعة")) color="#f8d7da";
-else if(t.type.toLowerCase().includes("امر توريد")) color="#d4edda";
+else if(t.type.toLowerCase().includes("توريد")) color="#d4edda";
 const div=document.createElement("div"); div.className="alert-item"; div.style.background=color;
-div.innerText=`⏰ ${t.client} | ${t.type} | ${t.text} | ${t.dateTime}`;
-container.appendChild(div);
-}
-}
-}
-}
-}
+div.innerText=`⏰ ${t.client} | ${t.type} | ${t.text} | ${t.dateTime}`; container.appendChild(div);}}}); }
 
-// ---------------- Task Alerts Sound ----------------
-function checkTaskAlerts(){
-const now=new Date();
-tasks.forEach(t=>{
-if(t.dateTime){
-const taskTime=new Date(t.dateTime);
-if(Math.abs(taskTime-now)<60000){ // within 1 min
-showNotification(`⏰ مهمة: ${t.type} للعميل: ${t.client}`);
-}
-}
-});
-}
-setInterval(checkTaskAlerts,60000);
-renderTasks();
+setInterval(()=>{ const now=new Date(); tasks.forEach(t=>{ if(t.dateTime){ const taskTime=new Date(t.dateTime);
+if(Math.abs(taskTime-now)<60000){ showNotification(`⏰ مهمة: ${t.type} للعميل: ${t.client}`); }}});},60000); renderTasks(); renderCRM();
 
-// ---------------- ERP & Excel ----------------
+// ---------- Dashboard ----------
+function updateDashboard(){ document.getElementById("dashTotalClients").innerText="Total Clients: "+clients.length;
+const holdCount=clients.filter(c=>c.status==="Hold").length;
+document.getElementById("dashHoldClients").innerText="Hold Clients: "+holdCount;
+document.getElementById("dashTasks").innerText="Total Tasks: "+tasks.length;
+let erpTotal=0; const erpData=JSON.parse(localStorage.getItem("erpData")||"[]");
+if(erpData.length>1){ for(let i=1;i<erpData.length;i++){ erpTotal+=Number(erpData[i][1]||0);} }
+document.getElementById("dashERP").innerText="ERP Accounts Total: "+erpTotal; }
+
+// ---------- ERP/Excel ----------
 function handleERPFile(e){ handleExcelGeneric(e,"erpTable","erpData"); }
 function handleExcelFile(e){ handleExcelGeneric(e,"excelTable","excelData"); }
-
-function handleExcelGeneric(e,tableId,storageKey){
-const file=e.target.files[0]; if(!file) return;
-const reader=new FileReader();
-reader.onload=function(evt){
-const data=new Uint8Array(evt.target.result);
-const workbook=XLSX.read(data,{type:"array"});
-const sheet=workbook.Sheets[workbook.SheetNames[0]];
-const json=XLSX.utils.sheet_to_json(sheet,{header:1});
-localStorage.setItem(storageKey,JSON.stringify(json));
-renderExcelTable(json,tableId);
-};
-reader.readAsArrayBuffer(file);
-}
-
-function renderExcelTable(data,tableId){
-const table=document.getElementById(tableId);
-table.innerHTML="";
-data.forEach((row,rIdx)=>{
-const tr=document.createElement("tr");
-row.forEach((cell,cIdx)=>{
-const td=document.createElement("td");
-if(rIdx===0){ td.innerText=cell; td.style.fontWeight="bold"; td.style.background="#007bff"; td.style.color="#fff";}
-else{ const inp=document.createElement("input"); inp.value=cell; inp.style.width="100%"; td.appendChild(inp); }
-tr.appendChild(td);
-});
-table.appendChild(tr);
-});
-}
-
+function handleExcelGeneric(e,tableId,storageKey){ const file=e.target.files[0]; if(!file) return;
+const reader=new FileReader(); reader.onload=function(evt){ const data=new Uint8Array(evt.target.result);
+const workbook=XLSX.read(data,{type:"array"}); const sheet=workbook.Sheets[workbook.SheetNames[0]];
+const json=XLSX.utils.sheet_to_json(sheet,{header:1}); localStorage.setItem(storageKey,JSON.stringify(json));
+renderExcelTable(json,tableId); updateDashboard(); }; reader.readAsArrayBuffer(file);}
+function renderExcelTable(data,tableId){ const table=document.getElementById(tableId); table.innerHTML="";
+data.forEach((row,rIdx)=>{ const tr=document.createElement("tr"); row.forEach((cell,cIdx)=>{ const td=document.createElement("td");
+if(rIdx===0){ td.innerText=cell; td.style.fontWeight="bold"; td.style.background="#007bff"; td.style.color="#fff"; }
+else{ const inp=document.createElement("input"); inp.value=cell; inp.style.width="100%"; td.appendChild(inp); } tr.appendChild(td); });
+table.appendChild(tr); }); }
 function exportERPExcel(){ exportExcelGeneric("erpTable"); }
 function exportExcelFile(){ exportExcelGeneric("excelTable"); }
-
-function exportExcelGeneric(tableId){
-const table=document.getElementById(tableId);
-const wb=XLSX.utils.book_new();
-const ws=XLSX.utils.table_to_sheet(table);
-XLSX.utils.book_append_sheet(wb,ws,"Sheet1");
-XLSX.writeFile(wb,"export.xlsx");
-}
-
-// Load saved Excel data
+function exportExcelGeneric(tableId){ const table=document.getElementById(tableId); const wb=XLSX.utils.book_new();
+const ws=XLSX.utils.table_to_sheet(table); XLSX.utils.book_append_sheet(wb,ws,"Sheet1"); XLSX.writeFile(wb,"export.xlsx"); }
 if(localStorage.getItem("erpData")) renderExcelTable(JSON.parse(localStorage.getItem("erpData")),"erpTable");
 if(localStorage.getItem("excelData")) renderExcelTable(JSON.parse(localStorage.getItem("excelData")),"excelTable");
 
