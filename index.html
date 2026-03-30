@@ -30,6 +30,7 @@ th { background:#222; color:#fff; }
 .erp-btn-add { background:#28a745; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; margin-top:5px;}
 .erp-btn-submit { background:#007bff; color:#fff; border:none; padding:10px 20px; cursor:pointer; border-radius:5px; margin-top:10px; width:100%; }
 .row-error { background:#f8d7da !important; }
+.task-row input { width:100%; box-sizing:border-box; padding:5px; }
 </style>
 
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -95,9 +96,29 @@ th { background:#222; color:#fff; }
 <h2>Tasks</h2>
 <div class="row">
 <input id="taskInput" placeholder="اكتب المهمة">
+<input type="date" id="taskDate" placeholder="تاريخ المهمة">
+<select id="offerStatus">
+<option>تقديم عرض سعر</option>
+<option>متابعة عرض السعر</option>
+<option>أمر توريد</option>
+</select>
 <button onclick="addTask()">➕ إضافة المهمة</button>
 </div>
-<ul id="taskList"></ul>
+<div class="row">
+<input type="file" id="taskExcelFile" onchange="importTasksFromExcel(event)">
+</div>
+<table id="taskTable">
+<thead>
+<tr>
+<th>المهمة</th>
+<th>التاريخ</th>
+<th>نوع المهمة</th>
+<th>تعديل</th>
+<th>حذف</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
 </div>
 
 <!-- ERP Tab -->
@@ -128,7 +149,7 @@ th { background:#222; color:#fff; }
 
 <!-- Excel Tab -->
 <div id="excelTab" class="tab-content">
-<h2>Excel</h2>
+<h2>Excel Import/Export</h2>
 <input type="file" onchange="handleFile(event)">
 <button onclick="exportExcelFile()">📊 تصدير Excel</button>
 <table id="excelTable"></table>
@@ -163,12 +184,10 @@ const dateEl=document.getElementById("date");
 const statusEl=document.getElementById("status");
 const notesEl=document.getElementById("notes");
 const reminderEl=document.getElementById("reminderDays");
-
 if(!nameEl.value.trim() || !phoneEl.value.trim()){
 alert("⚠️ أدخل الاسم ورقم الهاتف");
 return;
 }
-
 const clientData = {
 name:nameEl.value.trim(),
 phone:phoneEl.value.trim(),
@@ -176,10 +195,8 @@ date:dateEl.value,
 status:statusEl.value,
 notes:notesEl.value
 };
-
 if(editIndex===-1){ clients.push(clientData); }else{ clients[editIndex]=clientData; editIndex=-1; }
 localStorage.setItem("clients", JSON.stringify(clients));
-
 nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value=""; reminderEl.value="";
 showNotification("✅ تم الحفظ بنجاح");
 render();
@@ -220,10 +237,59 @@ render();
 
 // Tasks
 let tasks = JSON.parse(localStorage.getItem("tasks")||"[]");
-function addTask(){ const taskInput=document.getElementById("taskInput"); if(!taskInput.value.trim()) return; tasks.push(taskInput.value.trim()); localStorage.setItem("tasks",JSON.stringify(tasks)); taskInput.value=""; renderTasks(); }
+function addTask(){
+const taskInput=document.getElementById("taskInput");
+const taskDate=document.getElementById("taskDate");
+const offerStatus=document.getElementById("offerStatus");
+if(!taskInput.value.trim()) return;
+tasks.push({task:taskInput.value.trim(), date:taskDate.value, type:offerStatus.value});
+localStorage.setItem("tasks",JSON.stringify(tasks));
+taskInput.value=""; taskDate.value=""; renderTasks();
+}
 function deleteTask(i){ tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks(); }
-function renderTasks(){ const taskList=document.getElementById("taskList"); taskList.innerHTML=""; tasks.forEach((t,i)=>{ const li=document.createElement("li"); li.innerHTML=`${t} <button onclick="deleteTask(${i})">❌</button>`; taskList.appendChild(li); }); }
+function editTask(i){
+const t=tasks[i];
+document.getElementById("taskInput").value=t.task;
+document.getElementById("taskDate").value=t.date;
+document.getElementById("offerStatus").value=t.type;
+tasks.splice(i,1);
 renderTasks();
+}
+function renderTasks(){
+const tbody=document.getElementById("taskTable").querySelector("tbody");
+tbody.innerHTML="";
+tasks.forEach((t,i)=>{
+const tr=document.createElement("tr");
+tr.className="task-row";
+tr.innerHTML=`<td>${t.task}</td><td>${t.date}</td><td>${t.type}</td>
+<td><button onclick="editTask(${i})">✏️</button></td>
+<td><button onclick="deleteTask(${i})">❌</button></td>`;
+tbody.appendChild(tr);
+});
+}
+renderTasks();
+
+// Import Tasks from Excel
+function importTasksFromExcel(e){
+const file = e.target.files[0]; if(!file) return;
+const reader = new FileReader();
+reader.onload = function(evt){
+const data = new Uint8Array(evt.target.result);
+const workbook = XLSX.read(data,{type:"array"});
+const sheet = workbook.Sheets[workbook.SheetNames[0]];
+const json = XLSX.utils.sheet_to_json(sheet,{header:1});
+json.forEach((row,i)=>{
+if(i===0) return; // skip header
+if(row.length>=3){
+tasks.push({task:row[0], date:row[1], type:row[2]});
+}
+});
+localStorage.setItem("tasks",JSON.stringify(tasks));
+renderTasks();
+showNotification("✅ تم استيراد المهام من Excel");
+};
+reader.readAsArrayBuffer(file);
+}
 
 // ERP
 function addAccountingRow(){
@@ -242,35 +308,53 @@ tbody.appendChild(newRow);
 updateERPsum();
 newRow.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', updateERPsum));
 }
-
 function updateERPsum(){
 let totalD=0, totalC=0;
 document.querySelectorAll('#accountingTable tbody tr').forEach(r=>{
 const d=parseFloat(r.querySelector('.debit').value)||0;
 const c=parseFloat(r.querySelector('.credit').value)||0;
-
-// تمييز الصف إذا المدين ≠ الدائن
 if(d!==c && (d!==0 || c!==0)){ r.classList.add('row-error'); } else { r.classList.remove('row-error'); }
-
 totalD+=d; totalC+=c;
 });
 document.getElementById("totalDebit").innerText=totalD.toFixed(2);
 document.getElementById("totalCredit").innerText=totalC.toFixed(2);
 }
+function submitAccountingForm(){ updateERPsum(); let totalD=parseFloat(document.getElementById("totalDebit").innerText); let totalC=parseFloat(document.getElementById("totalCredit").innerText); if(totalD!==totalC){ alert("⚠️ المدين والدائن غير متساويين!"); return; } showNotification("✅ تم حفظ القيد بنجاح"); localStorage.setItem("erpData",document.getElementById("accountingTable").innerHTML); }
+if(localStorage.getItem("erpData")) document.getElementById("accountingTable").innerHTML=localStorage.getItem("erpData"); updateERPsum();
 
-function submitAccountingForm(){
-updateERPsum();
-let totalD=parseFloat(document.getElementById("totalDebit").innerText);
-let totalC=parseFloat(document.getElementById("totalCredit").innerText);
-if(totalD!==totalC){ alert("⚠️ المدين والدائن غير متساويين!"); return; }
-showNotification("✅ تم حفظ القيد بنجاح");
+// Excel Import to CRM/ERP
+function handleFile(e){
+const file=e.target.files[0]; if(!file) return;
+const reader=new FileReader();
+reader.onload=function(evt){
+const data=new Uint8Array(evt.target.result);
+const workbook=XLSX.read(data,{type:"array"});
+const sheet=workbook.Sheets[workbook.SheetNames[0]];
+const json=XLSX.utils.sheet_to_json(sheet,{header:1});
+renderExcel(json);
+};
+reader.readAsArrayBuffer(file);
 }
-
-// Excel
-function handleFile(e){ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=function(evt){ const data=new Uint8Array(evt.target.result); const workbook=XLSX.read(data,{type:"array"}); const sheet=workbook.Sheets[workbook.SheetNames[0]]; const json=XLSX.utils.sheet_to_json(sheet,{header:1}); renderExcel(json); }; reader.readAsArrayBuffer(file); }
-function renderExcel(data){ const table=document.getElementById("excelTable"); table.innerHTML=""; data.forEach((row,rIdx)=>{ const tr=document.createElement("tr"); row.forEach((cell,cIdx)=>{ const td=document.createElement("td"); if(rIdx===0){ td.innerText=cell; }else{ const inp=document.createElement("input"); inp.value=cell; td.appendChild(inp); } tr.appendChild(td); }); table.appendChild(tr); }); }
-function exportExcelFile(){ const table=document.getElementById("excelTable"); const wb=XLSX.utils.book_new(); const ws=XLSX.utils.table_to_sheet(table); XLSX.utils.book_append_sheet(wb,ws,"Sheet1"); XLSX.writeFile(wb,"export.xlsx"); }
-
+function renderExcel(data){
+const table=document.getElementById("excelTable"); table.innerHTML="";
+data.forEach((row,rIdx)=>{
+const tr=document.createElement("tr");
+row.forEach((cell,cIdx)=>{
+const td=document.createElement("td");
+if(rIdx===0){ td.innerText=cell; }else{ const inp=document.createElement("input"); inp.value=cell; td.appendChild(inp); }
+tr.appendChild(td);
+});
+table.appendChild(tr);
+});
+showNotification("✅ تم استيراد البيانات من Excel");
+}
+function exportExcelFile(){
+const table=document.getElementById("excelTable");
+const wb=XLSX.utils.book_new();
+const ws=XLSX.utils.table_to_sheet(table);
+XLSX.utils.book_append_sheet(wb,ws,"Sheet1");
+XLSX.writeFile(wb,"export.xlsx");
+}
 </script>
 
 </body>
