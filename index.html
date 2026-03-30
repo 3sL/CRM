@@ -27,6 +27,8 @@ th { background:#222; color:#fff;}
 .stage-order { background:green; }
 #excelTable { width: 100%; border: 1px solid #000; table-layout: fixed; }
 #excelTable th, #excelTable td { border: 1px solid #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.logo-container { text-align:center; margin-bottom:15px; }
+.logo-container img { max-width:150px; display:inline-block; }
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -53,6 +55,7 @@ th { background:#222; color:#fff;}
 
 <!-- CRM Tab -->
 <div id="crmTab" class="tab-content active">
+<div class="logo-container"><img src="logo.png" alt="شعار الشركة"></div>
 <h2>CRM System</h2>
 <div class="row">
 <input id="name" placeholder="اسم العميل">
@@ -86,6 +89,7 @@ th { background:#222; color:#fff;}
 
 <!-- Tasks Tab -->
 <div id="tasksTab" class="tab-content">
+<div class="logo-container"><img src="logo.png" alt="شعار الشركة"></div>
 <h2>Tasks</h2>
 <div class="row">
 <input id="taskInput" placeholder="نص المهمة">
@@ -103,6 +107,7 @@ th { background:#222; color:#fff;}
 
 <!-- ERP Tab -->
 <div id="erpTab" class="tab-content">
+<div class="logo-container"><img src="logo.png" alt="شعار الشركة"></div>
 <h2>ERP System</h2>
 <div class="row">
 <input id="erpAccount" placeholder="الحساب">
@@ -123,16 +128,18 @@ th { background:#222; color:#fff;}
 
 <!-- Excel Tab -->
 <div id="excelTab" class="tab-content">
+<div class="logo-container"><img src="logo.png" alt="شعار الشركة"></div>
 <h2>Excel Upload & Edit</h2>
 <input type="file" id="excelFile" onchange="handleFile(event)">
 <button onclick="exportExcelFile()">📊 تصدير Excel</button>
+<button onclick="saveExcelData()">💾 حفظ داخل البرنامج</button>
 <table id="excelTable"></table>
 </div>
 
 </div>
 
 <script>
-// التبويبات
+// Tab
 function showTab(id, btn){
 document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
 document.getElementById(id).classList.add('active');
@@ -151,7 +158,6 @@ setTimeout(()=>n.style.display="none",3000);
 // CRM
 let clients=JSON.parse(localStorage.getItem("clients")||"[]");
 let editIndex=-1;
-
 function addOrUpdate(){
 const nameEl=document.getElementById("name");
 const phoneEl=document.getElementById("phone");
@@ -159,23 +165,13 @@ const dateEl=document.getElementById("date");
 const statusEl=document.getElementById("status");
 const notesEl=document.getElementById("notes");
 const reminderEl=document.getElementById("reminderDays");
-
-if(!nameEl.value.trim() || !phoneEl.value.trim()){
-alert("⚠️ أدخل البيانات");
-return;
-}
-
+if(!nameEl.value.trim() || !phoneEl.value.trim()){alert("⚠️ أدخل البيانات");return;}
 const clientData={name:nameEl.value,phone:phoneEl.value,date:dateEl.value,status:statusEl.value,notes:notesEl.value};
-
 if(editIndex===-1){clients.push(clientData);}else{clients[editIndex]=clientData;editIndex=-1;}
-
 localStorage.setItem("clients",JSON.stringify(clients));
-
 nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value=""; reminderEl.value="";
-
 renderCRM();
 }
-
 function editClient(i){
 const c=clients[i];
 document.getElementById("name").value=c.name;
@@ -183,19 +179,11 @@ document.getElementById("phone").value=c.phone;
 document.getElementById("date").value=c.date;
 document.getElementById("status").value=c.status;
 document.getElementById("notes").value=c.notes;
-editIndex=i;
-showNotification("✏️ تعديل العميل");
+editIndex=i; showNotification("✏️ تعديل العميل");
 }
-
-function deleteClient(i){
-clients.splice(i,1);
-localStorage.setItem("clients",JSON.stringify(clients));
-renderCRM();
-}
-
+function deleteClient(i){clients.splice(i,1); localStorage.setItem("clients",JSON.stringify(clients)); renderCRM();}
 function renderCRM(){
-const table=document.getElementById("table");
-table.innerHTML="";
+const table=document.getElementById("table"); table.innerHTML="";
 let holdCount=0;
 clients.forEach((c,i)=>{
 if(c.status==="Hold") holdCount++;
@@ -211,13 +199,11 @@ document.getElementById("total").innerText="Total: "+clients.length;
 document.getElementById("hold").innerText="Hold: "+holdCount;
 }
 renderCRM();
-
 function openWhatsApp(phone){window.open(`https://wa.me/${phone}`,'_blank');}
 
 // Tasks
 let tasks=JSON.parse(localStorage.getItem("tasks")||"[]");
 let editTaskIndex=-1;
-
 function addTask(){
 const txt=document.getElementById("taskInput").value;
 const client=document.getElementById("taskClient").value;
@@ -232,7 +218,6 @@ document.getElementById("taskClient").value="";
 document.getElementById("taskDate").value="";
 renderTasks();
 }
-
 function editTask(i){
 const t=tasks[i];
 document.getElementById("taskInput").value=t.txt;
@@ -242,12 +227,9 @@ document.getElementById("taskStage").value=t.stage;
 editTaskIndex=i;
 showNotification("✏️ تعديل المهمة");
 }
-
 function deleteTask(i){tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks();}
-
 function renderTasks(){
-const list=document.getElementById("taskList");
-list.innerHTML="";
+const list=document.getElementById("taskList"); list.innerHTML="";
 tasks.forEach((t,i)=>{
 let stageClass=t.stage==="quote"?"stage-quote":t.stage==="follow"?"stage-follow":"stage-order";
 list.innerHTML+=`<li><strong>${t.client}</strong> | ${t.date} | <span class="task-stage ${stageClass}">${t.stage}</span><br>${t.txt}
@@ -258,7 +240,6 @@ renderTasks();
 
 // ERP
 let erpData=JSON.parse(localStorage.getItem("erpData")||"[]");
-
 function addERP(){
 const acc=document.getElementById("erpAccount").value;
 const debit=parseFloat(document.getElementById("erpDebit").value)||0;
@@ -269,7 +250,6 @@ localStorage.setItem("erpData",JSON.stringify(erpData));
 document.getElementById("erpAccount").value=""; document.getElementById("erpDebit").value=""; document.getElementById("erpCredit").value="";
 renderERP();
 }
-
 function renderERP(){
 const tbody=document.querySelector("#erpTable tbody");
 tbody.innerHTML="";
@@ -285,45 +265,63 @@ renderERP();
 
 // Excel
 let excelData=[];
+const excelStorageKey = "excelDataStored";
 function handleFile(e){
-const file=e.target.files[0];
-const reader=new FileReader();
-reader.onload=function(event){
-const data=new Uint8Array(event.target.result);
-const workbook=XLSX.read(data,{type:'array'});
-const firstSheet=workbook.SheetNames[0];
-excelData=XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet],{defval:""});
-renderExcel();
+    const file=e.target.files[0];
+    const reader=new FileReader();
+    reader.onload=function(event){
+        const data=new Uint8Array(event.target.result);
+        const workbook=XLSX.read(data,{type:'array'});
+        const firstSheet=workbook.SheetNames[0];
+        excelData=XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet],{defval:""});
+        localStorage.setItem(excelStorageKey, JSON.stringify(excelData));
+        renderExcel();
+    }
+    reader.readAsArrayBuffer(file);
 }
-reader.readAsArrayBuffer(file);
-}
-
+window.addEventListener('load',()=>{
+    const stored = localStorage.getItem(excelStorageKey);
+    if(stored){
+        excelData = JSON.parse(stored);
+        renderExcel();
+    }
+});
 function renderExcel(){
-const table=document.getElementById("excelTable");
-table.innerHTML="";
-if(excelData.length===0) return;
-let headers=Object.keys(excelData[0]);
-let tr=document.createElement("tr");
-headers.forEach(h=>tr.innerHTML+=`<th>${h}</th>`);
-table.appendChild(tr);
-excelData.forEach((row,r)=>{
-let tr=document.createElement("tr");
-headers.forEach(h=>{
-let td=document.createElement("td");
-td.contentEditable="true";
-td.innerText=row[h];
-td.addEventListener("input",()=>{excelData[r][h]=td.innerText;});
-tr.appendChild(td);
-});
-table.appendChild(tr);
-});
+    const table=document.getElementById("excelTable");
+    table.innerHTML="";
+    if(excelData.length===0) return;
+    let headers=Object.keys(excelData[0]);
+    let tr=document.createElement("tr");
+    headers.forEach(h=>{
+        let th=document.createElement("th");
+        th.innerText = h;
+        tr.appendChild(th);
+    });
+    table.appendChild(tr);
+    excelData.forEach((row,r)=>{
+        let tr=document.createElement("tr");
+        tr.style.background = r % 2 === 0 ? "#f9f9f9" : "#e6f2ff";
+        headers.forEach(h=>{
+            let td=document.createElement("td");
+            td.contentEditable="true";
+            td.innerText=row[h];
+            td.addEventListener("input",()=>{
+                excelData[r][h]=td.innerText;
+            });
+            tr.appendChild(td);
+        });
+        table.appendChild(tr);
+    });
 }
-
+function saveExcelData(){
+    localStorage.setItem(excelStorageKey, JSON.stringify(excelData));
+    showNotification("💾 تم حفظ بيانات Excel داخل البرنامج");
+}
 function exportExcelFile(){
-let wb=XLSX.utils.book_new();
-let ws=XLSX.utils.json_to_sheet(excelData);
-XLSX.utils.book_append_sheet(wb,ws,"Sheet1");
-XLSX.writeFile(wb,"export.xlsx");
+    let wb=XLSX.utils.book_new();
+    let ws=XLSX.utils.json_to_sheet(excelData);
+    XLSX.utils.book_append_sheet(wb,ws,"Sheet1");
+    XLSX.writeFile(wb,"export.xlsx");
 }
 
 // Language
