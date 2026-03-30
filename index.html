@@ -203,18 +203,40 @@ updateERPAccounts();
 nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value="";
 renderCRM();
 }
+
+// --- تعديل renderCRM لتمييز العملاء Hold وعرض اشعارات ---
 function renderCRM(){
-const table=document.getElementById("table"); table.innerHTML="";
-let holdCount=0;
-clients.forEach((c,i)=>{
-if(c.status==="Hold") holdCount++;
-table.innerHTML+=`<tr><td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td><td>${c.notes}</td><td>-</td>
-<td><button onclick="openWhatsApp('${c.phone}')">📱</button></td>
-<td><button onclick="editClient(${i})">✏️</button></td>
-<td><button onclick="deleteClient(${i})">❌</button></td></tr>`;
-});
-document.getElementById("total").innerText="Total: "+clients.length;
-document.getElementById("hold").innerText="Hold: "+holdCount;
+    const table=document.getElementById("table"); 
+    table.innerHTML="";
+    let holdCount=0;
+    let holdNames = [];
+    clients.forEach((c,i)=>{
+        // حساب Hold
+        if(c.status==="Hold") {
+            holdCount++;
+            holdNames.push(c.name);
+        }
+        // تلوين صف Hold
+        const rowColor = c.status==="Hold" ? "style='background:#fff3cd'" : "";
+        table.innerHTML+=`<tr ${rowColor}>
+            <td>${c.name}</td>
+            <td>${c.phone}</td>
+            <td>${c.date}</td>
+            <td>${c.status}</td>
+            <td>${c.notes}</td>
+            <td>-</td>
+            <td><button onclick="openWhatsApp('${c.phone}')">📱</button></td>
+            <td><button onclick="editClient(${i})">✏️</button></td>
+            <td><button onclick="deleteClient(${i})">❌</button></td>
+        </tr>`;
+    });
+    document.getElementById("total").innerText="Total: "+clients.length;
+    document.getElementById("hold").innerText="Hold: "+holdCount;
+
+    // إشعار للعملاء Hold
+    if(holdCount>0){
+        showNotification(`⚠️ هناك ${holdCount} عميل Hold: ${holdNames.join(", ")}`);
+    }
 }
 function editClient(i){
 const c=clients[i];
@@ -236,7 +258,7 @@ showNotification("❌ تم حذف العميل");
 function openWhatsApp(phone){window.open(`https://wa.me/${phone}`,'_blank');}
 renderCRM();
 
-// --- تحديث ERP Accounts تلقائياً ---
+// تحديث ERP Accounts تلقائياً
 function updateERPAccounts(){
 const sel=document.getElementById("erpAccount");
 sel.innerHTML='<option value="">اختر العميل</option>';
@@ -249,7 +271,7 @@ sel.appendChild(opt);
 }
 updateERPAccounts();
 
-// --- ERP ---
+// --- ERP, Tasks, Excel كما في الكود الأصلي ---
 let erpData=JSON.parse(localStorage.getItem("erpData")||"[]");
 function addERP(){
 const acc=document.getElementById("erpAccount").value;
@@ -278,7 +300,7 @@ document.getElementById("totalCredit").innerText=totalC;
 }
 renderERP();
 
-// --- Tasks ---
+// Tasks
 let tasks=JSON.parse(localStorage.getItem("tasks")||"[]"); let editTaskIndex=-1;
 function addTask(){const txt=document.getElementById("taskInput").value; const client=document.getElementById("taskClient").value; const date=document.getElementById("taskDate").value; const stage=document.getElementById("taskStage").value; if(!txt.trim() || !client.trim()) return alert("أدخل نص المهمة واسم العميل"); const task={txt,client,date,stage}; if(editTaskIndex===-1) tasks.push(task); else {tasks[editTaskIndex]=task; editTaskIndex=-1;} localStorage.setItem("tasks",JSON.stringify(tasks)); document.getElementById("taskInput").value=""; document.getElementById("taskClient").value=""; document.getElementById("taskDate").value=""; renderTasks(); showNotification("✅ تم إضافة/تعديل المهمة");}
 function editTask(i){const t=tasks[i]; document.getElementById("taskInput").value=t.txt; document.getElementById("taskClient").value=t.client; document.getElementById("taskDate").value=t.date; document.getElementById("taskStage").value=t.stage; editTaskIndex=i; showNotification("✏️ تعديل المهمة");}
@@ -286,7 +308,7 @@ function deleteTask(i){tasks.splice(i,1); localStorage.setItem("tasks",JSON.stri
 function renderTasks(){const list=document.getElementById("taskList"); list.innerHTML=""; tasks.forEach((t,i)=>{ let stageClass=t.stage==="quote"?"stage-quote":t.stage==="follow"?"stage-follow":"stage-order"; list.innerHTML+=`<li><strong>${t.client}</strong> | ${t.date} | <span class="task-stage ${stageClass}">${t.stage}</span><br>${t.txt}<br><button onclick="editTask(${i})">✏️</button> <button onclick="deleteTask(${i})">❌</button></li>`;});}
 renderTasks();
 
-// --- Excel ---
+// Excel
 let excelData=[];
 function handleFile(e){const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=function(event){try{const data=new Uint8Array(event.target.result); const workbook=XLSX.read(data,{type:'array'}); const firstSheet=workbook.SheetNames[0]; excelData=XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet],{defval:""}); renderExcel(); showNotification("✅ تم تحميل ملف Excel");}catch(err){alert("خطأ في قراءة ملف Excel"); console.error(err);}}; reader.readAsArrayBuffer(file);}
 function renderExcel(){const table=document.getElementById("excelTable"); table.innerHTML=""; if(excelData.length===0){ table.innerHTML="<tr><td colspan='20'>لا توجد بيانات</td></tr>"; return; } const headers=Object.keys(excelData[0]); let tr=document.createElement("tr"); headers.forEach(h=>tr.innerHTML+=`<th>${h}</th>`); table.appendChild(tr); excelData.forEach(row=>{let tr=document.createElement("tr"); headers.forEach(h=>{tr.innerHTML+=`<td contenteditable="true">${row[h]}</td>`;}); table.appendChild(tr);});}
@@ -295,7 +317,7 @@ function exportExcelFile(){const table=document.getElementById("excelTable"); le
 function loadStoredExcel(){const stored=localStorage.getItem("excelData"); if(stored){excelData=JSON.parse(stored); renderExcel();}}
 window.addEventListener("DOMContentLoaded", ()=>{renderERP(); renderCRM(); renderTasks(); loadStoredExcel();});
 
-// --- Language ---
+// Language
 function changeLang(val){alert("Language switched to "+val);}
 </script>
 
