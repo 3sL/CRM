@@ -3,16 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <title>CRM & ERP System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0; display:flex; min-height:100vh;}
-.sidebar { width:250px; background:#007bff; color:#fff; display:flex; flex-direction:column; padding:20px; box-sizing:border-box;}
-.sidebar h2 { text-align:center; }
-.sidebar button { background:#0056b3; color:#fff; border:none; padding:10px; margin:5px 0; border-radius:5px; cursor:pointer; text-align:right;}
-.sidebar button.active { background:#ffcc00; color:#000;}
-.tabs-content { flex:1; padding:20px; overflow:auto; width:100%; height:100vh; box-sizing:border-box; }
+body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0; display:flex; flex-direction:row; min-height:100vh; }
+.sidebar { width:250px; background:#007bff; color:#fff; display:flex; flex-direction:column; padding:20px; box-sizing:border-box; transition: transform 0.3s ease;}
+.sidebar h2 { text-align:center; margin-bottom:20px; }
+.sidebar button { background:#0056b3; color:#fff; border:none; padding:10px; margin:5px 0; border-radius:5px; cursor:pointer; text-align:right; }
+.sidebar button.active { background:#ffcc00; color:#000; }
+.tabs-content { flex:1; padding:20px; overflow:auto; width:100%; box-sizing:border-box; }
 .tab-content { display:none; }
 .tab-content.active { display:block; }
-h2 { margin-top:0;}
+h2 { margin-top:0; text-align:center;}
 input, select, textarea, button { padding:10px; margin:5px 0; width:100%; box-sizing:border-box;}
 textarea { resize:none; height:80px;}
 table { width:100%; border-collapse:collapse; margin-top:10px; table-layout: fixed; }
@@ -29,6 +30,15 @@ th { background:#222; color:#fff;}
 #excelTable th, #excelTable td { border: 1px solid #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .logo-container { text-align:center; margin-bottom:15px; }
 .logo-container img { max-width:150px; display:inline-block; }
+
+@media (max-width: 768px) {
+    body { flex-direction: column; }
+    .sidebar { width:100%; flex-direction: row; overflow-x: auto; }
+    .sidebar button { flex:1 0 auto; margin:0 5px; white-space: nowrap; }
+    .tabs-content { padding:10px; }
+    table, #excelTable { display:block; overflow-x:auto; }
+    th, td { white-space: nowrap; }
+}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -76,6 +86,7 @@ th { background:#222; color:#fff;}
 <div class="card" id="total">0</div>
 <div class="card" id="hold">Hold: 0</div>
 </div>
+<div style="overflow-x:auto;">
 <table>
 <thead>
 <tr>
@@ -85,6 +96,7 @@ th { background:#222; color:#fff;}
 </thead>
 <tbody id="table"></tbody>
 </table>
+</div>
 </div>
 
 <!-- Tasks Tab -->
@@ -115,6 +127,7 @@ th { background:#222; color:#fff;}
 <input type="number" id="erpCredit" placeholder="دائن">
 <button onclick="addERP()">💾 إضافة القيد</button>
 </div>
+<div style="overflow-x:auto;">
 <table id="erpTable">
 <thead>
 <tr><th>الحساب</th><th>مدين</th><th>دائن</th></tr>
@@ -125,6 +138,7 @@ th { background:#222; color:#fff;}
 </tfoot>
 </table>
 </div>
+</div>
 
 <!-- Excel Tab -->
 <div id="excelTab" class="tab-content">
@@ -133,21 +147,21 @@ th { background:#222; color:#fff;}
 <input type="file" id="excelFile" onchange="handleFile(event)">
 <button onclick="exportExcelFile()">📊 تصدير Excel</button>
 <button onclick="saveExcelData()">💾 حفظ داخل البرنامج</button>
+<div style="overflow-x:auto;">
 <table id="excelTable"></table>
+</div>
 </div>
 
 </div>
 
 <script>
-// Tab
+// --- Tabs & Notification ---
 function showTab(id, btn){
 document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
 document.getElementById(id).classList.add('active');
 document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
 btn.classList.add('active');
 }
-
-// Notification
 function showNotification(msg){
 const n=document.getElementById("notification");
 n.innerText=msg;
@@ -155,7 +169,7 @@ n.style.display="block";
 setTimeout(()=>n.style.display="none",3000);
 }
 
-// CRM
+// --- CRM ---
 let clients=JSON.parse(localStorage.getItem("clients")||"[]");
 let editIndex=-1;
 function addOrUpdate(){
@@ -172,160 +186,36 @@ localStorage.setItem("clients",JSON.stringify(clients));
 nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value=""; reminderEl.value="";
 renderCRM();
 }
-function editClient(i){
-const c=clients[i];
-document.getElementById("name").value=c.name;
-document.getElementById("phone").value=c.phone;
-document.getElementById("date").value=c.date;
-document.getElementById("status").value=c.status;
-document.getElementById("notes").value=c.notes;
-editIndex=i; showNotification("✏️ تعديل العميل");
-}
+function editClient(i){const c=clients[i];document.getElementById("name").value=c.name;document.getElementById("phone").value=c.phone;document.getElementById("date").value=c.date;document.getElementById("status").value=c.status;document.getElementById("notes").value=c.notes;editIndex=i;showNotification("✏️ تعديل العميل");}
 function deleteClient(i){clients.splice(i,1); localStorage.setItem("clients",JSON.stringify(clients)); renderCRM();}
-function renderCRM(){
-const table=document.getElementById("table"); table.innerHTML="";
-let holdCount=0;
-clients.forEach((c,i)=>{
-if(c.status==="Hold") holdCount++;
-table.innerHTML+=`<tr>
-<td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td>
-<td>${c.notes}</td><td>-</td>
-<td><button onclick="openWhatsApp('${c.phone}')">📱</button></td>
-<td><button onclick="editClient(${i})">✏️</button></td>
-<td><button onclick="deleteClient(${i})">❌</button></td>
-</tr>`;
-});
-document.getElementById("total").innerText="Total: "+clients.length;
-document.getElementById("hold").innerText="Hold: "+holdCount;
-}
+function renderCRM(){const table=document.getElementById("table"); table.innerHTML=""; let holdCount=0; clients.forEach((c,i)=>{ if(c.status==="Hold") holdCount++; table.innerHTML+=`<tr><td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td><td>${c.notes}</td><td>-</td><td><button onclick="openWhatsApp('${c.phone}')">📱</button></td><td><button onclick="editClient(${i})">✏️</button></td><td><button onclick="deleteClient(${i})">❌</button></td></tr>`}); document.getElementById("total").innerText="Total: "+clients.length; document.getElementById("hold").innerText="Hold: "+holdCount;}
 renderCRM();
 function openWhatsApp(phone){window.open(`https://wa.me/${phone}`,'_blank');}
 
-// Tasks
-let tasks=JSON.parse(localStorage.getItem("tasks")||"[]");
-let editTaskIndex=-1;
-function addTask(){
-const txt=document.getElementById("taskInput").value;
-const client=document.getElementById("taskClient").value;
-const date=document.getElementById("taskDate").value;
-const stage=document.getElementById("taskStage").value;
-if(!txt.trim() || !client.trim()) return alert("أدخل نص المهمة واسم العميل");
-const task={txt,client,date,stage};
-if(editTaskIndex===-1) tasks.push(task); else {tasks[editTaskIndex]=task; editTaskIndex=-1;}
-localStorage.setItem("tasks",JSON.stringify(tasks));
-document.getElementById("taskInput").value="";
-document.getElementById("taskClient").value="";
-document.getElementById("taskDate").value="";
-renderTasks();
-}
-function editTask(i){
-const t=tasks[i];
-document.getElementById("taskInput").value=t.txt;
-document.getElementById("taskClient").value=t.client;
-document.getElementById("taskDate").value=t.date;
-document.getElementById("taskStage").value=t.stage;
-editTaskIndex=i;
-showNotification("✏️ تعديل المهمة");
-}
+// --- Tasks ---
+let tasks=JSON.parse(localStorage.getItem("tasks")||"[]"); let editTaskIndex=-1;
+function addTask(){const txt=document.getElementById("taskInput").value; const client=document.getElementById("taskClient").value; const date=document.getElementById("taskDate").value; const stage=document.getElementById("taskStage").value; if(!txt.trim() || !client.trim()) return alert("أدخل نص المهمة واسم العميل"); const task={txt,client,date,stage}; if(editTaskIndex===-1) tasks.push(task); else {tasks[editTaskIndex]=task; editTaskIndex=-1;} localStorage.setItem("tasks",JSON.stringify(tasks)); document.getElementById("taskInput").value=""; document.getElementById("taskClient").value=""; document.getElementById("taskDate").value=""; renderTasks();}
+function editTask(i){const t=tasks[i]; document.getElementById("taskInput").value=t.txt; document.getElementById("taskClient").value=t.client; document.getElementById("taskDate").value=t.date; document.getElementById("taskStage").value=t.stage; editTaskIndex=i; showNotification("✏️ تعديل المهمة");}
 function deleteTask(i){tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks();}
-function renderTasks(){
-const list=document.getElementById("taskList"); list.innerHTML="";
-tasks.forEach((t,i)=>{
-let stageClass=t.stage==="quote"?"stage-quote":t.stage==="follow"?"stage-follow":"stage-order";
-list.innerHTML+=`<li><strong>${t.client}</strong> | ${t.date} | <span class="task-stage ${stageClass}">${t.stage}</span><br>${t.txt}
-<button onclick="editTask(${i})">✏️</button><button onclick="deleteTask(${i})">❌</button></li>`;
-});
-}
+function renderTasks(){const list=document.getElementById("taskList"); list.innerHTML=""; tasks.forEach((t,i)=>{ let stageClass=t.stage==="quote"?"stage-quote":t.stage==="follow"?"stage-follow":"stage-order"; list.innerHTML+=`<li><strong>${t.client}</strong> | ${t.date} | <span class="task-stage ${stageClass}">${t.stage}</span><br>${t.txt}<br><button onclick="editTask(${i})">✏️</button> <button onclick="deleteTask(${i})">❌</button></li>`;});}
 renderTasks();
 
-// ERP
+// --- ERP ---
 let erpData=JSON.parse(localStorage.getItem("erpData")||"[]");
-function addERP(){
-const acc=document.getElementById("erpAccount").value;
-const debit=parseFloat(document.getElementById("erpDebit").value)||0;
-const credit=parseFloat(document.getElementById("erpCredit").value)||0;
-if(!acc) return alert("أدخل الحساب");
-erpData.push({acc,debit,credit});
-localStorage.setItem("erpData",JSON.stringify(erpData));
-document.getElementById("erpAccount").value=""; document.getElementById("erpDebit").value=""; document.getElementById("erpCredit").value="";
-renderERP();
-}
-function renderERP(){
-const tbody=document.querySelector("#erpTable tbody");
-tbody.innerHTML="";
-let totalD=0,totalC=0;
-erpData.forEach(e=>{
-tbody.innerHTML+=`<tr><td>${e.acc}</td><td>${e.debit}</td><td>${e.credit}</td></tr>`;
-totalD+=e.debit; totalC+=e.credit;
-});
-document.getElementById("totalDebit").innerText=totalD;
-document.getElementById("totalCredit").innerText=totalC;
-}
+function addERP(){const acc=document.getElementById("erpAccount").value; const debit=parseFloat(document.getElementById("erpDebit").value)||0; const credit=parseFloat(document.getElementById("erpCredit").value)||0; if(!acc) return alert("أدخل الحساب"); erpData.push({acc,debit,credit}); localStorage.setItem("erpData",JSON.stringify(erpData)); document.getElementById("erpAccount").value=""; document.getElementById("erpDebit").value=""; document.getElementById("erpCredit").value=""; renderERP();}
+function renderERP(){const tbody=document.querySelector("#erpTable tbody"); tbody.innerHTML=""; let totalD=0,totalC=0; erpData.forEach(e=>{tbody.innerHTML+=`<tr><td>${e.acc}</td><td>${e.debit}</td><td>${e.credit}</td></tr>`; totalD+=e.debit; totalC+=e.credit;}); document.getElementById("totalDebit").innerText=totalD; document.getElementById("totalCredit").innerText=totalC;}
 renderERP();
 
-// Excel
+// --- Excel ---
 let excelData=[];
-const excelStorageKey = "excelDataStored";
-function handleFile(e){
-    const file=e.target.files[0];
-    const reader=new FileReader();
-    reader.onload=function(event){
-        const data=new Uint8Array(event.target.result);
-        const workbook=XLSX.read(data,{type:'array'});
-        const firstSheet=workbook.SheetNames[0];
-        excelData=XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet],{defval:""});
-        localStorage.setItem(excelStorageKey, JSON.stringify(excelData));
-        renderExcel();
-    }
-    reader.readAsArrayBuffer(file);
-}
-window.addEventListener('load',()=>{
-    const stored = localStorage.getItem(excelStorageKey);
-    if(stored){
-        excelData = JSON.parse(stored);
-        renderExcel();
-    }
-});
-function renderExcel(){
-    const table=document.getElementById("excelTable");
-    table.innerHTML="";
-    if(excelData.length===0) return;
-    let headers=Object.keys(excelData[0]);
-    let tr=document.createElement("tr");
-    headers.forEach(h=>{
-        let th=document.createElement("th");
-        th.innerText = h;
-        tr.appendChild(th);
-    });
-    table.appendChild(tr);
-    excelData.forEach((row,r)=>{
-        let tr=document.createElement("tr");
-        tr.style.background = r % 2 === 0 ? "#f9f9f9" : "#e6f2ff";
-        headers.forEach(h=>{
-            let td=document.createElement("td");
-            td.contentEditable="true";
-            td.innerText=row[h];
-            td.addEventListener("input",()=>{
-                excelData[r][h]=td.innerText;
-            });
-            tr.appendChild(td);
-        });
-        table.appendChild(tr);
-    });
-}
-function saveExcelData(){
-    localStorage.setItem(excelStorageKey, JSON.stringify(excelData));
-    showNotification("💾 تم حفظ بيانات Excel داخل البرنامج");
-}
-function exportExcelFile(){
-    let wb=XLSX.utils.book_new();
-    let ws=XLSX.utils.json_to_sheet(excelData);
-    XLSX.utils.book_append_sheet(wb,ws,"Sheet1");
-    XLSX.writeFile(wb,"export.xlsx");
-}
+function handleFile(e){const file=e.target.files[0]; const reader=new FileReader(); reader.onload=function(event){ const data=new Uint8Array(event.target.result); const workbook=XLSX.read(data,{type:'array'}); const firstSheet=workbook.SheetNames[0]; excelData=XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet],{defval:""}); renderExcel();} reader.readAsArrayBuffer(file);}
+function renderExcel(){const table=document.getElementById("excelTable"); table.innerHTML=""; if(excelData.length===0) return; let headers=Object.keys(excelData[0]); let tr=document.createElement("tr"); headers.forEach(h=>tr.innerHTML+=`<th>${h}</th>`); table.appendChild(tr); excelData.forEach((row,r)=>{let tr=document.createElement("tr"); headers.forEach(h=>{tr.innerHTML+=`<td contenteditable="true">${row[h]}</td>`;}); table.appendChild(tr);});}
+function exportExcelFile(){const table=document.getElementById("excelTable"); let wb=XLSX.utils.book_new(); let ws=XLSX.utils.table_to_sheet(table); XLSX.utils.book_append_sheet(wb,ws,"Sheet1"); XLSX.writeFile(wb,"export.xlsx");}
+function saveExcelData(){const table=document.getElementById("excelTable"); excelData=[]; for(let i=1;i<table.rows.length;i++){let row={}; for(let j=0;j<table.rows[i].cells.length;j++){row[table.rows[0].cells[j].innerText]=table.rows[i].cells[j].innerText;} excelData.push(row);} localStorage.setItem("excelData",JSON.stringify(excelData)); showNotification("💾 تم حفظ البيانات داخل البرنامج");}
 
-// Language
+// --- Language ---
 function changeLang(val){alert("Language switched to "+val);}
 </script>
+
 </body>
 </html>
