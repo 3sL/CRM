@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>CRM & ERP System</title>
-
 <style>
 body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0; }
 .container { max-width:1400px; margin:auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 0 20px rgba(0,0,0,0.15);}
@@ -32,8 +31,8 @@ th { background:#222; color:#fff; }
 .task-offer { background:#ffe0b2; }
 .task-follow { background:#c8e6c9; }
 .task-order { background:#b3e5fc; }
+.excelTable td, .excelTable th { padding:5px; }
 </style>
-
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
 
@@ -134,16 +133,16 @@ th { background:#222; color:#fff; }
 
 <!-- Excel -->
 <div id="excelTab" class="tab-content">
-<h2>Excel Upload / Edit</h2>
+<h2>Excel Customers</h2>
 <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleExcelFile(event)">
 <button onclick="exportExcelFile()">📊 تصدير Excel</button>
-<table id="excelTable" border="1"></table>
+<table id="excelTable" class="excelTable" border="1"></table>
 </div>
 
 </div>
 
 <script>
-// ---- Tabs ----
+// Tabs
 function showTab(id, btn){
 document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
 document.getElementById(id).classList.add('active');
@@ -151,7 +150,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
 btn.classList.add('active');
 }
 
-// ---- Notification + Sound ----
+// Notification + sound
 function showNotification(msg){
 const n=document.getElementById("notification");
 n.innerText=msg;
@@ -160,7 +159,7 @@ document.getElementById("notifSound").play();
 setTimeout(()=>n.style.display="none",3000);
 }
 
-// ---- CRM ----
+// CRM
 let clients=JSON.parse(localStorage.getItem("clients")||"[]");
 let editIndex=-1;
 function addOrUpdate(){
@@ -208,7 +207,7 @@ document.getElementById("hold").innerText="Hold: "+holdCount;
 }
 renderCRM();
 
-// ---- Tasks ----
+// Tasks
 let tasks=JSON.parse(localStorage.getItem("tasks")||"[]");
 function addTask(){
 const client=document.getElementById("taskClient").value.trim();
@@ -241,7 +240,7 @@ list.innerHTML+=`<li class="${cls}">${t.client} - ${t.text} [${t.type}]
 }
 renderTasks();
 
-// ---- ERP ----
+// ERP
 function addAccountingRow(){
 const tbody=document.getElementById("accountingTable").querySelector("tbody");
 const newRow=document.createElement("tr");
@@ -275,7 +274,7 @@ document.getElementById("erpSummary").innerText=summary;
 }
 document.getElementById("accountingTable").addEventListener("input",updateERP);
 
-// ---- Excel ----
+// Excel Import/Export
 function handleExcelFile(event){
 const file=event.target.files[0]; if(!file) return;
 const reader=new FileReader();
@@ -286,7 +285,10 @@ const firstSheetName=workbook.SheetNames[0];
 const worksheet=workbook.Sheets[firstSheetName];
 const html=XLSX.utils.sheet_to_html(worksheet);
 document.getElementById("excelTable").innerHTML=html;
-showNotification("✅ تم استيراد ملف Excel");
+showNotification("✅ تم استيراد ملف Excel (يمكن التعديل)");
+// Make table cells editable
+const tbl=document.getElementById("excelTable");
+tbl.querySelectorAll("td").forEach(td=>td.setAttribute("contenteditable","true"));
 };
 reader.readAsArrayBuffer(file);
 }
@@ -297,7 +299,6 @@ XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
 XLSX.writeFile(wb,"export.xlsx");
 showNotification("✅ تم تصدير ملف Excel");
 }
-
 </script>
 </body>
 </html>
