@@ -2,9 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM & ERP System</title>
-
-<!-- CSS -->
+<title>CRM & ERP System متقدم</title>
 <style>
 body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0;}
 .container { max-width:1400px; margin:auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 0 15px rgba(0,0,0,0.1);}
@@ -26,23 +24,12 @@ th { background:#222; color:#fff; }
 .card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px;}
 #notification { position: fixed; top:20px; right:20px; background:#ffcc00; padding:15px; border-radius:10px; display:none; z-index:999; }
 .holdRow { background:#fff3cd; }
-/* ERP */
 .erp-form { background:#f9f9f9; padding:15px; border-radius:8px; margin-top:10px; }
-.erp-form table { margin-top:10px; width:100%; border-collapse: collapse; }
-.erp-form th, .erp-form td { border:1px solid #ddd; padding:8px; text-align:center; }
-.erp-btn-add { background:#28a745; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; }
-.erp-btn-submit { background:#007bff; color:#fff; border:none; padding:10px 20px; cursor:pointer; border-radius:5px; margin-top:10px; width:100%; }
-/* Excel */
-#excelTable td { min-width:80px; }
-#excelTable input { width:100%; box-sizing:border-box; }
-/* Tasks */
-.taskRow { display:flex; gap:10px; margin-bottom:5px; }
-.taskRow input, .taskRow select { flex:1; padding:5px; }
+.erp-stats { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.erp-card { flex:1; background:#dfe6e9; padding:10px; text-align:center; border-radius:8px; min-width:120px; font-weight:bold; }
 </style>
 
-<!-- SheetJS for Excel -->
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-
 </head>
 <body>
 
@@ -52,20 +39,20 @@ th { background:#222; color:#fff; }
 
 <!-- Header -->
 <div class="header">
-    <img src="logo.png" alt="Company Logo">
+<img src="logo.png" alt="Company Logo">
 </div>
 <div class="developer">Developed by Eng : <strong>Mahmoud Mohamed Marie</strong></div>
 <div class="phone">📞 +201222153415</div>
 
 <!-- Tabs -->
 <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('crmTab', this)">CRM</button>
-    <button class="tab-btn" onclick="showTab('tasksTab', this)">Tasks</button>
-    <button class="tab-btn" onclick="showTab('erpTab', this)">ERP</button>
-    <button class="tab-btn" onclick="showTab('excelTab', this)">Excel</button>
+<button class="tab-btn active" onclick="showTab('crmTab', this)">CRM</button>
+<button class="tab-btn" onclick="showTab('tasksTab', this)">Tasks</button>
+<button class="tab-btn" onclick="showTab('erpTab', this)">ERP</button>
+<button class="tab-btn" onclick="showTab('excelTab', this)">Excel</button>
 </div>
 
-<!-- CRM Tab -->
+<!-- CRM -->
 <div id="crmTab" class="tab-content active">
 <h2>CRM System</h2>
 <div class="row">
@@ -83,12 +70,10 @@ th { background:#222; color:#fff; }
 <input type="number" id="reminderDays" placeholder="Reminder بالأيام">
 </div>
 <button onclick="addOrUpdate()">💾 حفظ</button>
-
 <div class="stats">
 <div class="card" id="total">0</div>
 <div class="card" id="hold">Hold: 0</div>
 </div>
-
 <table>
 <thead>
 <tr>
@@ -99,119 +84,50 @@ th { background:#222; color:#fff; }
 <tbody id="table"></tbody>
 </table>
 </div>
-<script>
-// تصدير Excel لكل عميل من CRM
-function exportClientExcel(index){
-    const client = clients[index];
-    if(!client) return;
-    const wb = XLSX.utils.book_new();
-    const wsData = [
-        ["الاسم","الهاتف","التاريخ","الحالة","ملاحظات"],
-        [client.name, client.phone, client.date, client.status, client.notes]
-    ];
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    XLSX.utils.book_append_sheet(wb, ws, "Client");
-    const fileName = client.name.replace(/[^a-z0-9]/gi,'_') + "_client.xlsx";
-    XLSX.writeFile(wb, fileName);
-}
 
-// تعديل renderClients لإضافة زر تصدير Excel لكل عميل
-function renderClients(){
-    const table=document.getElementById("table");
-    table.innerHTML="";
-    let holdCount=0;
-    clients.forEach((c,i)=>{
-        let rowClass=c.status==="Hold"?"holdRow":"";
-        if(c.status==="Hold"){ holdCount++; }
-        table.innerHTML+=`
-        <tr class="${rowClass}">
-            <td>${c.name}</td>
-            <td>${c.phone}</td>
-            <td>${c.date}</td>
-            <td>${c.status}</td>
-            <td>${c.notes}</td>
-            <td>-</td>
-            <td>
-                <button onclick="openWhatsApp('${c.phone}')">📱</button>
-            </td>
-            <td>
-                <button onclick="editClient(${i})">✏️</button>
-            </td>
-            <td>
-                <button onclick="deleteClient(${i})">❌</button>
-            </td>
-            <td>
-                <button onclick="exportClientExcel(${i})">📄 Excel</button>
-            </td>
-        </tr>`;
-    });
-    document.getElementById("total").innerText="Total: "+clients.length;
-    document.getElementById("hold").innerText="Hold: "+holdCount;
-}
-renderClients();
-</script>
-<!-- Tasks Tab -->
+<!-- Tasks -->
 <div id="tasksTab" class="tab-content">
 <h2>Tasks</h2>
-<div id="tasksContainer"></div>
 <div class="row">
-<input type="date" id="taskDate" placeholder="تاريخ المهمة">
 <select id="taskType">
 <option>تقديم عرض سعر</option>
-<option>متابعة عرض السعر</option>
+<option>متابعة عرض سعر</option>
 <option>أمر توريد</option>
 </select>
 <input id="taskText" placeholder="نص المهمة">
 <button onclick="addTask()">➕ إضافة المهمة</button>
 </div>
-<ul id="taskList"></ul>
+<table>
+<thead><tr><th>التاريخ</th><th>نوع المهمة</th><th>نص المهمة</th><th>حذف</th></tr></thead>
+<tbody id="taskList"></tbody>
+</table>
 </div>
 
-<!-- ERP Tab -->
+<!-- ERP -->
 <div id="erpTab" class="tab-content">
-<h2>ERP System</h2>
+<h2>ERP System متقدم</h2>
 <div class="erp-form">
-<form id="accountingForm">
-<div class="row">
-<div class="form-group">
-<label>التاريخ:</label>
-<input type="date" name="accDate" required>
-</div>
-<div class="form-group">
-<label>البيان (الوصف):</label>
-<input type="text" name="accDesc" placeholder="شرح القيد">
-</div>
-</div>
 <table id="accountingTable">
 <thead>
-<tr><th>الحساب</th><th>مدين</th><th>دائن</th></tr>
+<tr>
+<th>الحساب</th><th>مدين</th><th>دائن</th>
+</tr>
 </thead>
 <tbody>
 <tr>
-<td>
-<select>
-<option>الصندوق</option>
-<option>البنك</option>
-<option>العملاء</option>
-<option>الموردين</option>
-<option>المبيعات</option>
-<option>المشتريات</option>
-<option>المديونية</option>
-<option>العهدة</option>
-</select>
-</td>
+<td><select><option>الصندوق</option><option>البنك</option><option>المديونية</option><option>العهدة</option><option>المبيعات</option></select></td>
 <td><input type="number" placeholder="0.00"></td>
 <td><input type="number" placeholder="0.00"></td>
 </tr>
 </tbody>
 </table>
-<button type="button" class="erp-btn-add" onclick="addAccountingRow()">+ إضافة سطر</button>
-<button type="button" class="erp-btn-submit" onclick="submitAccountingForm()">💾 حفظ القيد</button>
-</form>
+<button onclick="addAccountingRow()">+ إضافة سطر</button>
+<button onclick="calculateERP()">حساب الرصيد</button>
 </div>
+<div class="erp-stats" id="erpStats"></div>
 </div>
 
-<!-- Excel Tab -->
+<!-- Excel -->
 <div id="excelTab" class="tab-content">
 <h2>Excel Upload / Edit</h2>
 <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleFile(event)">
@@ -219,7 +135,7 @@ renderClients();
 <table id="excelTable" border="1"></table>
 </div>
 
-</div> <!-- container -->
+</div>
 
 <script>
 // Tabs
@@ -248,12 +164,14 @@ const dateEl=document.getElementById("date");
 const statusEl=document.getElementById("status");
 const notesEl=document.getElementById("notes");
 const reminderEl=document.getElementById("reminderDays");
+
 if(!nameEl.value.trim() || !phoneEl.value.trim()){ alert("⚠️ أدخل البيانات"); return; }
-const clientData={name:nameEl.value, phone:phoneEl.value, date:dateEl.value, status:statusEl.value, notes:notesEl.value};
-if(editIndex===-1){ clients.push(clientData); }else{ clients[editIndex]=clientData; editIndex=-1; }
-localStorage.setItem("clients", JSON.stringify(clients));
+
+const clientData = {name:nameEl.value, phone:phoneEl.value, date:dateEl.value, status:statusEl.value, notes:notesEl.value};
+if(editIndex===-1){ clients.push(clientData); } else { clients[editIndex]=clientData; editIndex=-1; }
+localStorage.setItem("clients",JSON.stringify(clients));
 nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value=""; reminderEl.value="";
-renderClients();
+render();
 }
 function editClient(i){
 const c=clients[i];
@@ -265,12 +183,11 @@ document.getElementById("notes").value=c.notes;
 editIndex=i;
 showNotification("✏️ تعديل العميل");
 }
-function deleteClient(i){ clients.splice(i,1); localStorage.setItem("clients", JSON.stringify(clients)); renderClients();}
+function deleteClient(i){ clients.splice(i,1); localStorage.setItem("clients",JSON.stringify(clients)); render(); }
 function openWhatsApp(phone){ window.open(`https://wa.me/${phone}`,'_blank'); }
-function renderClients(){
+function render(){
 const table=document.getElementById("table");
-table.innerHTML="";
-let holdCount=0;
+table.innerHTML=""; let holdCount=0;
 clients.forEach((c,i)=>{
 let rowClass=c.status==="Hold"?"holdRow":"";
 if(c.status==="Hold"){ holdCount++; }
@@ -279,51 +196,61 @@ table.innerHTML+=`<tr class="${rowClass}">
 <td>${c.notes}</td><td>-</td>
 <td><button onclick="openWhatsApp('${c.phone}')">📱</button></td>
 <td><button onclick="editClient(${i})">✏️</button></td>
-<td><button onclick="deleteClient(${i})">❌</button></td></tr>`;
+<td><button onclick="deleteClient(${i})">❌</button></td>
+</tr>`;
 });
 document.getElementById("total").innerText="Total: "+clients.length;
 document.getElementById("hold").innerText="Hold: "+holdCount;
 }
-renderClients();
+render();
 
 // Tasks
 let tasks=JSON.parse(localStorage.getItem("tasks")||"[]");
 function addTask(){
-const date=document.getElementById("taskDate").value;
 const type=document.getElementById("taskType").value;
 const text=document.getElementById("taskText").value.trim();
 if(!text) return;
+const date=new Date().toLocaleDateString();
 tasks.push({date,type,text});
-localStorage.setItem("tasks", JSON.stringify(tasks));
-document.getElementById("taskDate").value="";
+localStorage.setItem("tasks",JSON.stringify(tasks));
 document.getElementById("taskText").value="";
 renderTasks();
 }
+function deleteTask(i){ tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks(); }
 function renderTasks(){
-const taskList=document.getElementById("taskList");
-taskList.innerHTML="";
+const tbody=document.getElementById("taskList"); tbody.innerHTML="";
 tasks.forEach((t,i)=>{
-let li=document.createElement("li");
-li.innerHTML=`[${t.date}] ${t.type}: ${t.text} <button onclick="deleteTask(${i})">❌</button>`;
-taskList.appendChild(li);
+const tr=document.createElement("tr");
+tr.innerHTML=`<td>${t.date}</td><td>${t.type}</td><td>${t.text}</td><td><button onclick="deleteTask(${i})">❌</button></td>`;
+tbody.appendChild(tr);
 });
 }
-function deleteTask(i){ tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks();}
 renderTasks();
 
 // ERP
 function addAccountingRow(){
 const tbody=document.getElementById("accountingTable").querySelector("tbody");
-const newRow=document.createElement("tr");
-newRow.innerHTML=`<td>
-<select>
-<option>الصندوق</option><option>البنك</option><option>العملاء</option><option>الموردين</option><option>المبيعات</option><option>المشتريات</option><option>المديونية</option><option>العهدة</option>
-</select></td>
+const tr=document.createElement("tr");
+tr.innerHTML=`<td><select><option>الصندوق</option><option>البنك</option><option>المديونية</option><option>العهدة</option><option>المبيعات</option></select></td>
 <td><input type="number" placeholder="0.00"></td>
 <td><input type="number" placeholder="0.00"></td>`;
-tbody.appendChild(newRow);
+tbody.appendChild(tr);
 }
-function submitAccountingForm(){ alert("💾 تم حفظ القيد بنجاح!"); }
+function calculateERP(){
+const rows=document.getElementById("accountingTable").querySelectorAll("tbody tr");
+const totals={الصندوق:0, البنك:0, المديونية:0, العهدة:0, المبيعات:0};
+rows.forEach(r=>{
+const account=r.cells[0].querySelector("select").value;
+const debit=parseFloat(r.cells[1].querySelector("input").value)||0;
+const credit=parseFloat(r.cells[2].querySelector("input").value)||0;
+totals[account]+=(debit-credit);
+});
+let statsDiv=document.getElementById("erpStats");
+statsDiv.innerHTML="";
+let finalTotal=0;
+for(let acc in totals){ finalTotal+=totals[acc]; statsDiv.innerHTML+=`<div class="erp-card">${acc}: ${totals[acc].toFixed(2)}</div>`; }
+statsDiv.innerHTML+=`<div class="erp-card">إجمالي نهائي: ${finalTotal.toFixed(2)}</div>`;
+}
 
 // Excel
 function handleFile(e){
@@ -344,7 +271,7 @@ data.forEach((row,rIdx)=>{
 const tr=document.createElement("tr");
 row.forEach((cell,cIdx)=>{
 const td=document.createElement("td");
-if(rIdx===0){ td.innerText=cell; }else{ const inp=document.createElement("input"); inp.value=cell; td.appendChild(inp);}
+if(rIdx===0){ td.innerText=cell; } else { const inp=document.createElement("input"); inp.value=cell; td.appendChild(inp); }
 tr.appendChild(td);
 });
 table.appendChild(tr);
@@ -358,5 +285,6 @@ XLSX.utils.book_append_sheet(wb,ws,"Sheet1");
 XLSX.writeFile(wb,"export.xlsx");
 }
 </script>
+
 </body>
 </html>
