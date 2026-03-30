@@ -60,7 +60,6 @@ th { background:#222; color:#fff;}
 </div>
 
 <div class="tabs-content">
-
 <div id="notification"></div>
 
 <!-- CRM Tab -->
@@ -246,19 +245,21 @@ function handleFile(e){
 const file=e.target.files[0]; if(!file) return;
 const reader=new FileReader();
 reader.onload=function(event){
+try{
 const data=new Uint8Array(event.target.result);
 const workbook=XLSX.read(data,{type:'array'});
 const firstSheet=workbook.SheetNames[0];
 excelData=XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet],{defval:""});
 renderExcel();
-}
+}catch(err){alert("خطأ في قراءة ملف Excel"); console.error(err);}
+};
 reader.readAsArrayBuffer(file);
 }
 function renderExcel(){
 const table=document.getElementById("excelTable");
 table.innerHTML="";
-if(excelData.length===0) return;
-let headers=Object.keys(excelData[0]);
+if(excelData.length===0){ table.innerHTML="<tr><td colspan='20'>لا توجد بيانات</td></tr>"; return; }
+const headers=Object.keys(excelData[0]);
 let tr=document.createElement("tr");
 headers.forEach(h=>tr.innerHTML+=`<th>${h}</th>`);
 table.appendChild(tr);
