@@ -161,6 +161,7 @@ function showTab(id, btn){
     document.getElementById(id).classList.add('active');
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
+    if(id === "excelTab"){ loadStoredExcel(); } // عرض Excel عند فتح التبويب
 }
 function showNotification(msg){
     const n=document.getElementById("notification");
@@ -178,13 +179,28 @@ function addOrUpdate(){
     const dateEl=document.getElementById("date");
     const statusEl=document.getElementById("status");
     const notesEl=document.getElementById("notes");
-    const reminderEl=document.getElementById("reminderDays");
     if(!nameEl.value.trim() || !phoneEl.value.trim()){alert("⚠️ أدخل البيانات"); return;}
     const clientData={name:nameEl.value,phone:phoneEl.value,date:dateEl.value,status:statusEl.value,notes:notesEl.value};
-    if(editIndex===-1){clients.push(clientData);} else {clients[editIndex]=clientData; editIndex=-1;}
-    localStorage.setItem("clients",JSON.stringify(clients));
-    nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value=""; reminderEl.value="";
+    if(editIndex===-1){ clients.push(clientData); } else { clients[editIndex]=clientData; editIndex=-1; }
+    localStorage.setItem("clients", JSON.stringify(clients));
+    nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value="";
     renderCRM();
+}
+function renderCRM(){
+    const table=document.getElementById("table"); table.innerHTML="";
+    let holdCount=0;
+    clients.forEach((c,i)=>{
+        if(c.status==="Hold") holdCount++;
+        table.innerHTML+=`<tr>
+        <td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td>
+        <td>${c.notes}</td><td>-</td>
+        <td><button onclick="openWhatsApp('${c.phone}')">📱</button></td>
+        <td><button onclick="editClient(${i})">✏️</button></td>
+        <td><button onclick="deleteClient(${i})">❌</button></td>
+        </tr>`;
+    });
+    document.getElementById("total").innerText="Total: "+clients.length;
+    document.getElementById("hold").innerText="Hold: "+holdCount;
 }
 function editClient(i){
     const c=clients[i];
@@ -196,68 +212,12 @@ function editClient(i){
     editIndex=i;
     showNotification("✏️ تعديل العميل");
 }
-function deleteClient(i){
-    clients.splice(i,1);
-    localStorage.setItem("clients",JSON.stringify(clients));
-    renderCRM();
-}
-function renderCRM(){
-    const table=document.getElementById("table"); table.innerHTML="";
-    let holdCount=0;
-    clients.forEach((c,i)=>{
-        if(c.status==="Hold") holdCount++;
-        table.innerHTML+=`<tr>
-        <td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td><td>${c.notes}</td>
-        <td>-</td>
-        <td><button onclick="openWhatsApp('${c.phone}')">📱</button></td>
-        <td><button onclick="editClient(${i})">✏️</button></td>
-        <td><button onclick="deleteClient(${i})">❌</button></td>
-        </tr>`;
-    });
-    document.getElementById("total").innerText="Total: "+clients.length;
-    document.getElementById("hold").innerText="Hold: "+holdCount;
-}
+function deleteClient(i){ clients.splice(i,1); localStorage.setItem("clients",JSON.stringify(clients)); renderCRM(); }
+function openWhatsApp(phone){ window.open(`https://wa.me/${phone}`,'_blank'); }
 renderCRM();
-function openWhatsApp(phone){window.open(`https://wa.me/${phone}`,'_blank');}
-
-// --- Tasks ---
-let tasks=JSON.parse(localStorage.getItem("tasks")||"[]"); let editTaskIndex=-1;
-function addTask(){
-    const txt=document.getElementById("taskInput").value;
-    const client=document.getElementById("taskClient").value;
-    const date=document.getElementById("taskDate").value;
-    const stage=document.getElementById("taskStage").value;
-    if(!txt.trim() || !client.trim()) return alert("أدخل نص المهمة واسم العميل");
-    const task={txt,client,date,stage};
-    if(editTaskIndex===-1) tasks.push(task);
-    else {tasks[editTaskIndex]=task; editTaskIndex=-1;}
-    localStorage.setItem("tasks",JSON.stringify(tasks));
-    document.getElementById("taskInput").value="";
-    document.getElementById("taskClient").value="";
-    document.getElementById("taskDate").value="";
-    renderTasks();
-}
-function editTask(i){
-    const t=tasks[i];
-    document.getElementById("taskInput").value=t.txt;
-    document.getElementById("taskClient").value=t.client;
-    document.getElementById("taskDate").value=t.date;
-    document.getElementById("taskStage").value=t.stage;
-    editTaskIndex=i;
-    showNotification("✏️ تعديل المهمة");
-}
-function deleteTask(i){tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks();}
-function renderTasks(){
-    const list=document.getElementById("taskList"); list.innerHTML="";
-    tasks.forEach((t,i)=>{
-        let stageClass=t.stage==="quote"?"stage-quote":t.stage==="follow"?"stage-follow":"stage-order";
-        list.innerHTML+=`<li><strong>${t.client}</strong> | ${t.date} | <span class="task-stage ${stageClass}">${t.stage}</span><br>${t.txt}<br><button onclick="editTask(${i})">✏️</button> <button onclick="deleteTask(${i})">❌</button></li>`;
-    });
-}
-renderTasks();
 
 // --- ERP ---
-let erpData=JSON.parse(localStorage.getItem("erpData")||"[]");
+let erpData = JSON.parse(localStorage.getItem("erpData")||"[]");
 function addERP(){
     const acc=document.getElementById("erpAccount").value;
     const debit=parseFloat(document.getElementById("erpDebit").value)||0;
@@ -278,13 +238,13 @@ function renderERP(){
         tbody.innerHTML+=`<tr><td>${e.acc}</td><td>${e.debit}</td><td>${e.credit}</td></tr>`;
         totalD+=e.debit; totalC+=e.credit;
     });
-    document.getElementById("totalDebit").innerText=totalD;
-    document.getElementById("totalCredit").innerText=totalC;
+    document.getElementById("totalDebit").innerText = totalD;
+    document.getElementById("totalCredit").innerText = totalC;
 }
 renderERP();
 
 // --- Excel ---
-let excelData = JSON.parse(localStorage.getItem("excelData")||"[]");
+let excelData = [];
 function handleFile(e){
     const file=e.target.files[0];
     const reader=new FileReader();
@@ -298,25 +258,18 @@ function handleFile(e){
     reader.readAsArrayBuffer(file);
 }
 function renderExcel(){
-    const table=document.getElementById("excelTable"); 
-    table.innerHTML=""; 
-    if(excelData.length===0) return; 
-    let headers=Object.keys(excelData[0]); 
-    let tr=document.createElement("tr"); 
-    headers.forEach(h=>tr.innerHTML+=`<th>${h}</th>`); 
-    table.appendChild(tr); 
-    excelData.forEach((row,r)=>{
-        let tr=document.createElement("tr"); 
-        headers.forEach(h=>{tr.innerHTML+=`<td contenteditable="true">${row[h]}</td>`;}); 
+    const table=document.getElementById("excelTable");
+    table.innerHTML="";
+    if(excelData.length===0) return;
+    const headers=Object.keys(excelData[0]);
+    let tr=document.createElement("tr");
+    headers.forEach(h=>tr.innerHTML+=`<th>${h}</th>`);
+    table.appendChild(tr);
+    excelData.forEach(row=>{
+        let tr=document.createElement("tr");
+        headers.forEach(h=>{ tr.innerHTML+=`<td contenteditable="true">${row[h]}</td>`; });
         table.appendChild(tr);
     });
-}
-function exportExcelFile(){
-    const table=document.getElementById("excelTable"); 
-    let wb=XLSX.utils.book_new(); 
-    let ws=XLSX.utils.table_to_sheet(table); 
-    XLSX.utils.book_append_sheet(wb,ws,"Sheet1"); 
-    XLSX.writeFile(wb,"export.xlsx");
 }
 function saveExcelData(){
     const table=document.getElementById("excelTable");
@@ -331,8 +284,21 @@ function saveExcelData(){
     localStorage.setItem("excelData",JSON.stringify(excelData));
     showNotification("💾 تم حفظ البيانات داخل البرنامج");
 }
-// استرجاع أي بيانات Excel محفوظة تلقائياً عند فتح الصفحة
-window.addEventListener('load', renderExcel);
+function exportExcelFile(){
+    const table=document.getElementById("excelTable");
+    let wb=XLSX.utils.book_new();
+    let ws=XLSX.utils.table_to_sheet(table);
+    XLSX.utils.book_append_sheet(wb,ws,"Sheet1");
+    XLSX.writeFile(wb,"export.xlsx");
+}
+function loadStoredExcel(){
+    const stored = localStorage.getItem("excelData");
+    if(stored){ excelData=JSON.parse(stored); renderExcel(); }
+}
+window.addEventListener("DOMContentLoaded", ()=>{
+    loadStoredExcel();
+    renderERP();
+});
 
 // --- Language ---
 function changeLang(val){alert("Language switched to "+val);}
