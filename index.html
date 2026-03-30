@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>Utopia Trading ( CRM & ERP System )</title>
+<title>CRM & ERP System</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0; display:flex; flex-direction:row; min-height:100vh; }
@@ -21,7 +21,7 @@ th, td { border:1px solid #ddd; padding:10px; text-align:center; overflow: hidde
 th { background:#222; color:#fff;}
 .card { background:#eee; padding:10px; text-align:center; border-radius:8px; margin:5px; flex:1;}
 .row { display:flex; flex-wrap:wrap; gap:10px;}
-#notification { position: fixed; top:20px; right:20px; background:#ffcc00; padding:15px; border-radius:10px; display:none; z-index:999;}
+#notification { position: fixed; top:20px; right:20px; background:#ffcc00; padding:15px; border-radius:10px; display:none; z-index:999; min-width:200px;}
 .task-stage { padding:5px; color:#fff; border-radius:5px; }
 .stage-quote { background:orange; }
 .stage-follow { background:blue; }
@@ -182,7 +182,14 @@ const statusEl=document.getElementById("status");
 const notesEl=document.getElementById("notes");
 if(!nameEl.value.trim() || !phoneEl.value.trim()){alert("⚠️ أدخل البيانات"); return;}
 const clientData={name:nameEl.value,phone:phoneEl.value,date:dateEl.value,status:statusEl.value,notes:notesEl.value};
-if(editIndex===-1){clients.push(clientData);}else{clients[editIndex]=clientData;editIndex=-1;}
+if(editIndex===-1){
+clients.push(clientData);
+showNotification("✅ تم إضافة عميل جديد");
+}else{
+clients[editIndex]=clientData;
+showNotification("✏️ تم تعديل العميل");
+editIndex=-1;
+}
 localStorage.setItem("clients",JSON.stringify(clients));
 nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value="";
 renderCRM();
@@ -210,7 +217,7 @@ document.getElementById("notes").value=c.notes;
 editIndex=i;
 showNotification("✏️ تعديل العميل");
 }
-function deleteClient(i){clients.splice(i,1); localStorage.setItem("clients",JSON.stringify(clients)); renderCRM();}
+function deleteClient(i){clients.splice(i,1); localStorage.setItem("clients",JSON.stringify(clients)); renderCRM(); showNotification("❌ تم حذف العميل");}
 function openWhatsApp(phone){window.open(`https://wa.me/${phone}`,'_blank');}
 renderCRM();
 
@@ -225,6 +232,7 @@ erpData.push({acc,debit,credit});
 localStorage.setItem("erpData",JSON.stringify(erpData));
 document.getElementById("erpAccount").value=""; document.getElementById("erpDebit").value=""; document.getElementById("erpCredit").value="";
 renderERP();
+showNotification("💾 تم إضافة القيد المحاسبي");
 }
 function renderERP(){
 const tbody=document.querySelector("#erpTable tbody");
@@ -239,6 +247,14 @@ document.getElementById("totalCredit").innerText=totalC;
 }
 renderERP();
 
+// --- Tasks ---
+let tasks=JSON.parse(localStorage.getItem("tasks")||"[]"); let editTaskIndex=-1;
+function addTask(){const txt=document.getElementById("taskInput").value; const client=document.getElementById("taskClient").value; const date=document.getElementById("taskDate").value; const stage=document.getElementById("taskStage").value; if(!txt.trim() || !client.trim()) return alert("أدخل نص المهمة واسم العميل"); const task={txt,client,date,stage}; if(editTaskIndex===-1) tasks.push(task); else {tasks[editTaskIndex]=task; editTaskIndex=-1;} localStorage.setItem("tasks",JSON.stringify(tasks)); document.getElementById("taskInput").value=""; document.getElementById("taskClient").value=""; document.getElementById("taskDate").value=""; renderTasks(); showNotification("✅ تم إضافة/تعديل المهمة");}
+function editTask(i){const t=tasks[i]; document.getElementById("taskInput").value=t.txt; document.getElementById("taskClient").value=t.client; document.getElementById("taskDate").value=t.date; document.getElementById("taskStage").value=t.stage; editTaskIndex=i; showNotification("✏️ تعديل المهمة");}
+function deleteTask(i){tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks(); showNotification("❌ تم حذف المهمة");}
+function renderTasks(){const list=document.getElementById("taskList"); list.innerHTML=""; tasks.forEach((t,i)=>{ let stageClass=t.stage==="quote"?"stage-quote":t.stage==="follow"?"stage-follow":"stage-order"; list.innerHTML+=`<li><strong>${t.client}</strong> | ${t.date} | <span class="task-stage ${stageClass}">${t.stage}</span><br>${t.txt}<br><button onclick="editTask(${i})">✏️</button> <button onclick="deleteTask(${i})">❌</button></li>`;});}
+renderTasks();
+
 // --- Excel ---
 let excelData=[];
 function handleFile(e){
@@ -251,6 +267,7 @@ const workbook=XLSX.read(data,{type:'array'});
 const firstSheet=workbook.SheetNames[0];
 excelData=XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet],{defval:""});
 renderExcel();
+showNotification("✅ تم تحميل ملف Excel");
 }catch(err){alert("خطأ في قراءة ملف Excel"); console.error(err);}
 };
 reader.readAsArrayBuffer(file);
@@ -280,7 +297,7 @@ row[table.rows[0].cells[j].innerText]=table.rows[i].cells[j].innerText;
 excelData.push(row);
 }
 localStorage.setItem("excelData",JSON.stringify(excelData));
-showNotification("💾 تم حفظ البيانات داخل البرنامج");
+showNotification("💾 تم حفظ بيانات Excel داخل البرنامج");
 }
 function exportExcelFile(){
 const table=document.getElementById("excelTable");
@@ -294,11 +311,12 @@ const stored=localStorage.getItem("excelData");
 if(stored){excelData=JSON.parse(stored); renderExcel();}
 }
 window.addEventListener("DOMContentLoaded", ()=>{
-renderERP(); loadStoredExcel();
+renderERP(); renderCRM(); renderTasks(); loadStoredExcel();
 });
 
 // --- Language ---
 function changeLang(val){alert("Language switched to "+val);}
 </script>
+
 </body>
 </html>
