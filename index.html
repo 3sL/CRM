@@ -30,7 +30,6 @@ th { background:#222; color:#fff;}
 #excelTable th, #excelTable td { border: 1px solid #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .logo-container { text-align:center; margin-bottom:15px; }
 .logo-container img { max-width:150px; display:inline-block; }
-
 @media (max-width: 768px) {
     body { flex-direction: column; }
     .sidebar { width:100%; flex-direction: row; overflow-x: auto; }
@@ -116,12 +115,14 @@ th { background:#222; color:#fff;}
 <ul id="taskList"></ul>
 </div>
 
-<!-- ERP Tab مع القيد المحاسبي الكامل -->
+<!-- ERP Tab مع الربط التلقائي بالعملاء -->
 <div id="erpTab" class="tab-content">
 <div class="logo-container"><img src="logo.png" alt="شعار الشركة"></div>
 <h2>ERP System</h2>
 <div class="row">
-<input id="erpAccount" placeholder="الحساب">
+<select id="erpAccount">
+<option value="">اختر العميل</option>
+</select>
 <select id="erpType">
 <option value="عهدة">عهدة</option>
 <option value="خزنة">خزنة</option>
@@ -200,6 +201,7 @@ showNotification("✏️ تم تعديل العميل");
 editIndex=-1;
 }
 localStorage.setItem("clients",JSON.stringify(clients));
+updateERPAccounts();
 nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value="";
 renderCRM();
 }
@@ -226,11 +228,26 @@ document.getElementById("notes").value=c.notes;
 editIndex=i;
 showNotification("✏️ تعديل العميل");
 }
-function deleteClient(i){clients.splice(i,1); localStorage.setItem("clients",JSON.stringify(clients)); renderCRM(); showNotification("❌ تم حذف العميل");}
+function deleteClient(i){
+clients.splice(i,1); localStorage.setItem("clients",JSON.stringify(clients)); renderCRM(); updateERPAccounts(); showNotification("❌ تم حذف العميل");
+}
 function openWhatsApp(phone){window.open(`https://wa.me/${phone}`,'_blank');}
 renderCRM();
 
-// --- ERP تحديث كامل للقيد المحاسبي ---
+// --- تحديث قائمة حسابات ERP تلقائياً من CRM ---
+function updateERPAccounts(){
+const sel=document.getElementById("erpAccount");
+sel.innerHTML='<option value="">اختر العميل</option>';
+clients.forEach(c=>{
+const opt=document.createElement("option");
+opt.value=c.name;
+opt.text=c.name;
+sel.appendChild(opt);
+});
+}
+updateERPAccounts();
+
+// --- ERP ---
 let erpData=JSON.parse(localStorage.getItem("erpData")||"[]");
 function addERP(){
 const acc=document.getElementById("erpAccount").value;
@@ -240,7 +257,6 @@ const credit=parseFloat(document.getElementById("erpCredit").value)||0;
 if(!acc) return alert("أدخل الحساب");
 erpData.push({acc,type,debit,credit});
 localStorage.setItem("erpData",JSON.stringify(erpData));
-document.getElementById("erpAccount").value="";
 document.getElementById("erpDebit").value="";
 document.getElementById("erpCredit").value="";
 renderERP();
