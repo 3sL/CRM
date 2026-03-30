@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM & ERP System - Professional UI with Daily Alerts</title>
+<title>CRM & ERP System - Professional UI with Daily Alerts & Filter</title>
 <style>
 body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#e2e8f0; margin:0; padding:0;}
 .container { max-width:1400px; margin:auto; background:#fff; padding:25px; border-radius:15px; box-shadow:0 0 25px rgba(0,0,0,0.2);}
@@ -39,6 +39,7 @@ button.small-btn { padding:5px 8px; margin:2px; border-radius:5px; cursor:pointe
 button.small-btn:hover { opacity:0.8;}
 #dailyAlerts { padding:10px; margin-bottom:15px; border-radius:8px; background:#e9ecef; font-weight:bold;}
 .alert-item { padding:5px; margin:3px 0; border-radius:5px;}
+.filter-row { display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -56,7 +57,12 @@ button.small-btn:hover { opacity:0.8;}
 <div class="developer">Developed by Eng : <strong>Mahmoud Mohamed Marie</strong></div>
 <div class="phone">📞 +201222153415</div>
 
-<!-- Daily Alerts -->
+<!-- Daily Alerts + Filters -->
+<div class="filter-row">
+<input type="text" id="filterClient" placeholder="فلتر حسب العميل / Filter by Client">
+<input type="text" id="filterType" placeholder="فلتر حسب نوع المهمة / Filter by Task Type">
+<button onclick="renderDailyAlerts()">تطبيق الفلتر / Apply Filter</button>
+</div>
 <div id="dailyAlerts"></div>
 
 <!-- Tabs -->
@@ -245,14 +251,18 @@ list.appendChild(li);
 renderDailyAlerts();
 }
 
-// --------------- Daily Alerts ----------------
+// --------------- Daily Alerts + Filter ----------------
 function renderDailyAlerts(){
 const container=document.getElementById("dailyAlerts"); container.innerHTML="";
 const now=new Date();
+const clientFilter=document.getElementById("filterClient").value.trim().toLowerCase();
+const typeFilter=document.getElementById("filterType").value.trim().toLowerCase();
 tasks.forEach(t=>{
 if(t.dateTime){
 const taskTime=new Date(t.dateTime);
 if(taskTime.toDateString()===now.toDateString() || taskTime<now){
+if((!clientFilter || t.client.toLowerCase().includes(clientFilter)) &&
+(!typeFilter || t.type.toLowerCase().includes(typeFilter))){
 let color=""; 
 if(t.type.toLowerCase().includes("تقديم عرض")) color="#fff3cd";
 else if(t.type.toLowerCase().includes("متابعة")) color="#f8d7da";
@@ -262,7 +272,8 @@ div.innerText=`⏰ ${t.client} | ${t.type} | ${t.text} | ${t.dateTime}`;
 container.appendChild(div);
 }
 }
-});
+}
+}
 }
 
 // ---------------- Task Alerts Sound ----------------
