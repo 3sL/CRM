@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM & ERP System</title>
+<title>CRM & ERP System For Utopia Trading</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0; display:flex; flex-direction:row; min-height:100vh; }
@@ -116,12 +116,21 @@ th { background:#222; color:#fff;}
 <ul id="taskList"></ul>
 </div>
 
-<!-- ERP Tab -->
+<!-- ERP Tab مع القيد المحاسبي الكامل -->
 <div id="erpTab" class="tab-content">
 <div class="logo-container"><img src="logo.png" alt="شعار الشركة"></div>
 <h2>ERP System</h2>
 <div class="row">
 <input id="erpAccount" placeholder="الحساب">
+<select id="erpType">
+<option value="عهدة">عهدة</option>
+<option value="خزنة">خزنة</option>
+<option value="بنوك">بنوك</option>
+<option value="تأخيرات">تأخيرات</option>
+<option value="غرامات">غرامات</option>
+<option value="خصومات">خصومات</option>
+<option value="أخرى">أخرى</option>
+</select>
 <input type="number" id="erpDebit" placeholder="مدين">
 <input type="number" id="erpCredit" placeholder="دائن">
 <button onclick="addERP()">💾 إضافة القيد</button>
@@ -129,11 +138,11 @@ th { background:#222; color:#fff;}
 <div style="overflow-x:auto;">
 <table id="erpTable">
 <thead>
-<tr><th>الحساب</th><th>مدين</th><th>دائن</th></tr>
+<tr><th>الحساب</th><th>النوع</th><th>مدين</th><th>دائن</th></tr>
 </thead>
 <tbody></tbody>
 <tfoot>
-<tr><th>الإجمالي</th><th id="totalDebit">0</th><th id="totalCredit">0</th></tr>
+<tr><th>الإجمالي</th><th>-</th><th id="totalDebit">0</th><th id="totalCredit">0</th></tr>
 </tfoot>
 </table>
 </div>
@@ -221,16 +230,19 @@ function deleteClient(i){clients.splice(i,1); localStorage.setItem("clients",JSO
 function openWhatsApp(phone){window.open(`https://wa.me/${phone}`,'_blank');}
 renderCRM();
 
-// --- ERP ---
+// --- ERP تحديث كامل للقيد المحاسبي ---
 let erpData=JSON.parse(localStorage.getItem("erpData")||"[]");
 function addERP(){
 const acc=document.getElementById("erpAccount").value;
+const type=document.getElementById("erpType").value;
 const debit=parseFloat(document.getElementById("erpDebit").value)||0;
 const credit=parseFloat(document.getElementById("erpCredit").value)||0;
 if(!acc) return alert("أدخل الحساب");
-erpData.push({acc,debit,credit});
+erpData.push({acc,type,debit,credit});
 localStorage.setItem("erpData",JSON.stringify(erpData));
-document.getElementById("erpAccount").value=""; document.getElementById("erpDebit").value=""; document.getElementById("erpCredit").value="";
+document.getElementById("erpAccount").value="";
+document.getElementById("erpDebit").value="";
+document.getElementById("erpCredit").value="";
 renderERP();
 showNotification("💾 تم إضافة القيد المحاسبي");
 }
@@ -239,8 +251,9 @@ const tbody=document.querySelector("#erpTable tbody");
 tbody.innerHTML="";
 let totalD=0,totalC=0;
 erpData.forEach(e=>{
-tbody.innerHTML+=`<tr><td>${e.acc}</td><td>${e.debit}</td><td>${e.credit}</td></tr>`;
-totalD+=e.debit; totalC+=e.credit;
+tbody.innerHTML+=`<tr><td>${e.acc}</td><td>${e.type}</td><td>${e.debit}</td><td>${e.credit}</td></tr>`;
+totalD+=e.debit;
+totalC+=e.credit;
 });
 document.getElementById("totalDebit").innerText=totalD;
 document.getElementById("totalCredit").innerText=totalC;
