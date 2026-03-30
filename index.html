@@ -26,6 +26,10 @@ th { background:#222; color:#fff; }
 #notification { position: fixed; top:20px; right:20px; background:#ffcc00; padding:15px; border-radius:10px; display:none; z-index:999; }
 .holdRow { background:#fff3cd; }
 .erp-form { background:#f9f9f9; padding:15px; border-radius:8px; margin-top:10px; }
+.erp-form table th, .erp-form table td { padding:8px; text-align:center; }
+.erp-btn-add { background:#28a745; color:#fff; border:none; padding:8px 12px; cursor:pointer; border-radius:5px; margin-top:5px;}
+.erp-btn-submit { background:#007bff; color:#fff; border:none; padding:10px 20px; cursor:pointer; border-radius:5px; margin-top:10px; width:100%; }
+.row-error { background:#f8d7da !important; }
 </style>
 
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
@@ -54,7 +58,6 @@ th { background:#222; color:#fff; }
 <!-- CRM Tab -->
 <div id="crmTab" class="tab-content active">
 <h2>CRM System</h2>
-
 <div class="row">
 <input id="name" placeholder="اسم العميل">
 <input id="phone" placeholder="رقم الهاتف">
@@ -69,7 +72,6 @@ th { background:#222; color:#fff; }
 <input id="agent" placeholder="اسم المندوب">
 <input type="number" id="reminderDays" placeholder="Reminder بالأيام">
 </div>
-
 <button onclick="addOrUpdate()">💾 حفظ</button>
 
 <div class="stats">
@@ -100,9 +102,28 @@ th { background:#222; color:#fff; }
 
 <!-- ERP Tab -->
 <div id="erpTab" class="tab-content">
-<h2>ERP</h2>
-<table id="accountingTable"><tbody></tbody></table>
-<button onclick="addAccountingRow()">+</button>
+<h2>ERP - قيود محاسبية</h2>
+<div class="erp-form">
+<table id="accountingTable">
+<thead>
+<tr>
+<th>الحساب</th>
+<th>مدين</th>
+<th>دائن</th>
+</tr>
+</thead>
+<tbody></tbody>
+<tfoot>
+<tr>
+<td>الإجمالي</td>
+<td id="totalDebit">0.00</td>
+<td id="totalCredit">0.00</td>
+</tr>
+</tfoot>
+</table>
+<button class="erp-btn-add" onclick="addAccountingRow()">+ إضافة سطر</button>
+<button class="erp-btn-submit" onclick="submitAccountingForm()">💾 حفظ القيد</button>
+</div>
 </div>
 
 <!-- Excel Tab -->
@@ -135,99 +156,63 @@ setTimeout(()=>n.style.display="none",3000);
 // CRM
 let clients=JSON.parse(localStorage.getItem("clients")||"[]");
 let editIndex = -1;
-
 function addOrUpdate(){
-const nameEl = document.getElementById("name");
-const phoneEl = document.getElementById("phone");
-const dateEl = document.getElementById("date");
-const statusEl = document.getElementById("status");
-const notesEl = document.getElementById("notes");
-const reminderEl = document.getElementById("reminderDays");
+const nameEl=document.getElementById("name");
+const phoneEl=document.getElementById("phone");
+const dateEl=document.getElementById("date");
+const statusEl=document.getElementById("status");
+const notesEl=document.getElementById("notes");
+const reminderEl=document.getElementById("reminderDays");
 
-// ✅ تحقق من الإدخال
-if(nameEl.value.trim() === "" || phoneEl.value.trim() === ""){
+if(!nameEl.value.trim() || !phoneEl.value.trim()){
 alert("⚠️ أدخل الاسم ورقم الهاتف");
 return;
 }
 
 const clientData = {
-name: nameEl.value.trim(),
-phone: phoneEl.value.trim(),
-date: dateEl.value,
-status: statusEl.value,
-notes: notesEl.value
+name:nameEl.value.trim(),
+phone:phoneEl.value.trim(),
+date:dateEl.value,
+status:statusEl.value,
+notes:notesEl.value
 };
 
-// تعديل أو إضافة
-if(editIndex === -1){
-clients.push(clientData);
-}else{
-clients[editIndex] = clientData;
-editIndex = -1;
-}
-
+if(editIndex===-1){ clients.push(clientData); }else{ clients[editIndex]=clientData; editIndex=-1; }
 localStorage.setItem("clients", JSON.stringify(clients));
 
-// تفريغ الفورم
-nameEl.value="";
-phoneEl.value="";
-dateEl.value="";
-notesEl.value="";
-reminderEl.value="";
-
+nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value=""; reminderEl.value="";
 showNotification("✅ تم الحفظ بنجاح");
-
 render();
 }
 
-// ✏️ تعديل العميل
 function editClient(i){
-const c = clients[i];
-document.getElementById("name").value = c.name;
-document.getElementById("phone").value = c.phone;
-document.getElementById("date").value = c.date;
-document.getElementById("status").value = c.status;
-document.getElementById("notes").value = c.notes;
-editIndex = i;
+const c=clients[i];
+document.getElementById("name").value=c.name;
+document.getElementById("phone").value=c.phone;
+document.getElementById("date").value=c.date;
+document.getElementById("status").value=c.status;
+document.getElementById("notes").value=c.notes;
+editIndex=i;
 showNotification("✏️ تعديل العميل");
 }
 
-// حذف
-function deleteClient(i){
-clients.splice(i,1);
-localStorage.setItem("clients", JSON.stringify(clients));
-render();
-}
+function deleteClient(i){ clients.splice(i,1); localStorage.setItem("clients",JSON.stringify(clients)); render(); }
+function openWhatsApp(phone){ window.open(`https://wa.me/${phone}`,'_blank'); }
 
-// واتساب
-function openWhatsApp(phone){
-window.open(`https://wa.me/${phone}`,'_blank');
-}
-
-// عرض الجدول
 function render(){
-const table=document.getElementById("table");
-table.innerHTML="";
+const table=document.getElementById("table"); table.innerHTML="";
 let holdCount=0;
-
 clients.forEach((c,i)=>{
 let rowClass=c.status==="Hold"?"holdRow":"";
-if(c.status==="Hold"){ holdCount++; }
-
-table.innerHTML += `
-<tr class="${rowClass}">
-<td>${c.name}</td>
-<td>${c.phone}</td>
-<td>${c.date}</td>
-<td>${c.status}</td>
-<td>${c.notes}</td>
-<td>-</td>
+if(c.status==="Hold") holdCount++;
+table.innerHTML += `<tr class="${rowClass}">
+<td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td>
+<td>${c.notes}</td><td>-</td>
 <td><button onclick="openWhatsApp('${c.phone}')">📱</button></td>
 <td><button onclick="editClient(${i})">✏️</button></td>
 <td><button onclick="deleteClient(${i})">❌</button></td>
 </tr>`;
 });
-
 document.getElementById("total").innerText="Total: "+clients.length;
 document.getElementById("hold").innerText="Hold: "+holdCount;
 }
@@ -235,22 +220,53 @@ render();
 
 // Tasks
 let tasks = JSON.parse(localStorage.getItem("tasks")||"[]");
-function addTask(){
-const taskInput=document.getElementById("taskInput");
-if(!taskInput.value.trim()) return;
-tasks.push(taskInput.value.trim());
-localStorage.setItem("tasks", JSON.stringify(tasks));
-taskInput.value="";
-renderTasks();
-}
+function addTask(){ const taskInput=document.getElementById("taskInput"); if(!taskInput.value.trim()) return; tasks.push(taskInput.value.trim()); localStorage.setItem("tasks",JSON.stringify(tasks)); taskInput.value=""; renderTasks(); }
 function deleteTask(i){ tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks(); }
-function renderTasks(){ const taskList=document.getElementById("taskList"); taskList.innerHTML=""; tasks.forEach((t,i)=>{ const li=document.createElement("li"); li.innerHTML=`${t} <button onclick="deleteTask(${i})">❌</button>`; taskList.appendChild(li); });}
+function renderTasks(){ const taskList=document.getElementById("taskList"); taskList.innerHTML=""; tasks.forEach((t,i)=>{ const li=document.createElement("li"); li.innerHTML=`${t} <button onclick="deleteTask(${i})">❌</button>`; taskList.appendChild(li); }); }
 renderTasks();
 
-// ERP placeholder
-function addAccountingRow(){ const tbody=document.getElementById("accountingTable").querySelector("tbody"); const newRow=document.createElement("tr"); newRow.innerHTML=`<td><input placeholder="الحساب"></td><td><input type="number" placeholder="0.00"></td><td><input type="number" placeholder="0.00"></td>`; tbody.appendChild(newRow); }
+// ERP
+function addAccountingRow(){
+const tbody=document.getElementById("accountingTable").querySelector("tbody");
+const newRow=document.createElement("tr");
+newRow.innerHTML=`<td><select>
+<option>الصندوق</option>
+<option>البنك</option>
+<option>المبيعات</option>
+<option>المديونية</option>
+<option>العهدة</option>
+</select></td>
+<td><input type="number" class="debit" value="0.00"></td>
+<td><input type="number" class="credit" value="0.00"></td>`;
+tbody.appendChild(newRow);
+updateERPsum();
+newRow.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', updateERPsum));
+}
 
-// Excel placeholder
+function updateERPsum(){
+let totalD=0, totalC=0;
+document.querySelectorAll('#accountingTable tbody tr').forEach(r=>{
+const d=parseFloat(r.querySelector('.debit').value)||0;
+const c=parseFloat(r.querySelector('.credit').value)||0;
+
+// تمييز الصف إذا المدين ≠ الدائن
+if(d!==c && (d!==0 || c!==0)){ r.classList.add('row-error'); } else { r.classList.remove('row-error'); }
+
+totalD+=d; totalC+=c;
+});
+document.getElementById("totalDebit").innerText=totalD.toFixed(2);
+document.getElementById("totalCredit").innerText=totalC.toFixed(2);
+}
+
+function submitAccountingForm(){
+updateERPsum();
+let totalD=parseFloat(document.getElementById("totalDebit").innerText);
+let totalC=parseFloat(document.getElementById("totalCredit").innerText);
+if(totalD!==totalC){ alert("⚠️ المدين والدائن غير متساويين!"); return; }
+showNotification("✅ تم حفظ القيد بنجاح");
+}
+
+// Excel
 function handleFile(e){ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=function(evt){ const data=new Uint8Array(evt.target.result); const workbook=XLSX.read(data,{type:"array"}); const sheet=workbook.Sheets[workbook.SheetNames[0]]; const json=XLSX.utils.sheet_to_json(sheet,{header:1}); renderExcel(json); }; reader.readAsArrayBuffer(file); }
 function renderExcel(data){ const table=document.getElementById("excelTable"); table.innerHTML=""; data.forEach((row,rIdx)=>{ const tr=document.createElement("tr"); row.forEach((cell,cIdx)=>{ const td=document.createElement("td"); if(rIdx===0){ td.innerText=cell; }else{ const inp=document.createElement("input"); inp.value=cell; td.appendChild(inp); } tr.appendChild(td); }); table.appendChild(tr); }); }
 function exportExcelFile(){ const table=document.getElementById("excelTable"); const wb=XLSX.utils.book_new(); const ws=XLSX.utils.table_to_sheet(table); XLSX.utils.book_append_sheet(wb,ws,"Sheet1"); XLSX.writeFile(wb,"export.xlsx"); }
