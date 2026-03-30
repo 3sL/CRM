@@ -3,7 +3,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>Advanced CRM System</title>
+<title>CRM & ERP System - Utopia</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 
@@ -11,120 +11,113 @@
 
 /* ===== Theme ===== */
 :root {
-  --main: #007bff;
-  --bg: #f4f6f9;
-  --card: #fff;
-  --text: #222;
+  --main:#007bff;
+  --bg:#f7f8fa;
+  --card:#fff;
+  --text:#222;
 }
 
 .dark {
-  --bg: #1e1e2f;
-  --card: #2c2c3e;
-  --text: #fff;
+  --bg:#1e1e2f;
+  --card:#2c2c3e;
+  --text:#fff;
 }
 
 body {
-  font-family: 'Cairo';
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
+  font-family:'Cairo',sans-serif;
+  background:var(--bg);
+  margin:0;
+  color:var(--text);
 }
 
-/* ===== Layout ===== */
 .container {
-  max-width: 1100px;
-  margin: 20px auto;
-  background: var(--card);
-  padding: 20px;
-  border-radius: 15px;
+  max-width:1200px;
+  margin:20px auto;
+  background:var(--card);
+  padding:20px;
+  border-radius:12px;
 }
 
+/* Header */
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  text-align:center;
 }
 
-/* ===== Buttons ===== */
+/* Buttons */
 button {
-  background: var(--main);
-  color: #fff;
-  border: none;
-  padding: 10px;
-  border-radius: 8px;
-  cursor: pointer;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:var(--main);
+  color:#fff;
+  cursor:pointer;
 }
 
-/* ===== Tabs ===== */
+/* Tabs */
 .tabs {
-  display: flex;
-  gap: 10px;
-  margin: 20px 0;
+  display:flex;
+  gap:10px;
+  margin:15px 0;
 }
 
 .tab-btn {
-  flex: 1;
-  padding: 10px;
-  background: #ddd;
+  flex:1;
+  background:#ddd;
 }
 
 .tab-btn.active {
-  background: var(--main);
-  color: #fff;
+  background:var(--main);
+  color:#fff;
 }
 
-.tab-content { display:none; }
-.tab-content.active { display:block; }
+.tab-content {display:none;}
+.tab-content.active {display:block;}
 
-/* ===== Grid ===== */
+/* Grid */
 .row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
-  gap: 10px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:10px;
 }
 
-input, select {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+input,select {
+  padding:10px;
+  border-radius:6px;
+  border:1px solid #ccc;
 }
 
-/* ===== Table ===== */
+/* Table */
 table {
-  width: 100%;
-  margin-top: 15px;
+  width:100%;
+  margin-top:15px;
 }
 
 th {
-  background: var(--main);
-  color: #fff;
+  background:var(--main);
+  color:#fff;
 }
 
-td, th {
-  padding: 8px;
-  text-align: center;
-}
-
-/* ===== Cards ===== */
+/* Cards */
 .stats {
-  display: flex;
-  gap: 10px;
+  display:flex;
+  gap:10px;
+  margin-top:10px;
 }
 
 .card {
-  flex: 1;
-  background: var(--main);
-  color: #fff;
-  padding: 10px;
-  border-radius: 10px;
+  flex:1;
+  background:var(--main);
+  color:#fff;
+  padding:10px;
+  border-radius:8px;
 }
 
-/* ===== Task ===== */
-li {
-  background: #ddd;
-  margin: 5px;
-  padding: 8px;
-  border-radius: 6px;
+/* Tasks */
+#taskList li {
+  background:#eee;
+  margin:5px;
+  padding:8px;
+  border-radius:6px;
 }
 
 </style>
@@ -136,24 +129,26 @@ li {
 <div class="container">
 
 <div class="header">
-  <h2>🚀 Advanced CRM</h2>
-  <button onclick="toggleDark()">🌙</button>
+  <h2>CRM & ERP System</h2>
 </div>
+
+<button onclick="toggleDark()">🌙 Dark Mode</button>
 
 <!-- Search -->
 
-<input id="search" placeholder="🔍 بحث..." onkeyup="render()">
+<input id="search" placeholder="🔍 بحث..." onkeyup="renderTable()">
 
 <!-- Tabs -->
 
 <div class="tabs">
-  <button class="tab-btn active" onclick="showTab('crm',this)">CRM</button>
-  <button class="tab-btn" onclick="showTab('tasks',this)">Tasks</button>
+  <button class="tab-btn active" onclick="showTab('crmTab',this)">CRM</button>
+  <button class="tab-btn" onclick="showTab('tasksTab',this)">Tasks</button>
+  <button class="tab-btn" onclick="showTab('erpTab',this)">ERP</button>
 </div>
 
 <!-- CRM -->
 
-<div id="crm" class="tab-content active">
+<div id="crmTab" class="tab-content active">
 
 <div class="row">
   <input id="name" placeholder="اسم العميل">
@@ -168,8 +163,8 @@ li {
 <button onclick="addClient()">💾 حفظ</button>
 
 <div class="stats">
-  <div class="card" id="total"></div>
-  <div class="card" id="hold"></div>
+  <div class="card" id="total">0</div>
+  <div class="card" id="hold">0</div>
 </div>
 
 <table>
@@ -189,21 +184,30 @@ li {
 
 <!-- Tasks -->
 
-<div id="tasks" class="tab-content">
-
+<div id="tasksTab" class="tab-content">
 <div class="row">
   <input id="taskInput">
   <button onclick="addTask()">+</button>
 </div>
+<ul id="taskList"></ul>
+</div>
 
-<ul id="tasksList"></ul>
+<!-- ERP -->
 
+<div id="erpTab" class="tab-content">
+<h3>ERP بسيط</h3>
+<div class="row">
+  <input placeholder="الوصف">
+  <input type="number" placeholder="المبلغ">
+</div>
+<button>حفظ</button>
 </div>
 
 </div>
 
 <script>
 
+/* LocalStorage */
 let clients = JSON.parse(localStorage.getItem("clients")||"[]");
 
 /* Tabs */
@@ -214,60 +218,65 @@ function showTab(id,btn){
   btn.classList.add("active");
 }
 
-/* Add */
+/* Add Client */
 function addClient(){
-  let name=nameInput.value;
-  let phone=phoneInput.value;
-  let status=status.value;
+  let name=document.getElementById("name").value;
+  let phone=document.getElementById("phone").value;
+  let status=document.getElementById("status").value;
+
+  if(!name) return;
 
   clients.push({name,phone,status});
-  save();
+  saveData();
 }
 
 /* Save */
-function save(){
+function saveData(){
   localStorage.setItem("clients",JSON.stringify(clients));
-  render();
+  renderTable();
 }
 
 /* Delete */
-function del(i){
+function deleteClient(i){
   clients.splice(i,1);
-  save();
+  saveData();
 }
 
 /* Render */
-function render(){
-  let search=searchInput.value.toLowerCase();
+function renderTable(){
+  let table=document.getElementById("table");
+  let search=document.getElementById("search").value.toLowerCase();
+
   table.innerHTML="";
-  let hold=0;
+  let holdCount=0;
 
   clients
   .filter(c=>c.name.toLowerCase().includes(search))
   .forEach((c,i)=>{
-    if(c.status=="Hold") hold++;
+    if(c.status=="Hold") holdCount++;
 
     table.innerHTML+=`
     <tr>
-    <td>${c.name}</td>
-    <td>${c.phone}</td>
-    <td>${c.status}</td>
-    <td><a href="https://wa.me/${c.phone}" target="_blank">📱</a></td>
-    <td><button onclick="del(${i})">❌</button></td>
+      <td>${c.name}</td>
+      <td>${c.phone}</td>
+      <td>${c.status}</td>
+      <td><a href="https://wa.me/${c.phone}" target="_blank">📱</a></td>
+      <td><button onclick="deleteClient(${i})">❌</button></td>
     </tr>
     `;
   });
 
-  total.innerText="Total: "+clients.length;
-  holdBox.innerText="Hold: "+hold;
+  document.getElementById("total").innerText="Total: "+clients.length;
+  document.getElementById("hold").innerText="Hold: "+holdCount;
 }
 
 /* Tasks */
 function addTask(){
+  let input=document.getElementById("taskInput");
   let li=document.createElement("li");
-  li.textContent=taskInput.value;
-  tasksList.appendChild(li);
-  taskInput.value="";
+  li.textContent=input.value;
+  document.getElementById("taskList").appendChild(li);
+  input.value="";
 }
 
 /* Dark Mode */
@@ -276,7 +285,7 @@ function toggleDark(){
 }
 
 /* Init */
-render();
+renderTable();
 
 </script>
 
