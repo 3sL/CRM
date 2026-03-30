@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -52,8 +51,7 @@ th { background:#222; color:#fff; }
 <button class="tab-btn" onclick="showTab('excelTab', this)">Excel</button>
 </div>
 
-<!-- CRM -->
-
+<!-- CRM Tab -->
 <div id="crmTab" class="tab-content active">
 <h2>CRM System</h2>
 
@@ -90,32 +88,34 @@ th { background:#222; color:#fff; }
 </table>
 </div>
 
-<!-- باقي التابس زي ما هي -->
-
+<!-- Tasks Tab -->
 <div id="tasksTab" class="tab-content">
 <h2>Tasks</h2>
-<input id="taskInput">
-<button onclick="addTask()">➕</button>
+<div class="row">
+<input id="taskInput" placeholder="اكتب المهمة">
+<button onclick="addTask()">➕ إضافة المهمة</button>
+</div>
 <ul id="taskList"></ul>
 </div>
 
+<!-- ERP Tab -->
 <div id="erpTab" class="tab-content">
 <h2>ERP</h2>
 <table id="accountingTable"><tbody></tbody></table>
 <button onclick="addAccountingRow()">+</button>
 </div>
 
+<!-- Excel Tab -->
 <div id="excelTab" class="tab-content">
 <h2>Excel</h2>
 <input type="file" onchange="handleFile(event)">
-<button onclick="exportExcelFile()">📊</button>
+<button onclick="exportExcelFile()">📊 تصدير Excel</button>
 <table id="excelTable"></table>
 </div>
 
 </div>
 
 <script>
-
 // Tabs
 function showTab(id, btn){
 document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
@@ -137,7 +137,6 @@ let clients=JSON.parse(localStorage.getItem("clients")||"[]");
 let editIndex = -1;
 
 function addOrUpdate(){
-
 const nameEl = document.getElementById("name");
 const phoneEl = document.getElementById("phone");
 const dateEl = document.getElementById("date");
@@ -145,20 +144,21 @@ const statusEl = document.getElementById("status");
 const notesEl = document.getElementById("notes");
 const reminderEl = document.getElementById("reminderDays");
 
-if(!nameEl.value.trim() || !phoneEl.value.trim()){
-alert("⚠️ أدخل البيانات");
+// ✅ تحقق من الإدخال
+if(nameEl.value.trim() === "" || phoneEl.value.trim() === ""){
+alert("⚠️ أدخل الاسم ورقم الهاتف");
 return;
 }
 
 const clientData = {
-name: nameEl.value,
-phone: phoneEl.value,
+name: nameEl.value.trim(),
+phone: phoneEl.value.trim(),
 date: dateEl.value,
 status: statusEl.value,
 notes: notesEl.value
 };
 
-// ✅ هنا الفرق (تعديل أو إضافة)
+// تعديل أو إضافة
 if(editIndex === -1){
 clients.push(clientData);
 }else{
@@ -168,41 +168,43 @@ editIndex = -1;
 
 localStorage.setItem("clients", JSON.stringify(clients));
 
-// تفريغ
+// تفريغ الفورم
 nameEl.value="";
 phoneEl.value="";
 dateEl.value="";
 notesEl.value="";
 reminderEl.value="";
 
+showNotification("✅ تم الحفظ بنجاح");
+
 render();
 }
 
-// ✏️ تعديل
+// ✏️ تعديل العميل
 function editClient(i){
 const c = clients[i];
-
 document.getElementById("name").value = c.name;
 document.getElementById("phone").value = c.phone;
 document.getElementById("date").value = c.date;
 document.getElementById("status").value = c.status;
 document.getElementById("notes").value = c.notes;
-
 editIndex = i;
-
 showNotification("✏️ تعديل العميل");
 }
 
+// حذف
 function deleteClient(i){
 clients.splice(i,1);
 localStorage.setItem("clients", JSON.stringify(clients));
 render();
 }
 
+// واتساب
 function openWhatsApp(phone){
 window.open(`https://wa.me/${phone}`,'_blank');
 }
 
+// عرض الجدول
 function render(){
 const table=document.getElementById("table");
 table.innerHTML="";
@@ -230,6 +232,28 @@ document.getElementById("total").innerText="Total: "+clients.length;
 document.getElementById("hold").innerText="Hold: "+holdCount;
 }
 render();
+
+// Tasks
+let tasks = JSON.parse(localStorage.getItem("tasks")||"[]");
+function addTask(){
+const taskInput=document.getElementById("taskInput");
+if(!taskInput.value.trim()) return;
+tasks.push(taskInput.value.trim());
+localStorage.setItem("tasks", JSON.stringify(tasks));
+taskInput.value="";
+renderTasks();
+}
+function deleteTask(i){ tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks(); }
+function renderTasks(){ const taskList=document.getElementById("taskList"); taskList.innerHTML=""; tasks.forEach((t,i)=>{ const li=document.createElement("li"); li.innerHTML=`${t} <button onclick="deleteTask(${i})">❌</button>`; taskList.appendChild(li); });}
+renderTasks();
+
+// ERP placeholder
+function addAccountingRow(){ const tbody=document.getElementById("accountingTable").querySelector("tbody"); const newRow=document.createElement("tr"); newRow.innerHTML=`<td><input placeholder="الحساب"></td><td><input type="number" placeholder="0.00"></td><td><input type="number" placeholder="0.00"></td>`; tbody.appendChild(newRow); }
+
+// Excel placeholder
+function handleFile(e){ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=function(evt){ const data=new Uint8Array(evt.target.result); const workbook=XLSX.read(data,{type:"array"}); const sheet=workbook.Sheets[workbook.SheetNames[0]]; const json=XLSX.utils.sheet_to_json(sheet,{header:1}); renderExcel(json); }; reader.readAsArrayBuffer(file); }
+function renderExcel(data){ const table=document.getElementById("excelTable"); table.innerHTML=""; data.forEach((row,rIdx)=>{ const tr=document.createElement("tr"); row.forEach((cell,cIdx)=>{ const td=document.createElement("td"); if(rIdx===0){ td.innerText=cell; }else{ const inp=document.createElement("input"); inp.value=cell; td.appendChild(inp); } tr.appendChild(td); }); table.appendChild(tr); }); }
+function exportExcelFile(){ const table=document.getElementById("excelTable"); const wb=XLSX.utils.book_new(); const ws=XLSX.utils.table_to_sheet(table); XLSX.utils.book_append_sheet(wb,ws,"Sheet1"); XLSX.writeFile(wb,"export.xlsx"); }
 
 </script>
 
