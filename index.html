@@ -1,321 +1,283 @@
 <!DOCTYPE html>
+
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM & ERP System - Utopia Trading & Export</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<title>Advanced CRM System</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+
 <style>
-/* General Styles */
+
+/* ===== Theme ===== */
+:root {
+  --main: #007bff;
+  --bg: #f4f6f9;
+  --card: #fff;
+  --text: #222;
+}
+
+.dark {
+  --bg: #1e1e2f;
+  --card: #2c2c3e;
+  --text: #fff;
+}
+
 body {
-  font-family: 'Roboto', sans-serif;
-  background-color: #f7f8fa;
+  font-family: 'Cairo';
   margin: 0;
-  padding: 0;
+  background: var(--bg);
+  color: var(--text);
 }
 
+/* ===== Layout ===== */
 .container {
-  max-width: 1200px;
-  margin: 30px auto;
-  background: #fff;
+  max-width: 1100px;
+  margin: 20px auto;
+  background: var(--card);
   padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
 }
 
-/* Header Section */
 .header {
-  text-align: center;
-  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.header img {
-  width: 180px;
-  margin-bottom: 15px;
+/* ===== Buttons ===== */
+button {
+  background: var(--main);
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
-.developer {
-  font-size: 14px;
-  color: #777;
-}
-
-.phone {
-  font-size: 14px;
-  color: #555;
-}
-
-h2 {
-  color: #333;
-  font-size: 24px;
-  margin-bottom: 10px;
-}
-
-/* Tab Button Styling */
+/* ===== Tabs ===== */
 .tabs {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
+  margin: 20px 0;
 }
 
 .tab-btn {
-  padding: 10px 20px;
-  background: #f0f1f6;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-  font-weight: 500;
-  transition: background 0.3s ease;
+  flex: 1;
+  padding: 10px;
+  background: #ddd;
 }
 
 .tab-btn.active {
-  background: #007bff;
+  background: var(--main);
   color: #fff;
 }
 
-.tab-btn:hover {
-  background: #007bff;
-  color: #fff;
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* ===== Grid ===== */
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+  gap: 10px;
 }
 
-/* Form Elements */
-input, select, button {
-  padding: 12px;
-  margin: 8px 0;
-  width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 14px;
+input, select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
 }
 
-input[type="number"], input[type="date"] {
-  max-width: 150px;
-}
-
-/* Table Styling */
+/* ===== Table ===== */
 table {
   width: 100%;
-  margin-top: 20px;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 12px;
-  border: 1px solid #ddd;
-  text-align: center;
+  margin-top: 15px;
 }
 
 th {
-  background: #007bff;
+  background: var(--main);
   color: #fff;
 }
 
-button {
-  cursor: pointer;
-  transition: background 0.3s ease;
+td, th {
+  padding: 8px;
+  text-align: center;
 }
 
-button:hover {
-  background: #f0f1f6;
-}
-
-/* Stats Section */
+/* ===== Cards ===== */
 .stats {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 20px;
 }
 
 .card {
-  background: #f1f1f1;
+  flex: 1;
+  background: var(--main);
+  color: #fff;
   padding: 10px;
-  text-align: center;
-  border-radius: 8px;
-  min-width: 120px;
-  box-sizing: border-box;
+  border-radius: 10px;
 }
 
-.card h3 {
-  margin: 0;
-  font-size: 16px;
+/* ===== Task ===== */
+li {
+  background: #ddd;
+  margin: 5px;
+  padding: 8px;
+  border-radius: 6px;
 }
 
-/* Notifications */
-#notification {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: #ffcc00;
-  padding: 15px;
-  border-radius: 8px;
-  display: none;
-  z-index: 1000;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .container {
-    padding: 15px;
-  }
-
-  .tabs {
-    flex-direction: column;
-  }
-
-  .tab-btn {
-    width: 100%;
-  }
-}
 </style>
+
 </head>
+
 <body>
 
 <div class="container">
-  <!-- Header Section -->
-  <div class="header">
-    <img src="logo.png" alt="Company Logo" class="logo">
-    <h2>CRM & ERP System</h2>
-    <div class="developer">Developed by Eng : <strong>Mahmoud Mohamed Marie</strong></div>
-    <div class="phone">📞 +201222153415</div>
-  </div>
 
-  <!-- Language Toggle -->
-  <button class="lang-btn" onclick="toggleLang()">🌐 عربي / English</button>
+<div class="header">
+  <h2>🚀 Advanced CRM</h2>
+  <button onclick="toggleDark()">🌙</button>
+</div>
 
-  <!-- Tabs Section -->
-  <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('crmTab', this)">CRM</button>
-    <button class="tab-btn" onclick="showTab('tasksTab', this)">Tasks</button>
-    <button class="tab-btn" onclick="showTab('erpTab', this)">ERP</button>
-    <button class="tab-btn" onclick="showTab('excelTab', this)">Excel</button>
-  </div>
+<!-- Search -->
 
-  <!-- CRM Tab -->
-  <div id="crmTab" class="tab-content active">
-    <div id="notification"></div>
+<input id="search" placeholder="🔍 بحث..." onkeyup="render()">
 
-    <!-- CRM Form -->
-    <div class="row">
-      <input id="name" placeholder="اسم العميل">
-      <input id="phone" placeholder="رقم الهاتف">
-      <input type="date" id="date">
-      <select id="status">
-        <option>Interested</option>
-        <option>In Progress</option>
-        <option>Hold</option>
-        <option>Completed</option>
-      </select>
-      <input id="notes" placeholder="ملاحظات">
-      <input id="agent" placeholder="اسم المندوب">
-      <input type="number" id="reminderDays" placeholder="Reminder بالأيام">
-    </div>
+<!-- Tabs -->
 
-    <div class="row">
-      <button onclick="addOrUpdate()">💾 حفظ</button>
-    </div>
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('crm',this)">CRM</button>
+  <button class="tab-btn" onclick="showTab('tasks',this)">Tasks</button>
+</div>
 
-    <!-- Stats Section -->
-    <div class="stats">
-      <div class="card" id="total">Total: 0</div>
-      <div class="card" id="hold">Hold: 0</div>
-    </div>
+<!-- CRM -->
 
-    <!-- Table Section -->
-    <table>
-      <thead>
-        <tr>
-          <th>الاسم</th>
-          <th>الهاتف</th>
-          <th>التاريخ</th>
-          <th>الحالة</th>
-          <th>ملاحظات</th>
-          <th>Reminder</th>
-          <th>واتساب</th>
-          <th>تعديل</th>
-          <th>حذف</th>
-        </tr>
-      </thead>
-      <tbody id="table"></tbody>
-    </table>
-  </div>
+<div id="crm" class="tab-content active">
 
-  <!-- Tasks Tab -->
-  <div id="tasksTab" class="tab-content">
-    <h3>My Tasks</h3>
-    <div class="row">
-      <input id="taskInput" placeholder="اكتب المهمة">
-      <button onclick="addTask()">➕ إضافة المهمة</button>
-    </div>
-    <ul id="taskList"></ul>
-  </div>
+<div class="row">
+  <input id="name" placeholder="اسم العميل">
+  <input id="phone" placeholder="رقم الهاتف">
+  <select id="status">
+    <option>Interested</option>
+    <option>Hold</option>
+    <option>Done</option>
+  </select>
+</div>
 
-  <!-- ERP Tab -->
-  <div id="erpTab" class="tab-content">
-    <h3>ERP System & Accounting Entry</h3>
-    <div class="erp-form">
-      <form id="accountingForm">
-        <div class="row">
-          <div class="form-group">
-            <label>التاريخ:</label>
-            <input type="date" name="accDate" required>
-          </div>
-          <div class="form-group">
-            <label>البيان (الوصف):</label>
-            <input type="text" name="accDesc" placeholder="شرح القيد">
-          </div>
-        </div>
+<button onclick="addClient()">💾 حفظ</button>
 
-        <table id="accountingTable">
-          <thead>
-            <tr>
-              <th>الحساب</th>
-              <th>مدين</th>
-              <th>دائن</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><select><option>الصندوق</option><option>البنك</option><option>المبيعات</option></select></td>
-              <td><input type="number" placeholder="0.00"></td>
-              <td><input type="number" placeholder="0.00"></td>
-            </tr>
-            <tr>
-              <td><select><option>الصندوق</option><option>البنك</option><option>المبيعات</option></select></td>
-              <td><input type="number" placeholder="0.00"></td>
-              <td><input type="number" placeholder="0.00"></td>
-            </tr>
-          </tbody>
-        </table>
-        <button type="button" class="erp-btn-add" onclick="addAccountingRow()">+ إضافة سطر</button>
-        <button type="button" class="erp-btn-submit" onclick="submitAccountingForm()">حفظ القيد</button>
-      </form>
-    </div>
-  </div>
+<div class="stats">
+  <div class="card" id="total"></div>
+  <div class="card" id="hold"></div>
+</div>
 
-  <!-- Excel Tab -->
-  <div id="excelTab" class="tab-content">
-    <h3>Excel Upload / Edit</h3>
-    <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleFile(event)">
-    <button onclick="exportExcelFile()">📊 تصدير Excel</button>
-    <table id="excelTable" border="1"></table>
-  </div>
+<table>
+<thead>
+<tr>
+<th>الاسم</th>
+<th>الهاتف</th>
+<th>الحالة</th>
+<th>واتساب</th>
+<th>حذف</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
+
+</div>
+
+<!-- Tasks -->
+
+<div id="tasks" class="tab-content">
+
+<div class="row">
+  <input id="taskInput">
+  <button onclick="addTask()">+</button>
+</div>
+
+<ul id="tasksList"></ul>
+
+</div>
+
 </div>
 
 <script>
-// Replace Firebase Config Below
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-};
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const clientsRef = collection(db, "clients");
+let clients = JSON.parse(localStorage.getItem("clients")||"[]");
 
-// Firebase Logic (and other functions you need)...
+/* Tabs */
+function showTab(id,btn){
+  document.querySelectorAll(".tab-content").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  btn.classList.add("active");
+}
+
+/* Add */
+function addClient(){
+  let name=nameInput.value;
+  let phone=phoneInput.value;
+  let status=status.value;
+
+  clients.push({name,phone,status});
+  save();
+}
+
+/* Save */
+function save(){
+  localStorage.setItem("clients",JSON.stringify(clients));
+  render();
+}
+
+/* Delete */
+function del(i){
+  clients.splice(i,1);
+  save();
+}
+
+/* Render */
+function render(){
+  let search=searchInput.value.toLowerCase();
+  table.innerHTML="";
+  let hold=0;
+
+  clients
+  .filter(c=>c.name.toLowerCase().includes(search))
+  .forEach((c,i)=>{
+    if(c.status=="Hold") hold++;
+
+    table.innerHTML+=`
+    <tr>
+    <td>${c.name}</td>
+    <td>${c.phone}</td>
+    <td>${c.status}</td>
+    <td><a href="https://wa.me/${c.phone}" target="_blank">📱</a></td>
+    <td><button onclick="del(${i})">❌</button></td>
+    </tr>
+    `;
+  });
+
+  total.innerText="Total: "+clients.length;
+  holdBox.innerText="Hold: "+hold;
+}
+
+/* Tasks */
+function addTask(){
+  let li=document.createElement("li");
+  li.textContent=taskInput.value;
+  tasksList.appendChild(li);
+  taskInput.value="";
+}
+
+/* Dark Mode */
+function toggleDark(){
+  document.body.classList.toggle("dark");
+}
+
+/* Init */
+render();
+
 </script>
 
 </body>
