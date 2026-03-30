@@ -2,14 +2,14 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>CRM & ERP System - Professional UI with Alerts</title>
+<title>CRM & ERP System - Professional UI with Daily Alerts</title>
 <style>
 body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#e2e8f0; margin:0; padding:0;}
 .container { max-width:1400px; margin:auto; background:#fff; padding:25px; border-radius:15px; box-shadow:0 0 25px rgba(0,0,0,0.2);}
-.header { text-align:center; margin-bottom:25px; }
+.header { text-align:center; margin-bottom:10px; }
 .header img { height:120px; width:auto; margin-bottom:10px; }
 .developer, .phone { text-align:center; font-size:14px; margin:2px 0; color:#555; font-weight:600;}
-.tabs { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:25px; justify-content:center; }
+.tabs { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px; justify-content:center; }
 .tab-btn { padding:12px 25px; background:#6c757d; border:none; cursor:pointer; border-radius:8px; font-weight:bold; color:#fff; transition:0.3s; }
 .tab-btn.active { background:#007bff; color:#fff; }
 .tab-btn:hover { background:#0056b3; }
@@ -37,6 +37,8 @@ th { background:#007bff; color:#fff; }
 .audio-alert { display:none;}
 button.small-btn { padding:5px 8px; margin:2px; border-radius:5px; cursor:pointer; }
 button.small-btn:hover { opacity:0.8;}
+#dailyAlerts { padding:10px; margin-bottom:15px; border-radius:8px; background:#e9ecef; font-weight:bold;}
+.alert-item { padding:5px; margin:3px 0; border-radius:5px;}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -53,6 +55,9 @@ button.small-btn:hover { opacity:0.8;}
 </div>
 <div class="developer">Developed by Eng : <strong>Mahmoud Mohamed Marie</strong></div>
 <div class="phone">📞 +201222153415</div>
+
+<!-- Daily Alerts -->
+<div id="dailyAlerts"></div>
 
 <!-- Tabs -->
 <div class="tabs">
@@ -149,7 +154,6 @@ setTimeout(()=>n.style.display="none",3000);
 // ---------------- CRM ----------------
 let clients = JSON.parse(localStorage.getItem("clients")||"[]");
 let editIndex = -1;
-
 function addOrUpdate(){
 const nameEl=document.getElementById("name");
 const phoneEl=document.getElementById("phone");
@@ -158,19 +162,12 @@ const statusEl=document.getElementById("status");
 const notesEl=document.getElementById("notes");
 const reminderEl=document.getElementById("reminderDays");
 if(!nameEl.value.trim() || !phoneEl.value.trim()){ alert("⚠️ أدخل البيانات / Enter Data"); return; }
-const clientData = {
-name:nameEl.value.trim(),
-phone:phoneEl.value.trim(),
-date:dateEl.value,
-status:statusEl.value,
-notes:notesEl.value
-};
+const clientData = {name:nameEl.value.trim(), phone:phoneEl.value.trim(), date:dateEl.value, status:statusEl.value, notes:notesEl.value};
 if(editIndex===-1){ clients.push(clientData); } else { clients[editIndex]=clientData; editIndex=-1; }
 localStorage.setItem("clients", JSON.stringify(clients));
 nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value=""; reminderEl.value="";
 renderCRM();
 }
-
 function editClient(i){
 const c=clients[i];
 document.getElementById("name").value=c.name;
@@ -181,20 +178,10 @@ document.getElementById("notes").value=c.notes;
 editIndex=i;
 showNotification("✏️ تعديل العميل / Edit Client");
 }
-
-function deleteClient(i){
-clients.splice(i,1);
-localStorage.setItem("clients", JSON.stringify(clients));
-renderCRM();
-}
-
-function openWhatsApp(phone){
-window.open(`https://wa.me/${phone}`,'_blank');
-}
-
+function deleteClient(i){ clients.splice(i,1); localStorage.setItem("clients", JSON.stringify(clients)); renderCRM(); }
+function openWhatsApp(phone){ window.open(`https://wa.me/${phone}`,'_blank'); }
 function renderCRM(){
-const table=document.getElementById("table");
-table.innerHTML=""; let holdCount=0;
+const table=document.getElementById("table"); table.innerHTML=""; let holdCount=0;
 clients.forEach((c,i)=>{
 let rowClass=c.status==="Hold"?"holdRow":"";
 if(c.status==="Hold") holdCount++;
@@ -214,7 +201,6 @@ renderCRM();
 // ---------------- Tasks ----------------
 let tasks = JSON.parse(localStorage.getItem("tasks")||"[]");
 let editTaskIndex=-1;
-
 function addTask(){
 const client=document.getElementById("taskClient").value.trim();
 const type=document.getElementById("taskType").value.trim();
@@ -256,9 +242,30 @@ li.innerHTML=`${t.client} | ${t.type} | ${t.text} | ${t.dateTime}
 <button class="small-btn" onclick="deleteTask(${i})">❌</button>`;
 list.appendChild(li);
 });
+renderDailyAlerts();
 }
 
-// --------------- Task Alerts ----------------
+// --------------- Daily Alerts ----------------
+function renderDailyAlerts(){
+const container=document.getElementById("dailyAlerts"); container.innerHTML="";
+const now=new Date();
+tasks.forEach(t=>{
+if(t.dateTime){
+const taskTime=new Date(t.dateTime);
+if(taskTime.toDateString()===now.toDateString() || taskTime<now){
+let color=""; 
+if(t.type.toLowerCase().includes("تقديم عرض")) color="#fff3cd";
+else if(t.type.toLowerCase().includes("متابعة")) color="#f8d7da";
+else if(t.type.toLowerCase().includes("امر توريد")) color="#d4edda";
+const div=document.createElement("div"); div.className="alert-item"; div.style.background=color;
+div.innerText=`⏰ ${t.client} | ${t.type} | ${t.text} | ${t.dateTime}`;
+container.appendChild(div);
+}
+}
+});
+}
+
+// ---------------- Task Alerts Sound ----------------
 function checkTaskAlerts(){
 const now=new Date();
 tasks.forEach(t=>{
