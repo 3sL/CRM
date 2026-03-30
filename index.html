@@ -34,6 +34,7 @@ th { background:#0984e3; color:#fff; font-weight:bold; }
 #excelTable input { width:100%; border:none; padding:5px; }
 #excelTable tr:nth-child(even) { background:#f5f6fa; }
 #excelTable tr:hover { background:#dfe6e9; }
+.language-select { text-align:center; margin-bottom:15px; }
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -50,6 +51,15 @@ th { background:#0984e3; color:#fff; font-weight:bold; }
 <div class="developer">Developed by Eng : <strong>Mahmoud Mohamed Marie</strong></div>
 <div class="phone">📞 +201222153415</div>
 
+<!-- Language -->
+<div class="language-select">
+<label>اللغة / Language: </label>
+<select id="language" onchange="changeLanguage()">
+<option value="ar">عربي</option>
+<option value="en">English</option>
+</select>
+</div>
+
 <!-- Tabs -->
 <div class="tabs">
 <button class="tab-btn active" onclick="showTab('crmTab', this)">CRM</button>
@@ -60,7 +70,7 @@ th { background:#0984e3; color:#fff; font-weight:bold; }
 
 <!-- CRM -->
 <div id="crmTab" class="tab-content active">
-<h2>CRM System</h2>
+<h2 id="crmTitle">CRM System</h2>
 <div class="row">
 <input id="name" placeholder="اسم العميل">
 <input id="phone" placeholder="رقم الهاتف">
@@ -75,7 +85,7 @@ th { background:#0984e3; color:#fff; font-weight:bold; }
 <input id="agent" placeholder="اسم المندوب">
 <input type="number" id="reminderDays" placeholder="Reminder بالأيام">
 </div>
-<button onclick="addOrUpdate()">💾 حفظ</button>
+<button onclick="addOrUpdate()" id="saveBtn">💾 حفظ</button>
 <div class="stats">
 <div class="card" id="total">0</div>
 <div class="card" id="hold">Hold: 0</div>
@@ -83,9 +93,9 @@ th { background:#0984e3; color:#fff; font-weight:bold; }
 <table>
 <thead>
 <tr>
-<th>الاسم</th><th>الهاتف</th><th>التاريخ</th><th>الحالة</th>
-<th>ملاحظات</th><th>Reminder</th>
-<th>واتساب</th><th>تعديل</th><th>حذف</th>
+<th id="thName">الاسم</th><th id="thPhone">الهاتف</th><th id="thDate">التاريخ</th><th id="thStatus">الحالة</th>
+<th id="thNotes">ملاحظات</th><th>Reminder</th>
+<th id="thWhats">واتساب</th><th id="thEdit">تعديل</th><th id="thDelete">حذف</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
@@ -94,7 +104,7 @@ th { background:#0984e3; color:#fff; font-weight:bold; }
 
 <!-- Tasks -->
 <div id="tasksTab" class="tab-content">
-<h2>Tasks</h2>
+<h2 id="tasksTitle">Tasks</h2>
 <div class="row">
 <select id="taskType">
 <option>تقديم عرض سعر</option>
@@ -102,17 +112,17 @@ th { background:#0984e3; color:#fff; font-weight:bold; }
 <option>أمر توريد</option>
 </select>
 <input id="taskText" placeholder="نص المهمة">
-<button onclick="addTask()">➕ إضافة المهمة</button>
+<button onclick="addTask()" id="addTaskBtn">➕ إضافة المهمة</button>
 </div>
 <table>
-<thead><tr><th>التاريخ</th><th>نوع المهمة</th><th>نص المهمة</th><th>حذف</th></tr></thead>
+<thead><tr><th id="thTaskDate">التاريخ</th><th id="thTaskType">نوع المهمة</th><th id="thTaskText">نص المهمة</th><th id="thTaskDelete">حذف</th></tr></thead>
 <tbody id="taskList"></tbody>
 </table>
 </div>
 
 <!-- ERP -->
 <div id="erpTab" class="tab-content">
-<h2>ERP System متقدم</h2>
+<h2 id="erpTitle">ERP System متقدم</h2>
 <div class="erp-form">
 <table id="accountingTable">
 <thead>
@@ -136,7 +146,7 @@ th { background:#0984e3; color:#fff; font-weight:bold; }
 
 <!-- Excel -->
 <div id="excelTab" class="tab-content">
-<h2>Excel Upload / Edit</h2>
+<h2 id="excelTitle">Excel Upload / Edit</h2>
 <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleFile(event)">
 <button onclick="exportExcelFile()">📊 تصدير Excel</button>
 <table id="excelTable" border="1"></table>
@@ -163,7 +173,7 @@ setTimeout(()=>n.style.display="none",3000);
 
 // CRM
 let clients=JSON.parse(localStorage.getItem("clients")||"[]");
-let editIndex = -1;
+let editIndex=-1;
 function addOrUpdate(){
 const nameEl=document.getElementById("name");
 const phoneEl=document.getElementById("phone");
@@ -171,8 +181,8 @@ const dateEl=document.getElementById("date");
 const statusEl=document.getElementById("status");
 const notesEl=document.getElementById("notes");
 const reminderEl=document.getElementById("reminderDays");
-if(!nameEl.value.trim() || !phoneEl.value.trim()){ alert("⚠️ أدخل البيانات"); return; }
-const clientData = {name:nameEl.value, phone:phoneEl.value, date:dateEl.value, status:statusEl.value, notes:notesEl.value};
+if(!nameEl.value.trim() || !phoneEl.value.trim()){ alert(currentLang.dataAlert); return; }
+const clientData={name:nameEl.value, phone:phoneEl.value, date:dateEl.value, status:statusEl.value, notes:notesEl.value};
 if(editIndex===-1){ clients.push(clientData); } else { clients[editIndex]=clientData; editIndex=-1; }
 localStorage.setItem("clients",JSON.stringify(clients));
 nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value=""; reminderEl.value="";
@@ -186,7 +196,7 @@ document.getElementById("date").value=c.date;
 document.getElementById("status").value=c.status;
 document.getElementById("notes").value=c.notes;
 editIndex=i;
-showNotification("✏️ تعديل العميل");
+showNotification("✏️ "+currentLang.editClient);
 }
 function deleteClient(i){ clients.splice(i,1); localStorage.setItem("clients",JSON.stringify(clients)); render(); }
 function openWhatsApp(phone){ window.open(`https://wa.me/${phone}`,'_blank'); }
@@ -204,7 +214,7 @@ table.innerHTML+=`<tr class="${rowClass}">
 <td><button onclick="deleteClient(${i})">❌</button></td>
 </tr>`;
 });
-document.getElementById("total").innerText="Total: "+clients.length;
+document.getElementById("total").innerText=currentLang.total+": "+clients.length;
 document.getElementById("hold").innerText="Hold: "+holdCount;
 }
 render();
@@ -288,6 +298,19 @@ const wb=XLSX.utils.book_new();
 const ws=XLSX.utils.table_to_sheet(table);
 XLSX.utils.book_append_sheet(wb,ws,"Sheet1");
 XLSX.writeFile(wb,"export.xlsx");
+}
+
+// Language
+const langData={
+ar:{dataAlert:"⚠️ أدخل البيانات", editClient:"تعديل العميل", total:"الإجمالي"},
+en:{dataAlert:"⚠️ Enter Data", editClient:"Edit Client", total:"Total"}
+};
+let currentLang=langData.ar;
+function changeLanguage(){
+const val=document.getElementById("language").value;
+currentLang=langData[val];
+render();
+renderTasks();
 }
 </script>
 
