@@ -4,127 +4,78 @@
 <meta charset="UTF-8">
 <title>CRM & ERP System</title>
 <style>
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background:#e6ebf1;
-    margin:0;
-    padding:0;
-}
-.container {
-    max-width:1400px;
-    margin:auto;
-    background:#fff;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 5px 25px rgba(0,0,0,0.2);
-}
-.header {
-    text-align:center;
-    margin-bottom:20px;
-}
-.header img {
-    height:120px;
-    width:auto;
-    margin-bottom:10px;
-    border-radius:10px;
-}
-.developer, .phone {
-    text-align:center;
-    font-size:14px;
-    margin:2px 0;
-    color:#555;
-}
-.tabs {
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-bottom:20px;
-}
-.tab-btn {
-    padding:10px 25px;
-    background:#f0f0f0;
-    border:none;
-    cursor:pointer;
-    border-radius:8px;
-    font-weight:bold;
-    transition:0.3s;
-}
-.tab-btn:hover { background:#ddd; }
+body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0;}
+.container { max-width:1400px; margin:auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 0 20px rgba(0,0,0,0.15);}
+.header { text-align:center; margin-bottom:20px; }
+.header img { height:120px; width:auto; margin-bottom:10px; }
+.developer, .phone { text-align:center; font-size:14px; margin:2px 0; color:#555; }
+.tabs { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+.tab-btn { padding:10px 20px; background:#ddd; border:none; cursor:pointer; border-radius:5px;}
 .tab-btn.active { background:#007bff; color:#fff; }
 .tab-content { display:none; }
-.tab-content.active { display:block; animation:fadeIn 0.5s;}
-@keyframes fadeIn { from {opacity:0} to {opacity:1} }
-input, select, button { padding:10px; margin:5px 0; width:100%; box-sizing:border-box; border-radius:6px; border:1px solid #ccc; }
+.tab-content.active { display:block; }
+input, select, button { padding:10px; margin:5px 0; width:100%; box-sizing:border-box; border-radius:5px; }
 .row { display:flex; gap:10px; flex-wrap:wrap; }
 .row > * { flex:1; min-width:150px; }
-table { width:100%; border-collapse:collapse; margin-top:15px; border-radius:8px; overflow:hidden; }
+table { width:100%; border-collapse:collapse; margin-top:15px;}
 th, td { border:1px solid #ddd; padding:10px; text-align:center; }
-th { background:#007bff; color:#fff; }
+th { background:#222; color:#fff; }
 .stats { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-.card { flex:1; background:#f7f7f7; padding:15px; text-align:center; border-radius:10px; min-width:150px; font-weight:bold; box-shadow:0 2px 10px rgba(0,0,0,0.1);}
-#notification {
-    position: fixed;
-    top:20px;
-    right:20px;
-    background:#ffcc00;
-    padding:15px 25px;
-    border-radius:10px;
-    display:none;
-    z-index:999;
-    font-weight:bold;
-    box-shadow:0 2px 10px rgba(0,0,0,0.3);
-}
+.card { flex:1; background:#eee; padding:10px; text-align:center; border-radius:8px; min-width:150px;}
+#notification { position: fixed; top:20px; right:20px; background:#ffcc00; padding:15px; border-radius:10px; display:none; z-index:999; font-weight:bold; }
 .holdRow { background:#fff3cd; }
-.erp-form { background:#f9f9f9; padding:15px; border-radius:12px; margin-top:10px; box-shadow:0 2px 10px rgba(0,0,0,0.05);}
-.erp-summary { margin-top:10px; font-weight:bold; background:#e0e0e0; padding:10px; border-radius:8px; }
-.task-pending { background:#fff3cd; padding:8px; margin:5px 0; border-radius:6px; }
-.task-offer { background:#ffe0b2; padding:8px; margin:5px 0; border-radius:6px; }
-.task-follow { background:#c8e6c9; padding:8px; margin:5px 0; border-radius:6px; }
-.task-order { background:#b3e5fc; padding:8px; margin:5px 0; border-radius:6px; }
-.excelTable td, .excelTable th { padding:5px; }
-.lang-btn { position:fixed; top:20px; left:20px; padding:10px 15px; background:#007bff; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
-button:hover { opacity:0.85; }
+.erp-form { background:#f9f9f9; padding:15px; border-radius:8px; margin-top:10px; box-shadow:0 0 10px rgba(0,0,0,0.1);}
+.erp-table { width:100%; border-collapse:collapse; margin-top:10px;}
+.erp-table th, .erp-table td { border:1px solid #ccc; padding:8px; text-align:center;}
+.erp-table th { background:#444; color:#fff;}
+.tab-header { font-weight:bold; font-size:18px; margin-bottom:10px; text-align:center; }
+.green { background-color:#d4edda !important; }
+.yellow { background-color:#fff3cd !important; }
+.red { background-color:#f8d7da !important; }
+.audio-alert { display:none;}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
-
 <body>
-<audio id="notifSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3" preload="auto"></audio>
-<button class="lang-btn" onclick="toggleLanguage()">English/عربي</button>
+
 <div id="notification"></div>
+<audio id="audioAlert" class="audio-alert" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
+
 <div class="container">
 
+<!-- Header -->
 <div class="header">
 <img src="logo.png" alt="Company Logo">
 </div>
 <div class="developer">Developed by Eng : <strong>Mahmoud Mohamed Marie</strong></div>
 <div class="phone">📞 +201222153415</div>
 
+<!-- Tabs -->
 <div class="tabs">
-<button class="tab-btn active" onclick="showTab('crmTab', this)" data-text-ar="CRM" data-text-en="CRM">CRM</button>
-<button class="tab-btn" onclick="showTab('tasksTab', this)" data-text-ar="Tasks" data-text-en="Tasks">Tasks</button>
-<button class="tab-btn" onclick="showTab('erpTab', this)" data-text-ar="ERP" data-text-en="ERP">ERP</button>
-<button class="tab-btn" onclick="showTab('excelTab', this)" data-text-ar="Excel" data-text-en="Excel">Excel</button>
+<button class="tab-btn active" onclick="showTab('crmTab', this)">CRM</button>
+<button class="tab-btn" onclick="showTab('tasksTab', this)">Tasks</button>
+<button class="tab-btn" onclick="showTab('erpTab', this)">ERP</button>
+<button class="tab-btn" onclick="showTab('excelTab', this)">Excel</button>
 </div>
 
-<!-- CRM -->
+<!-- CRM Tab -->
 <div id="crmTab" class="tab-content active">
-<h2 data-text-ar="نظام العملاء" data-text-en="CRM System">نظام العملاء</h2>
+<h2 class="tab-header">CRM System</h2>
 <div class="row">
-<input id="name" placeholder="اسم العميل" data-placeholder-ar="اسم العميل" data-placeholder-en="Client Name">
-<input id="phone" placeholder="رقم الهاتف" data-placeholder-ar="رقم الهاتف" data-placeholder-en="Phone Number">
+<input id="name" placeholder="اسم العميل / Client Name">
+<input id="phone" placeholder="رقم الهاتف / Phone">
 <input type="date" id="date">
 <select id="status">
-<option data-text-ar="مهتم" data-text-en="Interested">مهتم</option>
-<option data-text-ar="قيد التنفيذ" data-text-en="In Progress">قيد التنفيذ</option>
-<option data-text-ar="Hold" data-text-en="Hold">Hold</option>
-<option data-text-ar="مكتمل" data-text-en="Completed">مكتمل</option>
+<option>Interested</option>
+<option>In Progress</option>
+<option>Hold</option>
+<option>Completed</option>
 </select>
-<input id="notes" placeholder="ملاحظات" data-placeholder-ar="ملاحظات" data-placeholder-en="Notes">
-<input id="agent" placeholder="اسم المندوب" data-placeholder-ar="اسم المندوب" data-placeholder-en="Agent">
-<input type="number" id="reminderDays" placeholder="Reminder بالأيام" data-placeholder-ar="Reminder بالأيام" data-placeholder-en="Reminder (days)">
+<input id="notes" placeholder="ملاحظات / Notes">
+<input id="agent" placeholder="اسم المندوب / Agent">
+<input type="number" id="reminderDays" placeholder="Reminder بالأيام / Days">
 </div>
-<button onclick="addOrUpdate()" data-text-ar="💾 حفظ" data-text-en="💾 Save">💾 حفظ</button>
+<button onclick="addOrUpdate()">💾 حفظ / Save</button>
 <div class="stats">
 <div class="card" id="total">0</div>
 <div class="card" id="hold">Hold: 0</div>
@@ -132,92 +83,49 @@ button:hover { opacity:0.85; }
 <table>
 <thead>
 <tr>
-<th data-text-ar="الاسم" data-text-en="Name">الاسم</th>
-<th data-text-ar="الهاتف" data-text-en="Phone">الهاتف</th>
-<th data-text-ar="التاريخ" data-text-en="Date">التاريخ</th>
-<th data-text-ar="الحالة" data-text-en="Status">الحالة</th>
-<th data-text-ar="ملاحظات" data-text-en="Notes">ملاحظات</th>
-<th data-text-ar="Reminder" data-text-en="Reminder">Reminder</th>
-<th data-text-ar="واتساب" data-text-en="WhatsApp">واتساب</th>
-<th data-text-ar="تعديل" data-text-en="Edit">تعديل</th>
-<th data-text-ar="حذف" data-text-en="Delete">حذف</th>
+<th>الاسم</th><th>الهاتف</th><th>التاريخ</th><th>الحالة</th>
+<th>ملاحظات</th><th>Reminder</th><th>واتساب</th><th>تعديل</th><th>حذف</th>
 </tr>
 </thead>
 <tbody id="table"></tbody>
 </table>
 </div>
 
-<!-- Tasks -->
+<!-- Tasks Tab -->
 <div id="tasksTab" class="tab-content">
-<h2 data-text-ar="المهام" data-text-en="Tasks">المهام</h2>
+<h2 class="tab-header">Tasks</h2>
 <div class="row">
-<input id="taskClient" placeholder="اسم العميل" data-placeholder-ar="اسم العميل" data-placeholder-en="Client Name">
-<input id="taskInput" placeholder="نص المهمة" data-placeholder-ar="نص المهمة" data-placeholder-en="Task Text">
-<select id="taskType">
-<option value="pending" data-text-ar="تقديم عرض سعر" data-text-en="Offer Submission">تقديم عرض سعر</option>
-<option value="follow" data-text-ar="متابعة عرض السعر" data-text-en="Offer Follow-up">متابعة عرض السعر</option>
-<option value="order" data-text-ar="أمر توريد" data-text-en="Supply Order">أمر توريد</option>
-</select>
-<button onclick="addTask()" data-text-ar="➕ إضافة مهمة" data-text-en="➕ Add Task">➕ إضافة مهمة</button>
+<input id="taskClient" placeholder="اسم العميل / Client Name">
+<input id="taskType" placeholder="نوع المهمة / Task Type">
+<input id="taskText" placeholder="نص المهمة / Task Text">
+<button onclick="addTask()">➕ إضافة / Add</button>
 </div>
 <ul id="taskList"></ul>
 </div>
 
-<!-- ERP -->
+<!-- ERP Tab -->
 <div id="erpTab" class="tab-content">
-<h2 data-text-ar="ERP" data-text-en="ERP">ERP</h2>
+<h2 class="tab-header">ERP System</h2>
 <div class="erp-form">
-<table id="accountingTable">
-<thead><tr>
-<th data-text-ar="الحساب" data-text-en="Account">الحساب</th>
-<th data-text-ar="مدين" data-text-en="Debit">مدين</th>
-<th data-text-ar="دائن" data-text-en="Credit">دائن</th>
-</tr></thead>
-<tbody>
-<tr>
-<td>
-<select>
-<option>الصندوق</option>
-<option>البنك</option>
-<option>المبيعات</option>
-<option>المشتريات</option>
-<option>المديونية</option>
-<option>العهدة</option>
-</select>
-</td>
-<td><input type="number" placeholder="0.00"></td>
-<td><input type="number" placeholder="0.00"></td>
-</tr>
-</tbody>
-</table>
-<button onclick="addAccountingRow()" data-text-ar="+ إضافة سطر" data-text-en="+ Add Row">+ إضافة سطر</button>
-<div class="erp-summary" id="erpSummary">ERP Summary: -</div>
+<input type="file" id="erpExcelFile" accept=".xlsx, .xls" onchange="handleERPFile(event)">
+<button onclick="exportERPExcel()">📤 تصدير / Export</button>
+<table id="erpTable" class="erp-table"></table>
 </div>
 </div>
 
-<!-- Excel -->
+<!-- Excel Tab -->
 <div id="excelTab" class="tab-content">
-<h2 data-text-ar="Excel العملاء" data-text-en="Excel Customers">Excel العملاء</h2>
+<h2 class="tab-header">Excel Editor</h2>
 <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="handleExcelFile(event)">
-<button onclick="exportExcelFile()" data-text-ar="📊 تصدير Excel" data-text-en="📊 Export Excel">📊 تصدير Excel</button>
-<table id="excelTable" class="excelTable" border="1"></table>
+<button onclick="exportExcelFile()">📤 تصدير / Export</button>
+<table id="excelTable" class="erp-table"></table>
 </div>
 
 </div>
 
 <script>
-// ===================== Language Toggle =====================
-let currentLang='ar';
-function toggleLanguage(){
-currentLang=currentLang==='ar'?'en':'ar';
-document.querySelectorAll('[data-text-ar]').forEach(el=>{
-if(el.tagName==='INPUT'){ 
-el.placeholder= currentLang==='ar'?el.getAttribute('data-placeholder-ar'):el.getAttribute('data-placeholder-en');
-}else{ el.innerText=currentLang==='ar'?el.getAttribute('data-text-ar'):el.getAttribute('data-text-en'); }
-});
-}
 
-// ===================== Tabs =====================
+// ---------------- Tabs ----------------
 function showTab(id, btn){
 document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
 document.getElementById(id).classList.add('active');
@@ -225,18 +133,19 @@ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
 btn.classList.add('active');
 }
 
-// ===================== Notifications =====================
+// ---------------- Notification ----------------
 function showNotification(msg){
 const n=document.getElementById("notification");
 n.innerText=msg;
 n.style.display="block";
-document.getElementById("notifSound").play();
+document.getElementById("audioAlert").play();
 setTimeout(()=>n.style.display="none",3000);
 }
 
-// ===================== CRM =====================
-let clients=JSON.parse(localStorage.getItem("clients")||"[]");
-let editIndex=-1;
+// ---------------- CRM ----------------
+let clients = JSON.parse(localStorage.getItem("clients")||"[]");
+let editIndex = -1;
+
 function addOrUpdate(){
 const nameEl=document.getElementById("name");
 const phoneEl=document.getElementById("phone");
@@ -244,14 +153,25 @@ const dateEl=document.getElementById("date");
 const statusEl=document.getElementById("status");
 const notesEl=document.getElementById("notes");
 const reminderEl=document.getElementById("reminderDays");
-if(!nameEl.value.trim() || !phoneEl.value.trim()){ alert(currentLang==='ar'?"⚠️ أدخل البيانات":"⚠️ Enter data"); return; }
-const clientData={name:nameEl.value,phone:phoneEl.value,date:dateEl.value,status:statusEl.value,notes:notesEl.value};
-if(editIndex===-1){ clients.push(clientData); showNotification(currentLang==='ar'?"✅ تم إضافة العميل":"✅ Client Added"); } 
-else { clients[editIndex]=clientData; editIndex=-1; showNotification(currentLang==='ar'?"✏️ تم تعديل العميل":"✏️ Client Edited"); }
-localStorage.setItem("clients",JSON.stringify(clients));
+
+if(!nameEl.value.trim() || !phoneEl.value.trim()){ alert("⚠️ أدخل البيانات / Enter Data"); return; }
+
+const clientData = {
+name:nameEl.value.trim(),
+phone:phoneEl.value.trim(),
+date:dateEl.value,
+status:statusEl.value,
+notes:notesEl.value
+};
+
+if(editIndex===-1){ clients.push(clientData); }
+else { clients[editIndex]=clientData; editIndex=-1; }
+
+localStorage.setItem("clients", JSON.stringify(clients));
 nameEl.value=""; phoneEl.value=""; dateEl.value=""; notesEl.value=""; reminderEl.value="";
 renderCRM();
 }
+
 function editClient(i){
 const c=clients[i];
 document.getElementById("name").value=c.name;
@@ -260,15 +180,25 @@ document.getElementById("date").value=c.date;
 document.getElementById("status").value=c.status;
 document.getElementById("notes").value=c.notes;
 editIndex=i;
-showNotification(currentLang==='ar'?"✏️ تعديل العميل":"✏️ Edit Client");
+showNotification("✏️ تعديل العميل / Edit Client");
 }
-function deleteClient(i){ clients.splice(i,1); localStorage.setItem("clients",JSON.stringify(clients)); renderCRM(); showNotification(currentLang==='ar'?"❌ تم حذف العميل":"❌ Client Deleted"); }
-function openWhatsApp(phone){ window.open(`https://wa.me/${phone}`,'_blank'); }
+
+function deleteClient(i){
+clients.splice(i,1);
+localStorage.setItem("clients", JSON.stringify(clients));
+renderCRM();
+}
+
+function openWhatsApp(phone){
+window.open(`https://wa.me/${phone}`,'_blank');
+}
+
 function renderCRM(){
-const table=document.getElementById("table"); table.innerHTML=""; let holdCount=0;
+const table=document.getElementById("table");
+table.innerHTML=""; let holdCount=0;
 clients.forEach((c,i)=>{
 let rowClass=c.status==="Hold"?"holdRow":"";
-if(c.status==="Hold"){ holdCount++; }
+if(c.status==="Hold") holdCount++;
 table.innerHTML+=`<tr class="${rowClass}">
 <td>${c.name}</td><td>${c.phone}</td><td>${c.date}</td><td>${c.status}</td>
 <td>${c.notes}</td><td>-</td>
@@ -277,104 +207,104 @@ table.innerHTML+=`<tr class="${rowClass}">
 <td><button onclick="deleteClient(${i})">❌</button></td>
 </tr>`;
 });
-document.getElementById("total").innerText=(currentLang==='ar'?"المجموع: ":"Total: ")+clients.length;
-document.getElementById("hold").innerText=(currentLang==='ar'?"Hold: ":"Hold: ")+holdCount;
+document.getElementById("total").innerText="Total: "+clients.length;
+document.getElementById("hold").innerText="Hold: "+holdCount;
 }
 renderCRM();
 
-// ===================== Tasks =====================
-let tasks=JSON.parse(localStorage.getItem("tasks")||"[]");
+// ---------------- Tasks ----------------
+let tasks = JSON.parse(localStorage.getItem("tasks")||"[]");
+let editTaskIndex=-1;
 function addTask(){
 const client=document.getElementById("taskClient").value.trim();
-const text=document.getElementById("taskInput").value.trim();
-const type=document.getElementById("taskType").value;
-if(!client || !text){ alert(currentLang==='ar'?"⚠️ أدخل بيانات المهمة":"⚠️ Enter task data"); return; }
-tasks.push({client,text,type});
-localStorage.setItem("tasks",JSON.stringify(tasks));
-document.getElementById("taskClient").value=""; document.getElementById("taskInput").value="";
-showNotification(currentLang==='ar'?"✅ تم إضافة مهمة":"✅ Task Added");
+const type=document.getElementById("taskType").value.trim();
+const text=document.getElementById("taskText").value.trim();
+if(!client || !text) { alert("⚠️ أدخل البيانات / Enter Data"); return; }
+const taskObj={client,type,text};
+if(editTaskIndex===-1) tasks.push(taskObj); else { tasks[editTaskIndex]=taskObj; editTaskIndex=-1; }
+localStorage.setItem("tasks", JSON.stringify(tasks));
+document.getElementById("taskClient").value="";
+document.getElementById("taskType").value="";
+document.getElementById("taskText").value="";
 renderTasks();
 }
+
 function editTask(i){
 document.getElementById("taskClient").value=tasks[i].client;
-document.getElementById("taskInput").value=tasks[i].text;
 document.getElementById("taskType").value=tasks[i].type;
-tasks.splice(i,1);
-showNotification(currentLang==='ar'?"✏️ تعديل المهمة":"✏️ Task Edited");
-renderTasks();
+document.getElementById("taskText").value=tasks[i].text;
+editTaskIndex=i;
+showNotification("✏️ تعديل المهمة / Edit Task");
 }
-function deleteTask(i){ tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks(); showNotification(currentLang==='ar'?"❌ تم حذف المهمة":"❌ Task Deleted"); }
+
+function deleteTask(i){ tasks.splice(i,1); localStorage.setItem("tasks",JSON.stringify(tasks)); renderTasks(); }
+
 function renderTasks(){
 const list=document.getElementById("taskList"); list.innerHTML="";
 tasks.forEach((t,i)=>{
-let cls=t.type==="pending"?"task-pending":t.type==="follow"?"task-follow":"task-order";
-list.innerHTML+=`<li class="${cls}">${t.client} - ${t.text}
+let color="";
+if(t.type.toLowerCase().includes("تقديم عرض")) color="yellow";
+else if(t.type.toLowerCase().includes("متابعة")) color="red";
+else if(t.type.toLowerCase().includes("امر توريد")) color="green";
+const li=document.createElement("li");
+li.style.background=color;
+li.style.padding="5px"; li.style.margin="3px 0";
+li.innerHTML=`${t.client} | ${t.type} | ${t.text} 
 <button onclick="editTask(${i})">✏️</button>
-<button onclick="deleteTask(${i})">❌</button></li>`;
+<button onclick="deleteTask(${i})">❌</button>`;
+list.appendChild(li);
 });
 }
 renderTasks();
 
-// ===================== ERP =====================
-function addAccountingRow(){
-const tbody=document.getElementById("accountingTable").querySelector("tbody");
-const newRow=document.createElement("tr");
-newRow.innerHTML=`<td>
-<select>
-<option>الصندوق</option>
-<option>البنك</option>
-<option>المبيعات</option>
-<option>المشتريات</option>
-<option>المديونية</option>
-<option>العهدة</option>
-</select>
-</td><td><input type="number" placeholder="0.00"></td><td><input type="number" placeholder="0.00"></td>`;
-tbody.appendChild(newRow);
-updateERP();
-showNotification(currentLang==='ar'?"✅ تم إضافة سطر ERP":"✅ ERP Row Added");
-}
-function updateERP(){
-const rows=document.getElementById("accountingTable").querySelectorAll("tbody tr");
-let totals={الصندوق:0, البنك:0, المبيعات:0, المشتريات:0, المديونية:0, العهدة:0};
-rows.forEach(r=>{
-const account=r.cells[0].querySelector("select").value;
-const debit=parseFloat(r.cells[1].querySelector("input").value)||0;
-const credit=parseFloat(r.cells[2].querySelector("input").value)||0;
-totals[account]+=(debit-credit);
-});
-let summary=(currentLang==='ar'?"ملخص ERP: ":"ERP Summary: ");
-for(let key in totals){ summary+=`${key}: ${totals[key]} | `;}
-document.getElementById("erpSummary").innerText=summary;
-}
+// ---------------- ERP & Excel ----------------
+function handleERPFile(e){ handleExcelGeneric(e,"erpTable","erpData"); }
+function handleExcelFile(e){ handleExcelGeneric(e,"excelTable","excelData"); }
 
-// ===================== Excel =====================
-function handleExcelFile(e){
-const file=e.target.files[0];
+function handleExcelGeneric(e,tableId,storageKey){
+const file=e.target.files[0]; if(!file) return;
 const reader=new FileReader();
-reader.onload=function(ev){
-const data=new Uint8Array(ev.target.result);
-const workbook=XLSX.read(data,{type:'array'});
-const firstSheet=workbook.SheetNames[0];
-const worksheet=workbook.Sheets[firstSheet];
-const jsonData=XLSX.utils.sheet_to_json(worksheet,{header:1});
-const table=document.getElementById("excelTable"); table.innerHTML="";
-jsonData.forEach(row=>{
-let tr=document.createElement("tr");
-row.forEach(cell=>{ let td=document.createElement("td"); td.innerText=cell; tr.appendChild(td); });
-table.appendChild(tr);
-});
-showNotification(currentLang==='ar'?"✅ تم استيراد Excel":"✅ Excel Imported");
+reader.onload=function(evt){
+const data=new Uint8Array(evt.target.result);
+const workbook=XLSX.read(data,{type:"array"});
+const sheet=workbook.Sheets[workbook.SheetNames[0]];
+const json=XLSX.utils.sheet_to_json(sheet,{header:1});
+localStorage.setItem(storageKey,JSON.stringify(json));
+renderExcelTable(json,tableId);
 };
 reader.readAsArrayBuffer(file);
 }
-function exportExcelFile(){
-const table=document.getElementById("excelTable");
+
+function renderExcelTable(data,tableId){
+const table=document.getElementById(tableId);
+table.innerHTML="";
+data.forEach((row,rIdx)=>{
+const tr=document.createElement("tr");
+row.forEach((cell,cIdx)=>{
+const td=document.createElement("td");
+if(rIdx===0){ td.innerText=cell; td.style.fontWeight="bold"; }
+else{ const inp=document.createElement("input"); inp.value=cell; td.appendChild(inp); }
+tr.appendChild(td);
+});
+table.appendChild(tr);
+});
+}
+
+function exportERPExcel(){ exportExcelGeneric("erpTable"); }
+function exportExcelFile(){ exportExcelGeneric("excelTable"); }
+
+function exportExcelGeneric(tableId){
+const table=document.getElementById(tableId);
 const wb=XLSX.utils.book_new();
 const ws=XLSX.utils.table_to_sheet(table);
 XLSX.utils.book_append_sheet(wb,ws,"Sheet1");
 XLSX.writeFile(wb,"export.xlsx");
-showNotification(currentLang==='ar'?"📄 تم تصدير Excel":"📄 Excel exported");
 }
+
+// Load saved Excel data
+if(localStorage.getItem("erpData")) renderExcelTable(JSON.parse(localStorage.getItem("erpData")),"erpTable");
+if(localStorage.getItem("excelData")) renderExcelTable(JSON.parse(localStorage.getItem("excelData")),"excelTable");
+
 </script>
 </body>
 </html>
